@@ -28,18 +28,27 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     const tone = input.tone ? toneMap[input.tone] : "samimi ve eğitici";
     const voice = input.brandVoice ? `Klinik marka sesi: "${input.brandVoice}". ` : "";
 
+    let formatInstruction = `"content" alanı içine tek sayfalık standart Instagram post metni yaz (150-300 kelime, emoji kullan, HTML <br/> ile paragraflara ayır).`;
+    if (input.postFormat === "carousel") {
+        formatInstruction = `"content" alanı içine 5-8 sayfalık bir kaydırmalı (carousel) gönderi metni yaz. Her slayt için HTML yapısı kullan. Örnek: <b>Slayt 1: [Başlık]</b><br/>[Metin...]<br/><br/><b>Slayt 2: ...</b>`;
+    } else if (input.postFormat === "video") {
+        formatInstruction = `"content" alanı içine kısa bir Reels/TikTok video senaryosu yaz. HTML yapısı kullan. Örnek: <b>Sahne 1:</b> [Görüntü Açıklaması]<br/>🎤 <b>Seslendirme:</b> [Konuşma Metni...]<br/><br/>`;
+    } else if (input.postFormat === "ad") {
+        formatInstruction = `"content" alanı içine dikkat çekici, hasta dönüşümü odaklı (AIDA modeli) bir reklam broşürü/post metni yaz. HTML yapısı kullanıp, dikkat çekici yerleri <strong> ile vurgula. Call-to-action (Eyleme Çağrı) içersin.`;
+    }
+
     const prompt = `
 ${voice}
 Konu: "${input.topic}"
 Ton: ${tone}
-Post tipi: ${input.postType ?? "bilgi"}
+Format: ${input.postFormat ?? "post"}
 ${input.trending ? "Bu konu şu an trend. Dikkat çekici bir açılış yap." : ""}
 
 Lütfen aşağıdaki JSON formatında yanıt ver:
 {
-  "title": "Post başlığı (max 60 karakter)",
-  "content": "Instagram post metni (150-300 kelime, emoji kullan, paragraflar halinde)",
-  "hashtags": "30 adet Türkçe ve İngilizce hashtag (# ile başlayan, aralarında boşluk)"
+  "title": "Başlık (max 60 karakter)",
+  "content": ${formatInstruction},
+  "hashtags": "25 adet sektörel hashtag (# ile başlayan, aralarında boşluk)"
 }
 `;
 

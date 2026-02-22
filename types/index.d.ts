@@ -54,6 +54,7 @@ export interface GenerateTextInput {
     trending?: boolean;
     tone?: "profesyonel" | "samimi" | "eğitici" | "motive edici";
     postType?: "bilgi" | "egzersiz" | "motivasyon" | "hizmet";
+    postFormat?: "post" | "carousel" | "video" | "ad";
 }
 
 export interface GenerateMediaInput {
