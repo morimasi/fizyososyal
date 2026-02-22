@@ -1,7 +1,7 @@
 import { signIn } from "@/auth";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Activity } from "lucide-react";
+import { Activity, Instagram } from "lucide-react";
 
 export default function LoginPage() {
     return (
@@ -51,7 +51,32 @@ export default function LoginPage() {
                         </Button>
                     </form>
 
-                    <p className="mt-6 text-center text-xs text-slate-500">
+                    <div className="relative my-6 text-center">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-700/50"></div>
+                        </div>
+                        <div className="relative flex justify-center text-xs">
+                            <span className="bg-slate-900/50 px-2 text-slate-400">VEYA</span>
+                        </div>
+                    </div>
+
+                    <form
+                        action={async () => {
+                            "use server";
+                            await signIn("instagram", { redirectTo: "/dashboard" });
+                        }}
+                    >
+                        <Button
+                            type="submit"
+                            className="w-full h-12 text-lg bg-gradient-to-r hover:bg-gradient-to-l from-rose-500 via-fuchsia-600 to-indigo-600 border-0 text-white shadow-lg shadow-fuchsia-500/20"
+                            variant="primary"
+                        >
+                            <Instagram className="w-5 h-5 mr-2" />
+                            Instagram ile Giriş Yap
+                        </Button>
+                    </form>
+
+                    <p className="mt-8 text-center text-xs text-slate-500">
                         Giriş yaparak Hizmet Şartlarımızı ve Gizlilik Politikamızı kabul etmiş olursunuz.
                     </p>
                 </CardContent>
