@@ -10,6 +10,10 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+        if (!process.env.GEMINI_API_KEY) {
+            return NextResponse.json({ error: "Yapay zeka servisi yapılandırılmamış (GEMINI_API_KEY eksik)" }, { status: 503 });
+        }
+
         const body: GenerateTextInput = await req.json();
         if (!body.topic) {
             return NextResponse.json({ error: "Konu gereklidir" }, { status: 400 });

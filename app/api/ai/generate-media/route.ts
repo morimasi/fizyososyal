@@ -11,6 +11,10 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+        if (!process.env.NANOBANANA_API_KEY) {
+            return NextResponse.json({ error: "Görsel üretim servisi yapılandırılmamış (NANOBANANA_API_KEY eksik)" }, { status: 503 });
+        }
+
         const body: GenerateMediaInput & { applyLogo?: boolean } = await req.json();
         if (!body.prompt) {
             return NextResponse.json({ error: "Prompt gereklidir" }, { status: 400 });
