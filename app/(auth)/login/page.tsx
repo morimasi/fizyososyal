@@ -1,7 +1,7 @@
 import { signIn } from "@/auth";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Activity, Instagram } from "lucide-react";
+import { Activity, Instagram, Linkedin } from "lucide-react";
 
 export default function LoginPage() {
     return (
@@ -68,13 +68,49 @@ export default function LoginPage() {
                     >
                         <Button
                             type="submit"
-                            className="w-full h-12 text-lg bg-gradient-to-r hover:bg-gradient-to-l from-rose-500 via-fuchsia-600 to-indigo-600 border-0 text-white shadow-lg shadow-fuchsia-500/20"
+                            className="w-full h-12 text-lg bg-gradient-to-r hover:bg-gradient-to-l from-rose-500 via-fuchsia-600 to-indigo-600 border-0 text-white shadow-lg shadow-fuchsia-500/20 mb-3"
                             variant="primary"
                         >
                             <Instagram className="w-5 h-5 mr-2" />
                             Instagram ile Giriş Yap
                         </Button>
                     </form>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <form
+                            action={async () => {
+                                "use server";
+                                await signIn("linkedin", { redirectTo: "/dashboard" });
+                            }}
+                        >
+                            <Button
+                                type="submit"
+                                className="w-full h-12 text-sm bg-[#0A66C2] hover:bg-[#004182] border-0 text-white shadow-lg shadow-blue-500/20"
+                                variant="primary"
+                            >
+                                <Linkedin className="w-4 h-4 mr-2" />
+                                LinkedIn
+                            </Button>
+                        </form>
+
+                        <form
+                            action={async () => {
+                                "use server";
+                                await signIn("tiktok", { redirectTo: "/dashboard" });
+                            }}
+                        >
+                            <Button
+                                type="submit"
+                                className="w-full h-12 text-sm bg-black hover:bg-zinc-800 border border-white/10 text-white shadow-lg shadow-black/50"
+                                variant="primary"
+                            >
+                                <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                                </svg>
+                                TikTok
+                            </Button>
+                        </form>
+                    </div>
 
                     <p className="mt-8 text-center text-xs text-slate-500">
                         Giriş yaparak Hizmet Şartlarımızı ve Gizlilik Politikamızı kabul etmiş olursunuz.
