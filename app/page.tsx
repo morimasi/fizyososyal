@@ -95,7 +95,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="py-12 border-t border-white/5 text-center text-slate-500 text-sm">
-        <p>&copy; 2024 PhysioSocial AI. Tüm hakları saklıdır.</p>
+        <p>&copy; 2026 PhysioSocial AI. Tüm hakları saklıdır. bbma</p>
       </footer>
     </div>
   );
