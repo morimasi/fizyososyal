@@ -37,12 +37,17 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
         formatInstruction = `"content" alanı içine dikkat çekici, hasta dönüşümü odaklı (AIDA modeli) bir reklam broşürü/post metni yaz. HTML yapısı kullanıp, dikkat çekici yerleri <strong> ile vurgula. Call-to-action (Eyleme Çağrı) içersin.`;
     }
 
+    const evidencePrompt = input.evidenceBased
+        ? "DİKKAT KANITA DAYALI İÇERİK: Üreteceğin bu içerikte mutlaka gerçek fizyoterapi literatüründen, Cochrane derleme veya JOSPT gibi popüler tıbbi makalelerden referanslar ver. 'Kaynaklar' başlığı altında metnin sonunda alıntıları (yazar, yıl, dergi) listele. Asla uydurma (hallucination) bilgi verme."
+        : "";
+
     const prompt = `
 ${voice}
 Konu: "${input.topic}"
 Ton: ${tone}
 Format: ${input.postFormat ?? "post"}
 ${input.trending ? "Bu konu şu an trend. Dikkat çekici bir açılış yap." : ""}
+${evidencePrompt}
 
 Lütfen aşağıdaki JSON formatında yanıt ver:
 {

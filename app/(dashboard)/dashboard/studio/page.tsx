@@ -13,6 +13,7 @@ export default function StudioPage() {
     const { isListening, transcript, result, error, startListening, stopListening } = useVoiceCommand();
     const [topic, setTopic] = useState("");
     const [postFormat, setPostFormat] = useState<PostFormat>("post");
+    const [evidenceBased, setEvidenceBased] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedPost, setGeneratedPost] = useState<{
         title: string;
@@ -37,7 +38,7 @@ export default function StudioPage() {
             const textRes = await fetch("/api/ai/generate-text", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ topic, tone: "profesyonel", postFormat }),
+                body: JSON.stringify({ topic, tone: "profesyonel", postFormat, evidenceBased }),
             });
             const textData = await textRes.json();
 
@@ -156,7 +157,7 @@ export default function StudioPage() {
                             <span className="flex-1 h-px bg-white/10" />
                         </div>
 
-                        {/* Manuel Input */}
+                        {/* Manuel Input & Özellikler */}
                         <div className="space-y-4">
                             <textarea
                                 value={topic}
@@ -164,6 +165,24 @@ export default function StudioPage() {
                                 placeholder="Örn: Ofis çalışanları için boyun egzersizleri"
                                 className="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none h-24"
                             />
+
+                            {/* Evidence Based Toggle */}
+                            <div className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-slate-200">🔬 Kanıta Dayalı İçerik (RAG)</span>
+                                    <span className="text-xs text-slate-400">Tıbbi makalelerden ve literatürden referans ekle</span>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={evidenceBased}
+                                        onChange={(e) => setEvidenceBased(e.target.checked)}
+                                    />
+                                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-500"></div>
+                                </label>
+                            </div>
+
                             <Button
                                 onClick={handleGenerate}
                                 isLoading={isGenerating}
