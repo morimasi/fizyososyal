@@ -1,0 +1,21 @@
+{
+    "name": "PhysioSocial AI - Klinik İçerik Yönetimi",
+    "short_name": "PhysioSocial",
+    "description": "Fizyoterapistler için yapay zeka destekli omni-channel içerik yönetim platformu.",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#8b5cf6",
+    "icons": [
+        {
+            "src": "/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

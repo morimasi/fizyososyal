@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useVoiceCommand } from "@/hooks/useVoiceCommand";
-import { Mic, MicOff, Wand2, Image as ImageIcon, Send, Clock, AlertCircle, Heart, Share2, LayoutTemplate, Images, Clapperboard, Megaphone, Video, Instagram, Linkedin, MessageCircle, Bookmark } from "lucide-react";
+import { Mic, MicOff, Wand2, Image as ImageIcon, Send, Clock, AlertCircle, Heart, Share2, LayoutTemplate, Images, Clapperboard, Megaphone, Video, Instagram, Linkedin, MessageCircle, Bookmark, Sparkles, CheckCircle2, ShieldCheck, History, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type PostFormat = "post" | "carousel" | "video" | "ad";
 export type Platform = "instagram" | "linkedin" | "tiktok";
+type UserRole = "ADMIN" | "EDITOR" | "APPROVER";
 
 export default function StudioPage() {
     const { isListening, transcript, result, error, startListening, stopListening } = useVoiceCommand();
@@ -25,6 +26,7 @@ export default function StudioPage() {
         postFormat: PostFormat;
         platform: Platform;
     } | null>(null);
+    const [userRole, setUserRole] = useState<UserRole>("EDITOR"); // Simulation
 
     // Sesle gelen konuyu inputa aktar
     if (result?.topic && result.topic !== topic && !isGenerating) {
@@ -71,10 +73,33 @@ export default function StudioPage() {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent flex items-center gap-3">
-                    <Wand2 className="w-8 h-8 text-violet-400" />
-                    AI İçerik Stüdyosu
-                </h1>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                            AI İçerik Stüdyosu v2
+                        </h1>
+                        <p className="text-slate-400 mt-2">Klinik markanız için omni-format içerikler üretin.</p>
+                    </div>
+
+                    {/* Role Simulator (Phase 4 Demo) */}
+                    <div className="flex items-center gap-2 p-1.5 bg-slate-900/50 border border-white/5 rounded-xl self-start">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase px-2">Simülasyon Rolü:</span>
+                        {(["EDITOR", "APPROVER", "ADMIN"] as UserRole[]).map((r) => (
+                            <button
+                                key={r}
+                                onClick={() => setUserRole(r)}
+                                className={cn(
+                                    "px-3 py-1 rounded-lg text-[10px] font-bold transition-all border",
+                                    userRole === r
+                                        ? "bg-violet-600 text-white border-violet-500"
+                                        : "text-slate-500 border-transparent hover:text-white"
+                                )}
+                            >
+                                {r}
+                            </button>
+                        ))}
+                    </div>
+                </div>
                 <p className="text-slate-400 mt-2">Voice Chat veya metin ile saniyeler içinde post üretin.</p>
             </div>
 
@@ -449,15 +474,31 @@ export default function StudioPage() {
 
                         {/* Actions */}
                         {generatedPost && (
-                            <div className="flex gap-4 mt-6">
-                                <Button variant="secondary" className="flex-1">
-                                    <Clock className="w-4 h-4 mr-2" />
-                                    Akıllı Zamanla (18:00)
-                                </Button>
-                                <Button variant="primary" className="flex-1">
-                                    <Send className="w-4 h-4 mr-2" />
-                                    Şimdi Yayınla
-                                </Button>
+                            <div className="space-y-4 mt-8">
+                                <div className="flex gap-4">
+                                    <Button variant="secondary" className="flex-1 h-12">
+                                        <Clock className="w-4 h-4 mr-2" />
+                                        Zamanla (Yarın 18:00)
+                                    </Button>
+
+                                    {userRole === "EDITOR" ? (
+                                        <Button variant="primary" className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0">
+                                            <ShieldCheck className="w-4 h-4 mr-2" />
+                                            Onaya Gönder
+                                        </Button>
+                                    ) : (
+                                        <Button variant="primary" className="flex-1 h-12 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 border-0">
+                                            <Send className="w-4 h-4 mr-2" />
+                                            Hemen Yayınla
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {userRole !== "EDITOR" && (
+                                    <p className="text-[10px] text-center text-slate-500 flex items-center justify-center gap-1 uppercase tracking-wider font-bold animate-pulse">
+                                        <ShieldCheck className="w-3 h-3 text-emerald-400" /> Tam Yetkili Mod: Editörlerin postlarını onaylayabilir veya direkt yayınlayabilirsiniz.
+                                    </p>
+                                )}
                             </div>
                         )}
                     </CardContent>
