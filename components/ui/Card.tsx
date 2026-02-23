@@ -43,3 +43,11 @@ export function CardContent({ className, children, ...props }: HTMLAttributes<HT
         </div>
     );
 }
+
+export function CardDescription({ className, children, ...props }: HTMLAttributes<HTMLParagraphElement>) {
+    return (
+        <p className={cn("text-sm text-slate-400", className)} {...props}>
+            {children}
+        </p>
+    );
+}
