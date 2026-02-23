@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useVoiceCommand } from "@/hooks/useVoiceCommand";
-import { Mic, MicOff, Wand2, Image as ImageIcon, Send, Clock, AlertCircle, Heart, Share2, LayoutTemplate, Images, Clapperboard, Megaphone, Video, Instagram, Linkedin, MessageCircle, Bookmark, Sparkles, CheckCircle2, ShieldCheck, History, UserCheck } from "lucide-react";
+import { Mic, MicOff, Wand2, Image as ImageIcon, Send, Clock, AlertCircle, Heart, Share2, LayoutTemplate, Images, Clapperboard, Megaphone, Video, Instagram, Linkedin, MessageCircle, Bookmark, Sparkles, CheckCircle2, ShieldCheck, History, UserCheck, Zap, BrainCircuit } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type PostFormat = "post" | "carousel" | "video" | "ad";
@@ -26,7 +27,34 @@ export default function StudioPage() {
         postFormat: PostFormat;
         platform: Platform;
     } | null>(null);
+    const [selectedModel, setSelectedModel] = useState<"gemini-flash" | "gemini-pro">("gemini-flash");
     const [userRole, setUserRole] = useState<UserRole>("EDITOR"); // Simulation
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+    // Effect for hydration-safe persistence
+    useEffect(() => {
+        const saved = localStorage.getItem("physio_studio_draft");
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                if (data.topic) setTopic(data.topic);
+                if (data.generatedPost) setGeneratedPost(data.generatedPost);
+                if (data.platform) setPlatform(data.platform);
+                if (data.postFormat) setPostFormat(data.postFormat);
+                if (data.selectedModel) setSelectedModel(data.selectedModel);
+            } catch (e) { console.error(e); }
+        }
+    }, []);
+
+    // Save to LocalStorage on change
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            const data = { topic, generatedPost, platform, postFormat, selectedModel };
+            localStorage.setItem("physio_studio_draft", JSON.stringify(data));
+            setLastSaved(new Date());
+        }, 1000);
+        return () => clearTimeout(timeout);
+    }, [topic, generatedPost, platform, postFormat, selectedModel]);
 
     // Sesle gelen konuyu inputa aktar
     if (result?.topic && result.topic !== topic && !isGenerating) {
@@ -43,15 +71,25 @@ export default function StudioPage() {
             const textRes = await fetch("/api/ai/generate-text", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ topic, tone: "profesyonel", postFormat, evidenceBased }),
+                body: JSON.stringify({
+                    topic,
+                    tone: "profesyonel",
+                    postFormat,
+                    evidenceBased,
+                    model: selectedModel // Pass the professional model choice
+                }),
             });
             const textData = await textRes.json();
 
-            // 2. Görsel Üretimi
+            // 2. Görsel Üretimi (Pro modelde daha kaliteli prompt simülasyonu)
             const mediaRes = await fetch("/api/ai/generate-media", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt: textData.title || topic, aspectRatio: "1:1" }),
+                body: JSON.stringify({
+                    prompt: textData.title || topic,
+                    aspectRatio: postFormat === "video" ? "9:16" : "1:1",
+                    quality: selectedModel === "gemini-pro" ? "high" : "standard"
+                }),
             });
             const mediaData = await mediaRes.json();
 
@@ -76,9 +114,16 @@ export default function StudioPage() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                            AI İçerik Stüdyosu v2
+                            AI İçerik Stüdyosu Pro
                         </h1>
-                        <p className="text-slate-400 mt-2">Klinik markanız için omni-format içerikler üretin.</p>
+                        <div className="flex items-center gap-2 mt-2">
+                            <p className="text-slate-400">Omni-format içerik ve zeka merkezi.</p>
+                            {lastSaved && (
+                                <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1 animate-fade-in">
+                                    <CheckCircle2 className="w-3 h-3" /> Otomatik Kaydedildi ({lastSaved.toLocaleTimeString()})
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     {/* Role Simulator (Phase 4 Demo) */}
@@ -110,6 +155,31 @@ export default function StudioPage() {
                         <CardTitle>Ne paylaşmak istersiniz?</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
+                        {/* Intelligence Switch */}
+                        <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-3">Zekâ Seviyesi (AI Model)</label>
+                            <div className="grid grid-cols-2 gap-3 p-1 bg-slate-900/50 border border-white/5 rounded-xl">
+                                {[
+                                    { id: "gemini-flash", label: "Express", icon: Zap, desc: "Hızlı Taslaklar" },
+                                    { id: "gemini-pro", label: "Hâkim", icon: BrainCircuit, desc: "Derin Analiz" },
+                                ].map((m) => (
+                                    <button
+                                        key={m.id}
+                                        onClick={() => setSelectedModel(m.id as any)}
+                                        className={cn(
+                                            "flex flex-col items-center justify-center gap-1 p-3 rounded-lg transition-all border",
+                                            selectedModel === m.id
+                                                ? "bg-violet-600/10 border-violet-500/50 text-white shadow-inner"
+                                                : "border-transparent text-slate-500 hover:text-slate-300"
+                                        )}
+                                    >
+                                        <m.icon className={cn("w-5 h-5", selectedModel === m.id ? "text-violet-400" : "text-slate-600")} />
+                                        <span className="text-[11px] font-bold">{m.label}</span>
+                                        <span className="text-[9px] opacity-60">{m.desc}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                         {/* Platform Seçimi */}
                         <div>
                             <label className="text-sm font-medium text-slate-300 mb-3 block">1. Hedef Platformu Seçin</label>
@@ -264,15 +334,38 @@ export default function StudioPage() {
                             <CardTitle>Canlı Önizleme ({platform === "instagram" ? "Instagram" : platform === "linkedin" ? "LinkedIn" : "TikTok"})</CardTitle>
                         </div>
                     </CardHeader>
-                    <CardContent>
-                        {!generatedPost ? (
+                    <CardContent className="min-h-[450px]">
+                        {isGenerating && (
+                            <div className="space-y-6 animate-pulse">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton className="w-10 h-10 rounded-full" />
+                                        <div className="space-y-2">
+                                            <Skeleton className="w-24 h-4" />
+                                            <Skeleton className="w-16 h-3" />
+                                        </div>
+                                    </div>
+                                    <Skeleton className="w-20 h-6 rounded-lg" />
+                                </div>
+                                <Skeleton className="w-full h-[250px] rounded-2xl" />
+                                <div className="space-y-3">
+                                    <Skeleton className="w-full h-4" />
+                                    <Skeleton className="w-[90%] h-4" />
+                                    <Skeleton className="w-[60%] h-4" />
+                                </div>
+                            </div>
+                        )}
+
+                        {!generatedPost && !isGenerating && (
                             <div className="flex flex-col items-center justify-center h-[400px] text-center border-2 border-dashed border-white/10 rounded-2xl bg-white/5">
                                 <ImageIcon className="w-12 h-12 text-slate-600 mb-4" />
                                 <p className="text-slate-400 max-w-xs">
                                     Üretilen içerik burada Instagram mobil uygulamasında görüneceği gibi listelenecek.
                                 </p>
                             </div>
-                        ) : (
+                        )}
+
+                        {generatedPost && !isGenerating && (
                             <div className="max-w-[320px] mx-auto bg-black rounded-[2.5rem] border-[8px] border-slate-800 overflow-hidden shadow-2xl relative">
                                 {/* Instagram Mockup */}
                                 {generatedPost.platform === "instagram" && (
