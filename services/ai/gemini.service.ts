@@ -24,36 +24,37 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     const genAI = getGeminiClient();
     const modelName = input.model === "gemini-pro" ? "gemini-1.5-pro" : "gemini-1.5-flash";
 
-    console.log(`[GEMINI] Model başlatılıyor: ${modelName}`);
-    const model = genAI.getGenerativeModel({
-        model: modelName,
-        systemInstruction: PHYSIO_SYSTEM_PROMPT,
-    });
+    const attemptGeneration = async (modelName: string) => {
+        console.log(`[GEMINI] Deneme yapılıyor: ${modelName}`);
+        const model = genAI.getGenerativeModel({
+            model: modelName,
+            systemInstruction: PHYSIO_SYSTEM_PROMPT,
+        });
 
-    const toneMap = {
-        profesyonel: "resmi ve güven verici",
-        samimi: "samimi ve sıcak",
-        eğitici: "eğitici ve bilgilendirici",
-        "motive edici": "motive edici ve enerjik",
-    };
+        const toneMap = {
+            profesyonel: "resmi ve güven verici",
+            samimi: "samimi ve sıcak",
+            eğitici: "eğitici ve bilgilendirici",
+            "motive edici": "motive edici ve enerjik",
+        };
 
-    const tone = input.tone ? toneMap[input.tone] : "samimi ve eğitici";
-    const voice = input.brandVoice ? `Klinik marka sesi: "${input.brandVoice}". ` : "";
+        const tone = input.tone ? toneMap[input.tone] : "samimi ve eğitici";
+        const voice = input.brandVoice ? `Klinik marka sesi: "${input.brandVoice}". ` : "";
 
-    let formatInstruction = `"content" alanı içine tek sayfalık standart Instagram post metni yaz (150-300 kelime, emoji kullan, HTML <br/> ile paragraflara ayır).`;
-    if (input.postFormat === "carousel") {
-        formatInstruction = `"content" alanı içine 5-8 sayfalık bir kaydırmalı (carousel) gönderi metni yaz. Her slayt için HTML yapısı kullan. Örnek: <b>Slayt 1: [Başlık]</b><br/>[Metin...]<br/><br/><b>Slayt 2: ...</b>`;
-    } else if (input.postFormat === "video") {
-        formatInstruction = `"content" alanı içine kısa bir Reels/TikTok video senaryosu yaz. HTML yapısı kullan. Örnek: <b>Sahne 1:</b> [Görüntü Açıklaması]<br/>🎤 <b>Seslendirme:</b> [Konuşma Metni...]<br/><br/>`;
-    } else if (input.postFormat === "ad") {
-        formatInstruction = `"content" alanı içine dikkat çekici, hasta dönüşümü odaklı (AIDA modeli) bir reklam broşürü/post metni yaz. HTML yapısı kullanıp, dikkat çekici yerleri <strong> ile vurgula. Call-to-action (Eyleme Çağrı) içersin.`;
-    }
+        let formatInstruction = `"content" alanı içine tek sayfalık standart Instagram post metni yaz (150-300 kelime, emoji kullan, HTML <br/> ile paragraflara ayır).`;
+        if (input.postFormat === "carousel") {
+            formatInstruction = `"content" alanı içine 5-8 sayfalık bir kaydırmalı (carousel) gönderi metni yaz. Her slayt için HTML yapısı kullan. Örnek: <b>Slayt 1: [Başlık]</b><br/>[Metin...]<br/><br/><b>Slayt 2: ...</b>`;
+        } else if (input.postFormat === "video") {
+            formatInstruction = `"content" alanı içine kısa bir Reels/TikTok video senaryosu yaz. HTML yapısı kullan. Örnek: <b>Sahne 1:</b> [Görüntü Açıklaması]<br/>🎤 <b>Seslendirme:</b> [Konuşma Metni...]<br/><br/>`;
+        } else if (input.postFormat === "ad") {
+            formatInstruction = `"content" alanı içine dikkat çekici, hasta dönüşümü odaklı (AIDA modeli) bir reklam broşürü/post metni yaz. HTML yapısı kullanıp, dikkat çekici yerleri <strong> ile vurgula. Call-to-action (Eyleme Çağrı) içersin.`;
+        }
 
-    const evidencePrompt = input.evidenceBased
-        ? "DİKKAT KANITA DAYALI İÇERİK: Üreteceğin bu içerikte mutlaka gerçek fizyoterapi literatüründen, Cochrane derleme veya JOSPT gibi popüler tıbbi makalelerden referanslar ver. 'Kaynaklar' başlığı altında metnin sonunda alıntıları (yazar, yıl, dergi) listele. Asla uydurma (hallucination) bilgi verme."
-        : "";
+        const evidencePrompt = input.evidenceBased
+            ? "DİKKAT KANITA DAYALI İÇERİK: Üreteceğin bu içerikte mutlaka gerçek fizyoterapi literatüründen, Cochrane derleme veya JOSPT gibi popüler tıbbi makalelerden referanslar ver. 'Kaynaklar' başlığı altında metnin sonunda alıntıları (yazar, yıl, dergi) listele. Asla uydurma (hallucination) bilgi verme."
+            : "";
 
-    const prompt = `
+        const prompt = `
 ${voice}
 Konu: "${input.topic}"
 Ton: ${tone}
@@ -69,21 +70,30 @@ Lütfen aşağıdaki JSON formatında yanıt ver:
 }
 `;
 
-    try {
-        console.log("[GEMINI] API çağrısı yapılıyor...");
         const result = await model.generateContent(prompt);
-
-        console.log("[GEMINI] API yanıtı alındı, metin ayıklanıyor...");
         const response = result.response;
 
-        // Güvenlik filtrelerine takıldı mı?
-        const feedback = response.promptFeedback;
-        if (feedback?.blockReason) {
-            console.error("[GEMINI] İstek engellendi:", feedback.blockReason);
-            throw new Error(`İçerik üretimi güvenlik nedeniyle engellendi: ${feedback.blockReason}`);
+        if (response.promptFeedback?.blockReason) {
+            throw new Error(`İçerik üretimi güvenlik nedeniyle engellendi: ${response.promptFeedback.blockReason}`);
         }
 
-        const text = response.text();
+        return response.text();
+    };
+
+    try {
+        let text: string;
+        try {
+            text = await attemptGeneration(modelName);
+        } catch (error: any) {
+            // Eğer model bulunamadıysa (404) veya hata verirse gemini-pro dene
+            if (error.message?.includes("404") || error.message?.includes("not found")) {
+                console.warn(`[GEMINI] ${modelName} bulunamadı, fallback (gemini-pro) deneniyor...`);
+                text = await attemptGeneration("gemini-pro");
+            } else {
+                throw error;
+            }
+        }
+
         console.log("[GEMINI] Yanıt metni uzunluğu:", text.length);
 
         // JSON parse - markdown code fence temizle
