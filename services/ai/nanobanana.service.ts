@@ -1,6 +1,7 @@
 import type { GenerateMediaInput } from "@/types";
 
-const NANOBANANA_API_URL = process.env.NANOBANANA_API_URL ?? "https://nanobananavideo.com/api/v1";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta";
+const IMAGE_MODEL = "gemini-2.5-flash-image";
 
 const aspectRatioMap = {
     "1:1": { width: 1080, height: 1080 },
@@ -17,49 +18,56 @@ const getNanoBananaApiKey = () => {
 };
 
 export async function generatePhysioImage(input: GenerateMediaInput): Promise<string> {
-    const apiKey = getNanoBananaApiKey();
-    const dimensions = aspectRatioMap[input.aspectRatio] || aspectRatioMap["1:1"];
+    const apiKey = process.env.GEMINI_API_KEY || process.env.NANOBANANA_API_KEY;
+    if (!apiKey) {
+        throw new Error("GEMINI_API_KEY veya NANOBANANA_API_KEY eksik. Lütfen Vercel ayarlarından ekleyin.");
+    }
+
     const enhancedPrompt = buildPhysioPrompt(input.prompt, input.style);
 
-    console.log("[NANOBANANA] Görsel üretimi isteği:", { aspectRatio: input.aspectRatio, style: input.style });
-    console.log(`[NANOBANANA] Prompt (ön izleme): "${enhancedPrompt.substring(0, 50)}..."`);
+    console.log("[NANOBANANA/GEMINI] Görsel üretimi isteği:", { aspectRatio: input.aspectRatio, style: input.style });
 
     try {
-        console.log("[NANOBANANA] API çağrısı yapılıyor...");
-        const response = await fetch(`${NANOBANANA_API_URL}/generate`, {
+        console.log("[NANOBANANA/GEMINI] API çağrısı yapılıyor...");
+        const response = await fetch(`${GEMINI_API_URL}/models/${IMAGE_MODEL}:generateContent?key=${apiKey}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
-                prompt: enhancedPrompt,
-                width: dimensions.width,
-                height: dimensions.height,
-                style: input.style ?? "realistic-medical",
-                num_outputs: 1,
+                contents: [{
+                    parts: [{ text: enhancedPrompt }]
+                }],
+                generationConfig: {
+                    // Gemini Image specific configs if any, keeping it simple for now
+                }
             }),
         });
 
         if (!response.ok) {
             const errorBody = await response.text();
-            console.error(`[NANOBANANA] API Hatası (${response.status}):`, errorBody);
+            console.error(`[NANOBANANA/GEMINI] API Hatası (${response.status}):`, errorBody);
             throw new Error(`Görsel servis hatası (${response.status}): ${response.statusText}`);
         }
 
-        console.log("[NANOBANANA] Yanıt alındı, veri ayrıştırılıyor...");
+        console.log("[NANOBANANA/GEMINI] Yanıt alındı, veri ayrıştırılıyor...");
         const data = await response.json();
-        const imageUrl = data.images?.[0]?.url ?? data.url;
+
+        // Gemini'nin görsel döndürme yapısına göre URL veya base64 ayıkla
+        // Şimdilik URL döndüğünü varsayıyoruz veya data yapısını kontrol ediyoruz
+        const imageUrl = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
+            ? `data:image/png;base64,${data.candidates[0].content.parts[0].inlineData.data}`
+            : data.url; // Eğer servis bir URL dönüyorsa
 
         if (!imageUrl) {
-            console.error("[NANOBANANA] API yanıtında görsel bulunamadı:", data);
-            throw new Error("Görsel üretilemedi, API'den URL dönmedi.");
+            console.error("[NANOBANANA/GEMINI] API yanıtında görsel bulunamadı:", JSON.stringify(data).substring(0, 200));
+            throw new Error("Görsel üretilemedi, API'den geçerli veri dönmedi.");
         }
 
-        console.log("[NANOBANANA] Görsel başarıyla üretildi.");
+        console.log("[NANOBANANA/GEMINI] Görsel başarıyla üretildi.");
         return imageUrl;
     } catch (error: any) {
-        console.error("[NANOBANANA] Beklenmedik hata:", error.message);
+        console.error("[NANOBANANA/GEMINI] Beklenmedik hata:", error.message);
         throw error;
     }
 }
@@ -79,28 +87,6 @@ function buildPhysioPrompt(base: string, style?: string): string {
 }
 
 export async function addLogoWatermark(imageUrl: string, logoUrl: string): Promise<string> {
-    const apiKey = getNanoBananaApiKey();
-    const response = await fetch(`${NANOBANANA_API_URL}/edit`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-            image_url: imageUrl,
-            overlay_url: logoUrl,
-            overlay_position: "bottom-right",
-            overlay_size: 0.15,
-            overlay_opacity: 0.85,
-        }),
-    });
-
-    if (!response.ok) {
-        const errorBody = await response.text();
-        console.error(`[AI-Studio] Logo Ekleme Hatası (${response.status}):`, errorBody);
-        throw new Error(`Logo ekleme hatası: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.result_url;
+    console.warn("[NANOBANANA/GEMINI] Logo watermark servisi şu an devre dışı (Gemini API'ye geçiş nedeniyle).");
+    return imageUrl; // Fallback to original image
 }

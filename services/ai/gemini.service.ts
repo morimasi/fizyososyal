@@ -22,7 +22,8 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     console.log("[GEMINI] İstek alındı:", { topic: input.topic, model: input.model });
 
     const genAI = getGeminiClient();
-    const modelName = input.model === "gemini-pro" ? "gemini-1.5-pro" : "gemini-1.5-flash";
+    // Use more robust model naming to prevent 404s
+    const modelName = input.model === "gemini-pro" ? "gemini-1.5-pro" : "gemini-1.5-flash-latest";
 
     const attemptGeneration = async (modelName: string) => {
         console.log(`[GEMINI] Deneme yapılıyor: ${modelName}`);
