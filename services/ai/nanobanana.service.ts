@@ -1,6 +1,6 @@
 import type { GenerateMediaInput } from "@/types";
 
-const NANOBANANA_API_URL = process.env.NANOBANANA_API_URL ?? "https://api.nanobanana.io/v1";
+const NANOBANANA_API_URL = process.env.NANOBANANA_API_URL ?? "https://nanobananavideo.com/api/v1";
 
 const aspectRatioMap = {
     "1:1": { width: 1080, height: 1080 },
