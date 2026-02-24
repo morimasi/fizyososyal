@@ -11,28 +11,29 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        if (!process.env.NANOBANANA_API_KEY) {
-            return NextResponse.json({ error: "Görsel üretim servisi yapılandırılmamış (NANOBANANA_API_KEY eksik)" }, { status: 503 });
-        }
-
         const body: GenerateMediaInput & { applyLogo?: boolean } = await req.json();
         if (!body.prompt) {
             return NextResponse.json({ error: "Prompt gereklidir" }, { status: 400 });
         }
 
+        console.log(`[AI-Studio] Görsel üretimi isteği: ${body.prompt}`);
         let mediaUrl = await generatePhysioImage(body);
 
         // Kullanıcının logosu varsa watermark ekle
         if (body.applyLogo) {
             const user = await prisma.user.findUnique({ where: { id: session.user.id } });
             if (user?.logoUrl) {
+                console.log(`[AI-Studio] Watermark ekleniyor...`);
                 mediaUrl = await addLogoWatermark(mediaUrl, user.logoUrl);
             }
         }
 
         return NextResponse.json({ mediaUrl, aspectRatio: body.aspectRatio });
-    } catch (error) {
-        console.error("Görsel üretim hatası:", error);
-        return NextResponse.json({ error: "Görsel üretimi başarısız" }, { status: 500 });
+    } catch (error: any) {
+        console.error("[AI-Studio] Görsel üretim hatası:", error);
+        return NextResponse.json({
+            error: "Görsel üretimi başarısız",
+            details: error.message || "Bilinmeyen hata"
+        }, { status: 500 });
     }
 }

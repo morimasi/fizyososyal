@@ -1,7 +1,6 @@
 import type { GenerateMediaInput } from "@/types";
 
 const NANOBANANA_API_URL = process.env.NANOBANANA_API_URL ?? "https://api.nanobanana.io/v1";
-const NANOBANANA_API_KEY = process.env.NANOBANANA_API_KEY!;
 
 const aspectRatioMap = {
     "1:1": { width: 1080, height: 1080 },
@@ -9,31 +8,55 @@ const aspectRatioMap = {
     "9:16": { width: 1080, height: 1920 },
 };
 
+const getNanoBananaApiKey = () => {
+    const apiKey = process.env.NANOBANANA_API_KEY;
+    if (!apiKey) {
+        throw new Error("NANOBANANA_API_KEY eksik. Lütfen Vercel ayarlarından ekleyin.");
+    }
+    return apiKey;
+};
+
 export async function generatePhysioImage(input: GenerateMediaInput): Promise<string> {
-    const dimensions = aspectRatioMap[input.aspectRatio];
+    const apiKey = getNanoBananaApiKey();
+    const dimensions = aspectRatioMap[input.aspectRatio] || aspectRatioMap["1:1"];
     const enhancedPrompt = buildPhysioPrompt(input.prompt, input.style);
 
-    const response = await fetch(`${NANOBANANA_API_URL}/generate`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${NANOBANANA_API_KEY}`,
-        },
-        body: JSON.stringify({
-            prompt: enhancedPrompt,
-            width: dimensions.width,
-            height: dimensions.height,
-            style: input.style ?? "realistic-medical",
-            num_outputs: 1,
-        }),
-    });
+    console.log(`[AI-Studio] Görsel üretimi başlıyor: Prompt: "${enhancedPrompt.substring(0, 50)}..."`);
 
-    if (!response.ok) {
-        throw new Error(`NanaBanana API hatası: ${response.statusText}`);
+    try {
+        const response = await fetch(`${NANOBANANA_API_URL}/generate`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+                prompt: enhancedPrompt,
+                width: dimensions.width,
+                height: dimensions.height,
+                style: input.style ?? "realistic-medical",
+                num_outputs: 1,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            console.error(`[AI-Studio] NanoBanana API Hatası (${response.status}):`, errorBody);
+            throw new Error(`Görsel üretim servisi hata verdi: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const imageUrl = data.images?.[0]?.url ?? data.url;
+
+        if (!imageUrl) {
+            throw new Error("Görsel üretilemedi, API'den URL dönmedi.");
+        }
+
+        return imageUrl;
+    } catch (error) {
+        console.error("[AI-Studio] Görsel üretiminde beklenmedik hata:", error);
+        throw error;
     }
-
-    const data = await response.json();
-    return data.images?.[0]?.url ?? data.url;
 }
 
 function buildPhysioPrompt(base: string, style?: string): string {
@@ -51,11 +74,12 @@ function buildPhysioPrompt(base: string, style?: string): string {
 }
 
 export async function addLogoWatermark(imageUrl: string, logoUrl: string): Promise<string> {
+    const apiKey = getNanoBananaApiKey();
     const response = await fetch(`${NANOBANANA_API_URL}/edit`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${NANOBANANA_API_KEY}`,
+            Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
             image_url: imageUrl,
@@ -67,6 +91,8 @@ export async function addLogoWatermark(imageUrl: string, logoUrl: string): Promi
     });
 
     if (!response.ok) {
+        const errorBody = await response.text();
+        console.error(`[AI-Studio] Logo Ekleme Hatası (${response.status}):`, errorBody);
         throw new Error(`Logo ekleme hatası: ${response.statusText}`);
     }
 

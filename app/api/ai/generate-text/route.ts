@@ -10,19 +10,19 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        if (!process.env.GEMINI_API_KEY) {
-            return NextResponse.json({ error: "Yapay zeka servisi yapılandırılmamış (GEMINI_API_KEY eksik)" }, { status: 503 });
-        }
-
         const body: GenerateTextInput = await req.json();
         if (!body.topic) {
             return NextResponse.json({ error: "Konu gereklidir" }, { status: 400 });
         }
 
+        console.log(`[AI-Studio] Metin üretimi isteği: ${body.topic}`);
         const result = await generatePostText(body);
         return NextResponse.json(result);
-    } catch (error) {
-        console.error("Metin üretimi hatası:", error);
-        return NextResponse.json({ error: "Metin üretimi başarısız" }, { status: 500 });
+    } catch (error: any) {
+        console.error("[AI-Studio] Metin üretimi hatası:", error);
+        return NextResponse.json({
+            error: "Metin üretimi başarısız",
+            details: error.message || "Bilinmeyen hata"
+        }, { status: 500 });
     }
 }

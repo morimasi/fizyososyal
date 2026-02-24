@@ -1,20 +1,27 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { GenerateTextInput } from "@/types";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 const PHYSIO_SYSTEM_PROMPT = `Sen bir fizyoterapi kliniği için uzman dijital içerik yazarısın. 
 Tıbbi terimleri hasta dostu, anlaşılır bir dile çevir. 
 Her zaman güvenli, kanıta dayalı fizyoterapi bilgisi sun.
 Türkçe yaz. Empati kur. Motivasyonel ol. Müşteriyi klinik hizmetlerine çekmeye çalış.`;
+
+const getGeminiClient = () => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new Error("GEMINI_API_KEY eksik. Lütfen Vercel ayarlarından ekleyin.");
+    }
+    return new GoogleGenerativeAI(apiKey);
+};
 
 export async function generatePostText(input: GenerateTextInput): Promise<{
     content: string;
     hashtags: string;
     title: string;
 }> {
+    const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: input.model === "gemini-pro" ? "gemini-1.5-pro" : "gemini-1.5-flash",
         systemInstruction: PHYSIO_SYSTEM_PROMPT,
     });
 
@@ -80,6 +87,7 @@ Lütfen aşağıdaki JSON formatında yanıt ver:
 }
 
 export async function generateVoiceCommandResponse(transcript: string): Promise<string> {
+    const genAI = getGeminiClient();
     const model = genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
         systemInstruction: `Sen bir fizyoterapi kliniğinin AI asistanısın. 

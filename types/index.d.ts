@@ -56,6 +56,7 @@ export interface GenerateTextInput {
     postType?: "bilgi" | "egzersiz" | "motivasyon" | "hizmet";
     postFormat?: "post" | "carousel" | "video" | "ad";
     evidenceBased?: boolean;
+    model?: "gemini-flash" | "gemini-pro";
 }
 
 export interface GenerateMediaInput {
