@@ -21,9 +21,11 @@ export async function generatePhysioImage(input: GenerateMediaInput): Promise<st
     const dimensions = aspectRatioMap[input.aspectRatio] || aspectRatioMap["1:1"];
     const enhancedPrompt = buildPhysioPrompt(input.prompt, input.style);
 
-    console.log(`[AI-Studio] Görsel üretimi başlıyor: Prompt: "${enhancedPrompt.substring(0, 50)}..."`);
+    console.log("[NANOBANANA] Görsel üretimi isteği:", { aspectRatio: input.aspectRatio, style: input.style });
+    console.log(`[NANOBANANA] Prompt (ön izleme): "${enhancedPrompt.substring(0, 50)}..."`);
 
     try {
+        console.log("[NANOBANANA] API çağrısı yapılıyor...");
         const response = await fetch(`${NANOBANANA_API_URL}/generate`, {
             method: "POST",
             headers: {
@@ -41,20 +43,23 @@ export async function generatePhysioImage(input: GenerateMediaInput): Promise<st
 
         if (!response.ok) {
             const errorBody = await response.text();
-            console.error(`[AI-Studio] NanoBanana API Hatası (${response.status}):`, errorBody);
-            throw new Error(`Görsel üretim servisi hata verdi: ${response.statusText}`);
+            console.error(`[NANOBANANA] API Hatası (${response.status}):`, errorBody);
+            throw new Error(`Görsel servis hatası (${response.status}): ${response.statusText}`);
         }
 
+        console.log("[NANOBANANA] Yanıt alındı, veri ayrıştırılıyor...");
         const data = await response.json();
         const imageUrl = data.images?.[0]?.url ?? data.url;
 
         if (!imageUrl) {
+            console.error("[NANOBANANA] API yanıtında görsel bulunamadı:", data);
             throw new Error("Görsel üretilemedi, API'den URL dönmedi.");
         }
 
+        console.log("[NANOBANANA] Görsel başarıyla üretildi.");
         return imageUrl;
-    } catch (error) {
-        console.error("[AI-Studio] Görsel üretiminde beklenmedik hata:", error);
+    } catch (error: any) {
+        console.error("[NANOBANANA] Beklenmedik hata:", error.message);
         throw error;
     }
 }

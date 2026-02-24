@@ -3,6 +3,9 @@ import { auth } from "@/auth";
 import { generatePostText } from "@/services/ai/gemini.service";
 import type { GenerateTextInput } from "@/types";
 
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
     try {
         console.log("[AI-Studio] Metin üretimi API çağrıldı.");

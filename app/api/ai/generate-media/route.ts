@@ -4,6 +4,9 @@ import { generatePhysioImage, addLogoWatermark } from "@/services/ai/nanobanana.
 import { prisma } from "@/lib/prisma";
 import type { GenerateMediaInput } from "@/types";
 
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
     try {
         console.log("[AI-Studio] Görsel üretimi API çağrıldı.");

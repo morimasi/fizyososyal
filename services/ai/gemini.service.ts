@@ -19,9 +19,14 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     hashtags: string;
     title: string;
 }> {
+    console.log("[GEMINI] İstek alındı:", { topic: input.topic, model: input.model });
+
     const genAI = getGeminiClient();
+    const modelName = input.model === "gemini-pro" ? "gemini-1.5-pro" : "gemini-1.5-flash";
+
+    console.log(`[GEMINI] Model başlatılıyor: ${modelName}`);
     const model = genAI.getGenerativeModel({
-        model: input.model === "gemini-pro" ? "gemini-1.5-pro" : "gemini-1.5-flash",
+        model: modelName,
         systemInstruction: PHYSIO_SYSTEM_PROMPT,
     });
 
@@ -64,25 +69,45 @@ Lütfen aşağıdaki JSON formatında yanıt ver:
 }
 `;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-
-    // JSON parse - markdown code fence temizle
-    const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-
     try {
-        const parsed = JSON.parse(jsonStr);
-        return {
-            title: parsed.title ?? "Fizyoterapi İçeriği",
-            content: parsed.content ?? text,
-            hashtags: parsed.hashtags ?? "#fizyoterapi #physiotherapy #sağlık",
-        };
-    } catch {
-        return {
-            title: input.topic,
-            content: text,
-            hashtags: "#fizyoterapi #physiotherapy #sağlık #egzersiz #rehabilitasyon",
-        };
+        console.log("[GEMINI] API çağrısı yapılıyor...");
+        const result = await model.generateContent(prompt);
+
+        console.log("[GEMINI] API yanıtı alındı, metin ayıklanıyor...");
+        const response = result.response;
+
+        // Güvenlik filtrelerine takıldı mı?
+        const feedback = response.promptFeedback;
+        if (feedback?.blockReason) {
+            console.error("[GEMINI] İstek engellendi:", feedback.blockReason);
+            throw new Error(`İçerik üretimi güvenlik nedeniyle engellendi: ${feedback.blockReason}`);
+        }
+
+        const text = response.text();
+        console.log("[GEMINI] Yanıt metni uzunluğu:", text.length);
+
+        // JSON parse - markdown code fence temizle
+        const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+        try {
+            console.log("[GEMINI] JSON ayrıştırılıyor...");
+            const parsed = JSON.parse(jsonStr);
+            return {
+                title: parsed.title ?? "Fizyoterapi İçeriği",
+                content: parsed.content ?? text,
+                hashtags: parsed.hashtags ?? "#fizyoterapi #physiotherapy #sağlık",
+            };
+        } catch (jsonErr: any) {
+            console.warn("[GEMINI] JSON ayrıştırma hatası, ham metin dönülüyor:", jsonErr.message);
+            return {
+                title: input.topic,
+                content: text,
+                hashtags: "#fizyoterapi #physiotherapy #sağlık #egzersiz #rehabilitasyon",
+            };
+        }
+    } catch (apiErr: any) {
+        console.error("[GEMINI] API Hatası:", apiErr.message);
+        throw apiErr;
     }
 }
 
