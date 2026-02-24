@@ -124,16 +124,29 @@ export default function StudioPage() {
     const handleOptimize = async () => {
         if (!topic.trim()) return;
         setIsOptimizing(true);
+        console.log("[STUDIO] Optimizasyon başlatılıyor. Konu:", topic);
         try {
             const res = await fetch("/api/ai/optimize-prompt", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ topic }),
             });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`API hatası (${res.status}): ${errorText}`);
+            }
+
             const data = await res.json();
-            if (data.optimized) setTopic(data.optimized);
-        } catch (err) {
-            console.error("Optimize hatası:", err);
+            console.log("[STUDIO] Optimizasyon başarılı:", data);
+            if (data.optimized) {
+                setTopic(data.optimized);
+            } else {
+                console.warn("[STUDIO] API'den boş sonuç döndü.");
+            }
+        } catch (err: any) {
+            console.error("[STUDIO] Optimize hatası:", err.message);
+            // Optional: Set some error state here to show to user
         } finally {
             setIsOptimizing(false);
         }

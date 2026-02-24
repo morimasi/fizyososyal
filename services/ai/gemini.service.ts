@@ -168,10 +168,20 @@ Bu komuttan içerik üretim parametreleri çıkar ve aşağıdaki JSON formatın
 }
 
 export async function optimizePhysioPrompt(topic: string): Promise<string> {
+    console.log("[GEMINI/OPTIMIZE] Başlatıldı. Konu:", topic);
     const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        systemInstruction: `Sen dünyanın en iyi fizyoterapi kliniği kreatif ekibisin (Fizyoterapist + Grafik Tasarımcı + Sanat Danışmanı + Reklamcı). 
+
+    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", "gemini-pro"];
+    let success = false;
+    let lastError: any = null;
+    let resultText = topic;
+
+    for (const modelId of modelsToTry) {
+        try {
+            console.log(`[GEMINI/OPTIMIZE] Model deneniyor: ${modelId}`);
+            const model = genAI.getGenerativeModel({
+                model: modelId,
+                systemInstruction: `Sen dünyanın en iyi fizyoterapi kliniği kreatif ekibisin (Fizyoterapist + Grafik Tasarımcı + Sanat Danışmanı + Reklamcı). 
 Kullanıcının girdiği basit fikirleri, görsel üretim modelleri için sanat yönetmenliği yapılmış profesyonel promptlara dönüştür.
 
 Görsel Direktiflerin:
@@ -181,15 +191,27 @@ Görsel Direktiflerin:
 4. İnsan psikolojisini etkileyen ışık ve renk kullanımı (Reklamcı gözü).
 
 SADECE İngilizce prompt döndür.`,
-    });
+            });
 
-    const prompt = `Şu konuyu profesyonel bir görsel üretim promptuna dönüştür: "${topic}"`;
+            const prompt = `Şu konuyu profesyonel bir görsel üretim promptuna dönüştür: "${topic}"`;
+            const result = await model.generateContent(prompt);
+            const text = result.response.text().trim();
 
-    try {
-        const result = await model.generateContent(prompt);
-        return result.response.text().trim();
-    } catch (error) {
-        console.error("[GEMINI] Prompt optimizasyon hatası:", error);
-        return topic; // Fallback to original
+            if (text) {
+                console.log(`[GEMINI/OPTIMIZE] ${modelId} ile üretim başarılı.`);
+                resultText = text;
+                success = true;
+                break;
+            }
+        } catch (err: any) {
+            lastError = err;
+            console.warn(`[GEMINI/OPTIMIZE] ${modelId} hatası:`, err.message);
+        }
     }
+
+    if (!success) {
+        console.error("[GEMINI/OPTIMIZE] Tüm model denemeleri başarısız oldu:", lastError?.message);
+    }
+
+    return resultText;
 }
