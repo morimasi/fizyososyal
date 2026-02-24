@@ -5,47 +5,45 @@ import { prisma } from "@/lib/prisma";
 import type { GenerateMediaInput } from "@/types";
 
 export async function POST(req: NextRequest) {
-    const session = await auth();
-    if (!session?.user?.id) {
-        return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
-    }
-
     try {
+        console.log("[AI-Studio] Görsel üretimi API çağrıldı.");
+
+        const session = await auth().catch(err => {
+            console.error("[AI-Studio] Auth hatası:", err);
+            throw new Error(`Oturum doğrulaması başarısız: ${err.message}`);
+        });
+
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
+        }
+
         const body: GenerateMediaInput & { applyLogo?: boolean } = await req.json();
         if (!body.prompt) {
             return NextResponse.json({ error: "Prompt gereklidir" }, { status: 400 });
         }
 
-        console.log(`[AI-Studio] Görsel üretimi isteği: ${body.prompt}`);
         let mediaUrl = await generatePhysioImage(body);
 
         // Kullanıcının logosu varsa watermark ekle
         if (body.applyLogo) {
-            const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+            const user = await prisma.user.findUnique({
+                where: { id: session.user.id }
+            }).catch(err => {
+                console.error("[AI-Studio] Database hatası (User/Logo):", err);
+                return null; // Don't crash for logo
+            });
+
             if (user?.logoUrl) {
-                console.log(`[AI-Studio] Watermark ekleniyor...`);
                 mediaUrl = await addLogoWatermark(mediaUrl, user.logoUrl);
             }
         }
 
         return NextResponse.json({ mediaUrl, aspectRatio: body.aspectRatio });
     } catch (error: any) {
-        console.error("[AI-Studio] Görsel üretim hatası:", error);
-
-        // Vercel'deki loglara bakmadan tarayıcıdan hatayı anlayabilmek için:
-        let errorMessage = error.message || "Bilinmeyen hata";
-        let hint = undefined;
-
-        if (errorMessage.includes("NANOBANANA_API_KEY")) {
-            hint = "Vercel Dashboard > Settings > Environment Variables kısmına NANOBANANA_API_KEY eklenmemiş.";
-        } else if (errorMessage.includes("fetch")) {
-            hint = "NanoBanana API'sine erişilemiyor. İnternet veya servis sorunu olabilir.";
-        }
-
+        console.error("[AI-Studio] KRİTİK HATA (generate-media):", error);
         return NextResponse.json({
-            error: "Görsel üretimi başarısız",
-            details: errorMessage,
-            hint: hint
+            error: "Sistem hatası oluştu",
+            details: error.message || "Bilinmeyen hata"
         }, { status: 500 });
     }
 }

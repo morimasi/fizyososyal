@@ -4,25 +4,31 @@ import { generatePostText } from "@/services/ai/gemini.service";
 import type { GenerateTextInput } from "@/types";
 
 export async function POST(req: NextRequest) {
-    const session = await auth();
-    if (!session?.user) {
-        return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
-    }
-
     try {
+        console.log("[AI-Studio] Metin üretimi API çağrıldı.");
+
+        const session = await auth().catch(err => {
+            console.error("[AI-Studio] Auth hatası:", err);
+            throw new Error(`Oturum doğrulaması başarısız: ${err.message}`);
+        });
+
+        if (!session?.user) {
+            return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
+        }
+
         const body: GenerateTextInput = await req.json();
         if (!body.topic) {
             return NextResponse.json({ error: "Konu gereklidir" }, { status: 400 });
         }
 
-        console.log(`[AI-Studio] Metin üretimi isteği: ${body.topic}`);
         const result = await generatePostText(body);
         return NextResponse.json(result);
     } catch (error: any) {
-        console.error("[AI-Studio] Metin üretimi hatası:", error);
+        console.error("[AI-Studio] KRİTİK HATA (generate-text):", error);
         return NextResponse.json({
-            error: "Metin üretimi başarısız",
-            details: error.message || "Bilinmeyen hata"
+            error: "Sistem hatası oluştu",
+            details: error.message || "Bilinmeyen hata",
+            stack: process.env.NODE_ENV === "development" ? error.stack : undefined
         }, { status: 500 });
     }
 }

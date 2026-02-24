@@ -114,25 +114,27 @@ export default function AnalyticsPage() {
                         </div>
                         <CardDescription>Hangi içerik tipleri daha çok hasta çekiyor?</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[350px] flex flex-col items-center justify-center">
-                        <ResponsiveContainer width="100%" height={220}>
-                            <PieChart>
-                                <Pie
-                                    data={themeData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {themeData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip content={<CustomTooltip />} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                    <CardContent className="min-h-[350px] flex flex-col items-center justify-center">
+                        <div className="w-full h-[220px]">
+                            <ResponsiveContainer width="100%" height="100%" minHeight={220}>
+                                <PieChart>
+                                    <Pie
+                                        data={themeData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {themeData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip content={<CustomTooltip />} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
 
                         <div className="w-full mt-4 space-y-2">
                             {themeData.map((item) => (
