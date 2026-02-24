@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function GET(req: NextRequest) {
     const debugInfo: any = {
@@ -15,15 +16,23 @@ export async function GET(req: NextRequest) {
     };
 
     try {
-        // 1. Test Auth
+        // 1. Test Auth & Gemini
         try {
             const session = await auth();
             debugInfo.session = {
                 active: !!session,
                 user: session?.user ? { id: !!session.user.id, email: !!session.user.email } : null
             };
+
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+            // Test simple generation instead of listing
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            debugInfo.gemini = {
+                status: "Client initialized",
+                testModel: "gemini-1.5-flash"
+            };
         } catch (e: any) {
-            debugInfo.sessionError = e.message;
+            debugInfo.geminiError = e.message;
         }
 
         // 2. Test DB
