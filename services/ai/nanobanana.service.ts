@@ -9,14 +9,6 @@ const aspectRatioMap = {
     "9:16": { width: 1080, height: 1920 },
 };
 
-const getNanoBananaApiKey = () => {
-    const apiKey = process.env.NANOBANANA_API_KEY;
-    if (!apiKey) {
-        throw new Error("NANOBANANA_API_KEY eksik. Lütfen Vercel ayarlarından ekleyin.");
-    }
-    return apiKey;
-};
-
 export async function generatePhysioImage(input: GenerateMediaInput): Promise<string> {
     const apiKey = process.env.GEMINI_API_KEY || process.env.NANOBANANA_API_KEY;
     if (!apiKey) {
@@ -29,6 +21,7 @@ export async function generatePhysioImage(input: GenerateMediaInput): Promise<st
 
     try {
         console.log("[NANOBANANA/GEMINI] API çağrısı yapılıyor...");
+        // Use the exact endpoint provided by the user
         const response = await fetch(`${GEMINI_API_URL}/models/${IMAGE_MODEL}:generateContent?key=${apiKey}`, {
             method: "POST",
             headers: {
@@ -36,10 +29,10 @@ export async function generatePhysioImage(input: GenerateMediaInput): Promise<st
             },
             body: JSON.stringify({
                 contents: [{
-                    parts: [{ text: enhancedPrompt }]
+                    parts: [{ text: `Generate an image of: ${enhancedPrompt}` }]
                 }],
                 generationConfig: {
-                    // Gemini Image specific configs if any, keeping it simple for now
+                    // Try to suggest image output structure
                 }
             }),
         });
@@ -53,19 +46,26 @@ export async function generatePhysioImage(input: GenerateMediaInput): Promise<st
         console.log("[NANOBANANA/GEMINI] Yanıt alındı, veri ayrıştırılıyor...");
         const data = await response.json();
 
-        // Gemini'nin görsel döndürme yapısına göre URL veya base64 ayıkla
-        // Şimdilik URL döndüğünü varsayıyoruz veya data yapısını kontrol ediyoruz
-        const imageUrl = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
-            ? `data:image/png;base64,${data.candidates[0].content.parts[0].inlineData.data}`
-            : data.url; // Eğer servis bir URL dönüyorsa
-
-        if (!imageUrl) {
-            console.error("[NANOBANANA/GEMINI] API yanıtında görsel bulunamadı:", JSON.stringify(data).substring(0, 200));
-            throw new Error("Görsel üretilemedi, API'den geçerli veri dönmedi.");
+        // Debug the candidates structure
+        if (data.candidates?.[0]?.content?.parts) {
+            const parts = data.candidates[0].content.parts;
+            for (const part of parts) {
+                if (part.inlineData) {
+                    console.log(`[NANOBANANA/GEMINI] Görsel verisi bulundu (${part.inlineData.mimeType}).`);
+                    return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                }
+                if (part.text) {
+                    console.warn("[NANOBANANA/GEMINI] API metin döndürdü:", part.text.substring(0, 100));
+                }
+            }
         }
 
-        console.log("[NANOBANANA/GEMINI] Görsel başarıyla üretildi.");
-        return imageUrl;
+        // Fallback or secondary checks
+        const imageUrl = data.url || data.images?.[0]?.url;
+        if (imageUrl) return imageUrl;
+
+        console.error("[NANOBANANA/GEMINI] Geçerli görsel verisi bulunamadı:", JSON.stringify(data).substring(0, 500));
+        throw new Error("Görsel üretilemedi, API'den görsel verisi yerine metin döndü. Lütfen model ayarlarını veya kotanızı kontrol edin.");
     } catch (error: any) {
         console.error("[NANOBANANA/GEMINI] Beklenmedik hata:", error.message);
         throw error;
@@ -87,6 +87,6 @@ function buildPhysioPrompt(base: string, style?: string): string {
 }
 
 export async function addLogoWatermark(imageUrl: string, logoUrl: string): Promise<string> {
-    console.warn("[NANOBANANA/GEMINI] Logo watermark servisi şu an devre dışı (Gemini API'ye geçiş nedeniyle).");
-    return imageUrl; // Fallback to original image
+    console.warn("[NANOBANANA/GEMINI] Logo watermark servisi devre dışı.");
+    return imageUrl;
 }

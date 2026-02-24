@@ -22,40 +22,36 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     console.log("[GEMINI] İstek alındı:", { topic: input.topic, model: input.model });
 
     const genAI = getGeminiClient();
-    // Use more robust model naming to prevent 404s
-    const modelName = input.model === "gemini-pro" ? "gemini-1.5-pro" : "gemini-1.5-flash-latest";
 
-    const attemptGeneration = async (modelName: string) => {
-        console.log(`[GEMINI] Deneme yapılıyor: ${modelName}`);
-        const model = genAI.getGenerativeModel({
-            model: modelName,
-            systemInstruction: PHYSIO_SYSTEM_PROMPT,
-        });
+    // Comprehensive fallback list for production reliability
+    const modelsToTry = input.model === "gemini-pro"
+        ? ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro", "gemini-pro"]
+        : ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", "gemini-pro"];
 
-        const toneMap = {
-            profesyonel: "resmi ve güven verici",
-            samimi: "samimi ve sıcak",
-            eğitici: "eğitici ve bilgilendirici",
-            "motive edici": "motive edici ve enerjik",
-        };
+    const toneMap = {
+        profesyonel: "resmi ve güven verici",
+        samimi: "samimi ve sıcak",
+        eğitici: "eğitici ve bilgilendirici",
+        "motive edici": "motive edici ve enerjik",
+    };
 
-        const tone = input.tone ? toneMap[input.tone] : "samimi ve eğitici";
-        const voice = input.brandVoice ? `Klinik marka sesi: "${input.brandVoice}". ` : "";
+    const tone = input.tone ? toneMap[input.tone] : "samimi ve eğitici";
+    const voice = input.brandVoice ? `Klinik marka sesi: "${input.brandVoice}". ` : "";
 
-        let formatInstruction = `"content" alanı içine tek sayfalık standart Instagram post metni yaz (150-300 kelime, emoji kullan, HTML <br/> ile paragraflara ayır).`;
-        if (input.postFormat === "carousel") {
-            formatInstruction = `"content" alanı içine 5-8 sayfalık bir kaydırmalı (carousel) gönderi metni yaz. Her slayt için HTML yapısı kullan. Örnek: <b>Slayt 1: [Başlık]</b><br/>[Metin...]<br/><br/><b>Slayt 2: ...</b>`;
-        } else if (input.postFormat === "video") {
-            formatInstruction = `"content" alanı içine kısa bir Reels/TikTok video senaryosu yaz. HTML yapısı kullan. Örnek: <b>Sahne 1:</b> [Görüntü Açıklaması]<br/>🎤 <b>Seslendirme:</b> [Konuşma Metni...]<br/><br/>`;
-        } else if (input.postFormat === "ad") {
-            formatInstruction = `"content" alanı içine dikkat çekici, hasta dönüşümü odaklı (AIDA modeli) bir reklam broşürü/post metni yaz. HTML yapısı kullanıp, dikkat çekici yerleri <strong> ile vurgula. Call-to-action (Eyleme Çağrı) içersin.`;
-        }
+    let formatInstruction = `"content" alanı içine tek sayfalık standart Instagram post metni yaz (150-300 kelime, emoji kullan, HTML <br/> ile paragraflara ayır).`;
+    if (input.postFormat === "carousel") {
+        formatInstruction = `"content" alanı içine 5-8 sayfalık bir kaydırmalı (carousel) gönderi metni yaz. Her slayt için HTML yapısı kullan. Örnek: <b>Slayt 1: [Başlık]</b><br/>[Metin...]<br/><br/><b>Slayt 2: ...</b>`;
+    } else if (input.postFormat === "video") {
+        formatInstruction = `"content" alanı içine kısa bir Reels/TikTok video senaryosu yaz. HTML yapısı kullan. Örnek: <b>Sahne 1:</b> [Görüntü Açıklaması]<br/>🎤 <b>Seslendirme:</b> [Konuşma Metni...]<br/><br/>`;
+    } else if (input.postFormat === "ad") {
+        formatInstruction = `"content" alanı içine dikkat çekici, hasta dönüşümü odaklı (AIDA modeli) bir reklam broşürü/post metni yaz. HTML yapısı kullanıp, dikkat çekici yerleri <strong> ile vurgula. Call-to-action (Eyleme Çağrı) içersin.`;
+    }
 
-        const evidencePrompt = input.evidenceBased
-            ? "DİKKAT KANITA DAYALI İÇERİK: Üreteceğin bu içerikte mutlaka gerçek fizyoterapi literatüründen, Cochrane derleme veya JOSPT gibi popüler tıbbi makalelerden referanslar ver. 'Kaynaklar' başlığı altında metnin sonunda alıntıları (yazar, yıl, dergi) listele. Asla uydurma (hallucination) bilgi verme."
-            : "";
+    const evidencePrompt = input.evidenceBased
+        ? "DİKKAT KANITA DAYALI İÇERİK: Üreteceğin bu içerikte mutlaka gerçek fizyoterapi literatüründen, Cochrane derleme veya JOSPT gibi popüler tıbbi makalelerden referanslar ver. 'Kaynaklar' başlığı altında metnin sonunda alıntıları (yazar, yıl, dergi) listele. Asla uydurma (hallucination) bilgi verme."
+        : "";
 
-        const prompt = `
+    const prompt = `
 ${voice}
 Konu: "${input.topic}"
 Ton: ${tone}
@@ -71,33 +67,43 @@ Lütfen aşağıdaki JSON formatında yanıt ver:
 }
 `;
 
-        const result = await model.generateContent(prompt);
-        const response = result.response;
+    let text: string = "";
+    let success = false;
+    let lastError: any = null;
 
-        if (response.promptFeedback?.blockReason) {
-            throw new Error(`İçerik üretimi güvenlik nedeniyle engellendi: ${response.promptFeedback.blockReason}`);
+    for (const modelId of modelsToTry) {
+        try {
+            console.log(`[GEMINI] Model deneniyor: ${modelId}`);
+            const model = genAI.getGenerativeModel({
+                model: modelId,
+                systemInstruction: PHYSIO_SYSTEM_PROMPT,
+            });
+
+            const result = await model.generateContent(prompt);
+            const response = result.response;
+
+            if (response.promptFeedback?.blockReason) {
+                console.warn(`[GEMINI] ${modelId} engellendi: ${response.promptFeedback.blockReason}`);
+                continue;
+            }
+
+            text = response.text();
+            success = true;
+            console.log(`[GEMINI] ${modelId} ile üretim başarılı.`);
+            break;
+        } catch (err: any) {
+            lastError = err;
+            console.warn(`[GEMINI] ${modelId} hatası:`, err.message);
         }
+    }
 
-        return response.text();
-    };
+    if (!success) {
+        console.error("[GEMINI] Tüm model denemeleri başarısız oldu.");
+        throw lastError || new Error("İçerik üretilemedi, Google API modellerine ulaşılamıyor.");
+    }
 
     try {
-        let text: string;
-        try {
-            text = await attemptGeneration(modelName);
-        } catch (error: any) {
-            // Eğer model bulunamadıysa (404) veya hata verirse gemini-pro dene
-            if (error.message?.includes("404") || error.message?.includes("not found")) {
-                console.warn(`[GEMINI] ${modelName} bulunamadı, fallback (gemini-pro) deneniyor...`);
-                text = await attemptGeneration("gemini-pro");
-            } else {
-                throw error;
-            }
-        }
-
         console.log("[GEMINI] Yanıt metni uzunluğu:", text.length);
-
-        // JSON parse - markdown code fence temizle
         const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
 
         try {
@@ -117,7 +123,7 @@ Lütfen aşağıdaki JSON formatında yanıt ver:
             };
         }
     } catch (apiErr: any) {
-        console.error("[GEMINI] API Hatası:", apiErr.message);
+        console.error("[GEMINI] Veri İşleme Hatası:", apiErr.message);
         throw apiErr;
     }
 }
