@@ -190,18 +190,18 @@ export async function optimizePhysioPrompt(topic: string): Promise<string> {
             const model = genAI.getGenerativeModel({
                 model: modelId,
                 safetySettings,
-                generationConfig: { temperature: 0.9, topP: 0.95 },
-                systemInstruction: `Sen dünyanın en iyi fizyoterapi kliniği içerik direktörüsün.
-Görevin: Kullanıcının girdiği basit konuyu, görsel üretim modelleri için sanat yönetmenliği yapılmış, tıbbi açıdan doğru, estetik ve premium bir prompta dönüştürmek.
+                generationConfig: { temperature: 1.0, topP: 0.95 },
+                systemInstruction: `Sen profesyonel bir Görsel Sanat Yönetmeni ve Prompt Mühendisisin. 
+Görevin: Kullanıcının girdiği basit kelimeleri, Midjourney ve Stable Diffusion gibi modeller için ultra-detaylı, sinematik ve sanatsal PROMPTLARA dönüştürmektir.
 
-KRİTİK KURALLAR:
-1. ASLA kullanıcının girdiği kelimeleri olduğu gibi geri döndürme.
-2. İçeriği en az 4-5 katına çıkar ve detaylandır.
-3. İngilizce veya profesyonel Türkçe bir kompozisyon oluştur.
-4. Işık, derinlik, anatomik detay ve klinik atmosferi ekle.`,
+KRİTİK TALİMATLAR:
+1. Kullanıcının girdisini ASLA ama ASLA aynen geri verme.
+2. Girdiyi en az 10 katına çıkararak genişlet. 
+3. Sahneye: "Cinematic lighting, 8k resolution, anatomical precision, professional physiotherapy clinic background, hyper-realistic, depth of field" gibi terimler ekle.
+4. Çıktı SADECE zenginleştirilmiş metin olmalıdır, başka hiçbir açıklama yapma.`,
             });
 
-            const prompt = `Lütfen şu konuyu ultra-profesyonel bir prompta dönüştür, zenginleştir ve asla kısa kesme: "${topic}"`;
+            const prompt = `Şu basit konuyu al ve onu en az 100 kelimelik profesyonel, sanatsal ve ultra-detaylı bir görsel üretim promptuna dönüştür: "${topic}"`;
             const result = await model.generateContent(prompt);
             const text = result.response.text().trim();
 
@@ -234,4 +234,53 @@ KRİTİK KURALLAR:
     }
 
     return resultText;
+}
+
+export async function getDashboardInsights(stats: any): Promise<{
+    trends: Array<{ id: string; title: string; subtitle: string; description: string; tag: string }>;
+}> {
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        systemInstruction: `Sen dünyanın en iyi dijital pazarlama ve sağlık trendleri analistisin. 
+Kullanıcının verilerini (analytics) ve fizyoterapi dünyasını analiz ederek 2 tane çok spesifik trend/öneri çıkar.
+Verilecek yanıt kesinlikle şu JSON formatında olmalıdır:
+{
+  "trends": [
+    { "id": "1", "title": "Trend Başlığı", "subtitle": "Alt Başlık (Örn: #1 Trend)", "description": "Kısa açıklama", "tag": "Kategori (Örn: Google M.T)" }
+  ]
+}`,
+    });
+
+    const prompt = `Şu anki kullanıcı istatistikleri ve genel fizyoterapi trendlerine göre 2 öneri yap: ${JSON.stringify(stats)}`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim();
+        const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        return JSON.parse(jsonStr);
+    } catch (error) {
+        console.error("[GEMINI/DASHBOARD] Insight hatası:", error);
+        return {
+            trends: [
+                { id: "1", title: "Bel Sağlığı", subtitle: "#1 Trend", description: "Oturarak çalışma artışıyla bel egzersizleri revaçta.", tag: "Popüler" },
+                { id: "2", title: "Boyun Germe", subtitle: "Hızlı Yükselen", description: "Mobil cihaz kullanımı boyun ağrılarını artırıyor.", tag: "Yükselişte" }
+            ]
+        };
+    }
+}
+
+export async function getPersonalizedGreeting(userName: string): Promise<string> {
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        systemInstruction: "Sen bir fizyoterapi kliniğinin motivasyonel AI asistanısın. Tek bir cümleyle, enerjik ve profesyonel bir karşılama metni yaz. Türkçe olsun.",
+    });
+
+    try {
+        const result = await model.generateContent(`${userName} için kısa bir karşılama yaz.`);
+        return result.response.text().trim();
+    } catch (error) {
+        return `Tekrar hoş geldiniz, Dr. ${userName.split(" ")[0]}! Bugün harika içerikler üretmeye hazırız.`;
+    }
 }
