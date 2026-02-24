@@ -18,39 +18,57 @@ export default async function DashboardPage() {
         return <div>Lütfen giriş yapın.</div>;
     }
 
-    // 1. Prisma'dan gerçek verileri çek
-    const [analyticsSum, upcomingPosts] = await Promise.all([
-        prisma.analytics.aggregate({
-            _sum: {
-                likes: true,
-                comments: true,
-                reach: true,
-                saves: true
-            },
-            where: {
-                post: { userId }
-            }
-        }),
-        prisma.post.findMany({
-            where: {
-                userId,
-                status: "ONAYLANDI",
-                scheduledDate: { gte: new Date() }
-            },
-            include: { media: { take: 1 } },
-            orderBy: { scheduledDate: "asc" },
-            take: 3
-        })
-    ]);
+    // 1. Prisma'dan gerçek verileri çek (Hata yakalama ile)
+    let analyticsSum = { _sum: { likes: 0, comments: 0, reach: 0, saves: 0 } };
+    let upcomingPosts: any[] = [];
 
-    // 2. AI Verilerini çek
-    const [greeting, aiInsights] = await Promise.all([
-        getPersonalizedGreeting(userName),
-        getDashboardInsights({
-            totalReach: analyticsSum._sum.reach || 0,
-            totalInteractions: (analyticsSum._sum.likes || 0) + (analyticsSum._sum.comments || 0)
-        })
-    ]);
+    try {
+        const [aSum, uPosts] = await Promise.all([
+            prisma.analytics.aggregate({
+                _sum: { likes: true, comments: true, reach: true, saves: true },
+                where: { post: { userId } }
+            }),
+            prisma.post.findMany({
+                where: {
+                    userId,
+                    status: "ONAYLANDI",
+                    scheduledDate: { gte: new Date() }
+                },
+                include: { media: { take: 1 } },
+                orderBy: { scheduledDate: "asc" },
+                take: 3
+            })
+        ]);
+        if (aSum) analyticsSum = aSum as any;
+        if (uPosts) upcomingPosts = uPosts;
+    } catch (dbError) {
+        console.error("[DASHBOARD] Veritabanı hatası:", dbError);
+        // Fallback sessizce devam eder, boş verilerle
+    }
+
+    // 2. AI Verilerini çek (Hata yakalama ile)
+    let greeting = `Tekrar hoş geldiniz, Dr. ${userName.split(" ")[0]}!`;
+    let aiInsights = {
+        trends: [
+            { id: "1", title: "Bel Sağlığı", subtitle: "#1 Trend", description: "Oturarak çalışma artışıyla bel egzersizleri revaçta.", tag: "Popüler" },
+            { id: "2", title: "Boyun Germe", subtitle: "Hızlı Yükselen", description: "Mobil cihaz kullanımı boyun ağrılarını artırıyor.", tag: "Yükselişte" }
+        ]
+    };
+
+    try {
+        const [greet, insights] = await Promise.all([
+            getPersonalizedGreeting(userName),
+            getDashboardInsights({
+                totalReach: analyticsSum._sum.reach || 0,
+                totalInteractions: (analyticsSum._sum.likes || 0) + (analyticsSum._sum.comments || 0)
+            })
+        ]);
+        if (greet) greeting = greet;
+        if (insights) aiInsights = insights;
+    } catch (aiError) {
+        console.error("[DASHBOARD] AI Servis hatası:", aiError);
+        // Fallback'ler zaten tanımlandı
+    }
 
     // İstatistik objelerini hazırla
     const stats = [
