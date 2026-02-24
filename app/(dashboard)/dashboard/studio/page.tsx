@@ -139,10 +139,11 @@ export default function StudioPage() {
 
             const data = await res.json();
             console.log("[STUDIO] Optimizasyon başarılı:", data);
-            if (data.optimized) {
+            if (data.optimized && data.optimized !== topic) {
                 setTopic(data.optimized);
+                // Trigger a small visual pop if we had a toast system, but for now log is enough
             } else {
-                console.warn("[STUDIO] API'den boş sonuç döndü.");
+                console.warn("[STUDIO] API'den orijinal veya boş sonuç döndü. AI genişletme yapamadı.");
             }
         } catch (err: any) {
             console.error("[STUDIO] Optimize hatası:", err.message);

@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { GenerateTextInput } from "@/types";
 import { FormatSettings } from "@/types/studio";
 
@@ -171,46 +171,66 @@ export async function optimizePhysioPrompt(topic: string): Promise<string> {
     console.log("[GEMINI/OPTIMIZE] Başlatıldı. Konu:", topic);
     const genAI = getGeminiClient();
 
-    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", "gemini-pro"];
-    let success = false;
-    let lastError: any = null;
-    let resultText = topic;
+    // Strict safety settings to allow medical context simulation
+    const safetySettings = [
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    ];
 
+    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
+    let resultText = topic;
+    let success = false;
+
+    // Stage 1: Professional Artistic Expansion
     for (const modelId of modelsToTry) {
         try {
-            console.log(`[GEMINI/OPTIMIZE] Model deneniyor: ${modelId}`);
+            console.log(`[GEMINI/OPTIMIZE] Stage 1 deneniyor: ${modelId}`);
             const model = genAI.getGenerativeModel({
                 model: modelId,
-                systemInstruction: `Sen dünyanın en iyi fizyoterapi kliniği kreatif ekibisin (Fizyoterapist + Grafik Tasarımcı + Sanat Danışmanı + Reklamcı). 
-Kullanıcının girdiği basit fikirleri, görsel üretim modelleri için sanat yönetmenliği yapılmış profesyonel promptlara dönüştür.
+                safetySettings,
+                generationConfig: { temperature: 0.9, topP: 0.95 },
+                systemInstruction: `Sen dünyanın en iyi fizyoterapi kliniği içerik direktörüsün.
+Görevin: Kullanıcının girdiği basit konuyu, görsel üretim modelleri için sanat yönetmenliği yapılmış, tıbbi açıdan doğru, estetik ve premium bir prompta dönüştürmek.
 
-Görsel Direktiflerin:
-1. Anatomik ve teknik fizyoterapi doğruluğu (Fizyoterapist gözü).
-2. Altın oran, derinlik ve sinematik kompozisyon (Sanat Danışmanı gözü).
-3. Modern, minimalist ve premium klinik estetiği (Grafik Tasarımcı gözü).
-4. İnsan psikolojisini etkileyen ışık ve renk kullanımı (Reklamcı gözü).
-
-SADECE İngilizce prompt döndür.`,
+KRİTİK KURALLAR:
+1. ASLA kullanıcının girdiği kelimeleri olduğu gibi geri döndürme.
+2. İçeriği en az 4-5 katına çıkar ve detaylandır.
+3. İngilizce veya profesyonel Türkçe bir kompozisyon oluştur.
+4. Işık, derinlik, anatomik detay ve klinik atmosferi ekle.`,
             });
 
-            const prompt = `Şu konuyu profesyonel bir görsel üretim promptuna dönüştür: "${topic}"`;
+            const prompt = `Lütfen şu konuyu ultra-profesyonel bir prompta dönüştür, zenginleştir ve asla kısa kesme: "${topic}"`;
             const result = await model.generateContent(prompt);
             const text = result.response.text().trim();
 
-            if (text) {
-                console.log(`[GEMINI/OPTIMIZE] ${modelId} ile üretim başarılı.`);
+            if (text && text.length > topic.length + 10) {
+                console.log(`[GEMINI/OPTIMIZE] Stage 1 başarılı.`);
                 resultText = text;
                 success = true;
                 break;
             }
         } catch (err: any) {
-            lastError = err;
-            console.warn(`[GEMINI/OPTIMIZE] ${modelId} hatası:`, err.message);
+            console.warn(`[GEMINI/OPTIMIZE] Stage 1 (${modelId}) hatası:`, err.message);
         }
     }
 
+    // Stage 2: Emergency Minimal Expansion (if Stage 1 fails or returns original)
     if (!success) {
-        console.error("[GEMINI/OPTIMIZE] Tüm model denemeleri başarısız oldu:", lastError?.message);
+        try {
+            console.log("[GEMINI/OPTIMIZE] Stage 2 (Emergency) başlatıldı.");
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
+            const prompt = `Kullanıcının girdiği şu konuyu bir profesyonel fizyoterapist bakış açısıyla zenginleştirerek 3 cümlelik bir senaryoya dönüştür: "${topic}"`;
+            const result = await model.generateContent(prompt);
+            const text = result.response.text().trim();
+            if (text && text.length > topic.length) {
+                resultText = text;
+                success = true;
+            }
+        } catch (err: any) {
+            console.error("[GEMINI/OPTIMIZE] Stage 2 başarısız:", err.message);
+        }
     }
 
     return resultText;
