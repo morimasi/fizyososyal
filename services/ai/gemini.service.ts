@@ -1,10 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { GenerateTextInput } from "@/types";
 
-const PHYSIO_SYSTEM_PROMPT = `Sen bir fizyoterapi kliniği için uzman dijital içerik yazarısın. 
-Tıbbi terimleri hasta dostu, anlaşılır bir dile çevir. 
-Her zaman güvenli, kanıta dayalı fizyoterapi bilgisi sun.
-Türkçe yaz. Empati kur. Motivasyonel ol. Müşteriyi klinik hizmetlerine çekmeye çalış.`;
+const PHYSIO_SYSTEM_PROMPT = `Sen dünyanın en iyi fizyoterapi kliniği içerik ekibisin. Şu 4 uzman kimliğiyle hareket et:
+1. Kıdemli Fizyoterapist: Tıbbi doğruluk ve hasta güvenliğinden sorumlu.
+2. Kreatif Grafik Tasarımcı: Görsel hiyerarşi ve estetikten sorumlu.
+3. Dijital Reklamcı (Copywriter): Dönüşüm oranı (conversion) ve ilgi çekici metinlerden sorumlu.
+4. Sanat Danışmanı: Renk uyumu, kompozisyon ve marka prestijinden sorumlu.
+
+Tıbbi terimleri hasta dostu dile çevirirken reklamcı kimliğinle merak uyandır, tasarımcı kimliğinle görsel yapıyı (HTML tagları ile) kurgula. Türkçe yaz. Empati kur. Motivasyonel ol.`;
 
 const getGeminiClient = () => {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -151,4 +154,31 @@ Bu komuttan içerik üretim parametreleri çıkar ve aşağıdaki JSON formatın
 
     const result = await model.generateContent(prompt);
     return result.response.text();
+}
+
+export async function optimizePhysioPrompt(topic: string): Promise<string> {
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        systemInstruction: `Sen dünyanın en iyi fizyoterapi kliniği kreatif ekibisin (Fizyoterapist + Grafik Tasarımcı + Sanat Danışmanı + Reklamcı). 
+Kullanıcının girdiği basit fikirleri, görsel üretim modelleri için sanat yönetmenliği yapılmış profesyonel promptlara dönüştür.
+
+Görsel Direktiflerin:
+1. Anatomik ve teknik fizyoterapi doğruluğu (Fizyoterapist gözü).
+2. Altın oran, derinlik ve sinematik kompozisyon (Sanat Danışmanı gözü).
+3. Modern, minimalist ve premium klinik estetiği (Grafik Tasarımcı gözü).
+4. İnsan psikolojisini etkileyen ışık ve renk kullanımı (Reklamcı gözü).
+
+SADECE İngilizce prompt döndür.`,
+    });
+
+    const prompt = `Şu konuyu profesyonel bir görsel üretim promptuna dönüştür: "${topic}"`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim();
+    } catch (error) {
+        console.error("[GEMINI] Prompt optimizasyon hatası:", error);
+        return topic; // Fallback to original
+    }
 }

@@ -32,21 +32,37 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
     const [isDarkMode, setIsDarkMode] = useState(true);
     const [zoom, setZoom] = useState(1);
     const [showUI, setShowUI] = useState(true);
+    const [previewMode, setPreviewMode] = useState<"mockup" | "raw">("mockup");
     const [isProcessing, setIsProcessing] = useState(false);
     const previewRef = useRef<HTMLDivElement>(null);
 
     const handleDownload = async () => {
-        if (!previewRef.current) return;
+        if (!previewRef.current || !generatedPost) return;
         setIsProcessing(true);
         try {
-            const dataUrl = await htmlToImage.toPng(previewRef.current, {
-                quality: 1,
-                pixelRatio: 2,
-            });
-            const link = document.createElement("a");
-            link.download = `physio-post-${Date.now()}.png`;
-            link.href = dataUrl;
-            link.click();
+            if (previewMode === "raw" && generatedPost.mediaUrl) {
+                // Direct download of the high-res image
+                const response = await fetch(generatedPost.mediaUrl);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `physio-${generatedPost.platform}-${Date.now()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } else {
+                // Screenshot of the mockup
+                const dataUrl = await htmlToImage.toPng(previewRef.current, {
+                    quality: 1,
+                    pixelRatio: 2,
+                });
+                const link = document.createElement("a");
+                link.download = `physio-mockup-${Date.now()}.png`;
+                link.href = dataUrl;
+                link.click();
+            }
         } catch (err) {
             console.error("Görsel indirme hatası:", err);
         } finally {
@@ -98,6 +114,8 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
                     setZoom={setZoom}
                     showUI={showUI}
                     setShowUI={setShowUI}
+                    previewMode={previewMode}
+                    setPreviewMode={setPreviewMode}
                 />
 
                 {/* Visualizer Area */}
@@ -137,17 +155,39 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
                             className="transition-transform duration-300 ease-out"
                             ref={previewRef}
                         >
-                            <MockupFrame platform={generatedPost.platform} isDarkMode={isDarkMode}>
-                                {generatedPost.platform === "instagram" && (
-                                    <InstagramPreview post={generatedPost} isDarkMode={isDarkMode} />
-                                )}
-                                {generatedPost.platform === "linkedin" && (
-                                    <LinkedInPreview post={generatedPost} isDarkMode={isDarkMode} />
-                                )}
-                                {generatedPost.platform === "tiktok" && (
-                                    <TikTokPreview post={generatedPost} />
-                                )}
-                            </MockupFrame>
+                            {previewMode === "mockup" ? (
+                                <MockupFrame platform={generatedPost.platform} isDarkMode={isDarkMode}>
+                                    {generatedPost.platform === "instagram" && (
+                                        <InstagramPreview post={generatedPost} isDarkMode={isDarkMode} />
+                                    )}
+                                    {generatedPost.platform === "linkedin" && (
+                                        <LinkedInPreview post={generatedPost} isDarkMode={isDarkMode} />
+                                    )}
+                                    {generatedPost.platform === "tiktok" && (
+                                        <TikTokPreview post={generatedPost} />
+                                    )}
+                                </MockupFrame>
+                            ) : (
+                                <div className="relative group/raw overflow-hidden rounded-2xl border border-white/10 shadow-2xl bg-black">
+                                    {generatedPost.mediaUrl ? (
+                                        <img
+                                            src={generatedPost.mediaUrl}
+                                            alt="Generated Content"
+                                            className="max-w-full max-h-[70vh] object-contain"
+                                        />
+                                    ) : (
+                                        <div className="w-[400px] aspect-square flex flex-col items-center justify-center gap-4 bg-slate-900 text-slate-500">
+                                            <ImageIcon className="w-12 h-12 opacity-20" />
+                                            <p className="text-sm font-medium">Medya Üretilmedi</p>
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/raw:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                        <span className="text-[10px] font-bold text-white uppercase tracking-widest bg-violet-600 px-3 py-1 rounded-full shadow-lg">
+                                            Raw Output
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -161,6 +201,7 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
                             onPublish={handlePublish}
                             onDownload={handleDownload}
                             isProcessing={isProcessing}
+                            previewMode={previewMode}
                         />
                     </div>
                 )}

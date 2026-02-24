@@ -9,6 +9,8 @@ interface PreviewControlsProps {
     setZoom: (val: number) => void;
     showUI: boolean;
     setShowUI: (val: boolean) => void;
+    previewMode: "mockup" | "raw";
+    setPreviewMode: (val: "mockup" | "raw") => void;
 }
 
 export const PreviewControls: React.FC<PreviewControlsProps> = ({
@@ -17,7 +19,9 @@ export const PreviewControls: React.FC<PreviewControlsProps> = ({
     zoom,
     setZoom,
     showUI,
-    setShowUI
+    setShowUI,
+    previewMode,
+    setPreviewMode
 }) => {
     return (
         <div className="flex flex-wrap items-center gap-4 p-2 bg-slate-900/40 border border-white/5 rounded-2xl backdrop-blur-md">
@@ -77,6 +81,30 @@ export const PreviewControls: React.FC<PreviewControlsProps> = ({
 
                 <button className="p-2 bg-black/40 border border-white/5 rounded-xl text-slate-500 hover:text-white transition-colors">
                     <Maximize2 className="w-4 h-4" />
+                </button>
+            </div>
+
+            {/* Mode Switcher */}
+            <div className="flex items-center gap-1 p-1 bg-black/40 rounded-xl border border-white/5 mx-2">
+                <button
+                    onClick={() => setPreviewMode("mockup")}
+                    className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-[10px] font-bold",
+                        previewMode === "mockup" ? "bg-violet-600 text-white shadow-lg" : "text-slate-500 hover:text-white"
+                    )}
+                >
+                    <Layout className="w-3 h-3" />
+                    Simülasyon
+                </button>
+                <button
+                    onClick={() => setPreviewMode("raw")}
+                    className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-[10px] font-bold",
+                        previewMode === "raw" ? "bg-violet-600 text-white shadow-lg" : "text-slate-500 hover:text-white"
+                    )}
+                >
+                    <Maximize2 className="w-3 h-3" />
+                    Ham Görünüm
                 </button>
             </div>
 

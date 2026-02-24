@@ -7,7 +7,7 @@ import { useVoiceCommand } from "@/hooks/useVoiceCommand";
 import {
     Mic, MicOff, Wand2, AlertCircle, Zap, BrainCircuit,
     Instagram, LayoutTemplate, Images, Video, Megaphone,
-    CheckCircle2, Linkedin
+    CheckCircle2, Linkedin, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SocialPreview } from "@/components/studio/preview/SocialPreview";
@@ -23,6 +23,7 @@ export default function StudioPage() {
     const [postFormat, setPostFormat] = useState<PostFormat>("post");
     const [evidenceBased, setEvidenceBased] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isOptimizing, setIsOptimizing] = useState(false);
     const [generatedPost, setGeneratedPost] = useState<{
         title: string;
         content: string;
@@ -114,6 +115,24 @@ export default function StudioPage() {
             console.error("Üretim hatası:", err);
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const handleOptimize = async () => {
+        if (!topic.trim()) return;
+        setIsOptimizing(true);
+        try {
+            const res = await fetch("/api/ai/optimize-prompt", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topic }),
+            });
+            const data = await res.json();
+            if (data.optimized) setTopic(data.optimized);
+        } catch (err) {
+            console.error("Optimize hatası:", err);
+        } finally {
+            setIsOptimizing(false);
         }
     };
 
@@ -291,12 +310,26 @@ export default function StudioPage() {
                         </div>
 
                         <div className="space-y-4">
-                            <textarea
-                                value={topic}
-                                onChange={(e) => setTopic(e.target.value)}
-                                placeholder="Örn: Ofis çalışanları için boyun egzersizleri"
-                                className="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none h-24"
-                            />
+                            <div className="relative">
+                                <textarea
+                                    value={topic}
+                                    onChange={(e) => setTopic(e.target.value)}
+                                    placeholder="Örn: Ofis çalışanları için boyun egzersizleri"
+                                    className="w-full bg-slate-900 border border-white/10 rounded-xl p-4 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none h-24"
+                                />
+                                <button
+                                    onClick={handleOptimize}
+                                    disabled={!topic.trim() || isOptimizing}
+                                    className={cn(
+                                        "absolute bottom-3 right-3 p-2 rounded-lg transition-all",
+                                        "bg-violet-600/20 text-violet-400 hover:bg-violet-600 hover:text-white border border-violet-500/30",
+                                        isOptimizing && "animate-pulse opacity-50"
+                                    )}
+                                    title="AI ile Geliştir (Fizyoterapi Odaklı)"
+                                >
+                                    <Sparkles className={cn("w-4 h-4", isOptimizing && "animate-spin")} />
+                                </button>
+                            </div>
 
                             <div className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
                                 <div className="flex flex-col">

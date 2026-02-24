@@ -9,6 +9,7 @@ interface PreviewActionsProps {
     onPublish: () => void;
     onDownload: () => void;
     isProcessing?: boolean;
+    previewMode: "mockup" | "raw";
 }
 
 export const PreviewActions: React.FC<PreviewActionsProps> = ({
@@ -16,7 +17,8 @@ export const PreviewActions: React.FC<PreviewActionsProps> = ({
     userRole,
     onPublish,
     onDownload,
-    isProcessing = false
+    isProcessing = false,
+    previewMode
 }) => {
     const [showConfetti, setShowConfetti] = useState(false);
 
@@ -54,9 +56,11 @@ export const PreviewActions: React.FC<PreviewActionsProps> = ({
                     <div className="flex flex-col items-center justify-center">
                         <div className="flex items-center gap-2 font-bold text-sm">
                             <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-                            Kartı İndir (PNG)
+                            {previewMode === "raw" ? "Ham Görseli İndir" : "Kartı İndir (PNG)"}
                         </div>
-                        <span className="text-[10px] opacity-50 font-medium">Sosyal medya formatında</span>
+                        <span className="text-[10px] opacity-50 font-medium">
+                            {previewMode === "raw" ? "Yüksek kaliteli ham üretim" : "Sosyal medya formatında"}
+                        </span>
                     </div>
                 </Button>
 
