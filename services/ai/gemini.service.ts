@@ -13,7 +13,8 @@ Tıbbi terimleri hasta dostu dile çevirirken reklamcı kimliğinle merak uyand�
 const getGeminiClient = () => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-        throw new Error("GEMINI_API_KEY eksik. Lütfen Vercel ayarlarından ekleyin.");
+        console.warn("[GEMINI] GEMINI_API_KEY eksik. AI özellikleri devre dışı kalabilir.");
+        return null; // Don't throw, just return null
     }
     return new GoogleGenerativeAI(apiKey);
 };
@@ -26,6 +27,13 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     console.log("[GEMINI] İstek alındı:", { topic: input.topic, model: input.model });
 
     const genAI = getGeminiClient();
+    if (!genAI) {
+        return {
+            title: input.topic,
+            content: "AI Servisi şu an ulaşılamaz durumda. Lütfen API anahtarınızı kontrol edin.",
+            hashtags: "#fizyoterapi #sağlık",
+        };
+    }
 
     // Comprehensive fallback list for production reliability
     const modelsToTry = input.model === "gemini-pro"
@@ -144,6 +152,8 @@ Lütfen aşağıdaki JSON formatında yanıt ver:
 
 export async function generateVoiceCommandResponse(transcript: string): Promise<string> {
     const genAI = getGeminiClient();
+    if (!genAI) return JSON.stringify({ message: "AI Servisi kapalı.", topic: transcript });
+
     const model = genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
         systemInstruction: `Sen bir fizyoterapi kliniğinin AI asistanısın. 
@@ -170,6 +180,7 @@ Bu komuttan içerik üretim parametreleri çıkar ve aşağıdaki JSON formatın
 export async function optimizePhysioPrompt(topic: string): Promise<string> {
     console.log("[GEMINI/OPTIMIZE] Başlatıldı. Konu:", topic);
     const genAI = getGeminiClient();
+    if (!genAI) return topic;
 
     // Strict safety settings to allow medical context simulation
     const safetySettings = [
@@ -239,10 +250,20 @@ KRİTİK TALİMATLAR:
 export async function getDashboardInsights(stats: any): Promise<{
     trends: Array<{ id: string; title: string; subtitle: string; description: string; tag: string }>;
 }> {
+    const fallback = {
+        trends: [
+            { id: "1", title: "Bel Sağlığı", subtitle: "#1 Trend", description: "Oturarak çalışma artışıyla bel egzersizleri revaçta.", tag: "Popüler" },
+            { id: "2", title: "Boyun Germe", subtitle: "Hızlı Yükselen", description: "Mobil cihaz kullanımı boyun ağrılarını artırıyor.", tag: "Yükselişte" }
+        ]
+    };
+
     const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        systemInstruction: `Sen dünyanın en iyi dijital pazarlama ve sağlık trendleri analistisin. 
+    if (!genAI) return fallback;
+
+    try {
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            systemInstruction: `Sen dünyanın en iyi dijital pazarlama ve sağlık trendleri analistisin. 
 Kullanıcının verilerini (analytics) ve fizyoterapi dünyasını analiz ederek 2 tane çok spesifik trend/öneri çıkar.
 Verilecek yanıt kesinlikle şu JSON formatında olmalıdır:
 {
@@ -250,37 +271,33 @@ Verilecek yanıt kesinlikle şu JSON formatında olmalıdır:
     { "id": "1", "title": "Trend Başlığı", "subtitle": "Alt Başlık (Örn: #1 Trend)", "description": "Kısa açıklama", "tag": "Kategori (Örn: Google M.T)" }
   ]
 }`,
-    });
+        });
 
-    const prompt = `Şu anki kullanıcı istatistikleri ve genel fizyoterapi trendlerine göre 2 öneri yap: ${JSON.stringify(stats)}`;
-
-    try {
+        const prompt = `Şu anki kullanıcı istatistikleri ve genel fizyoterapi trendlerine göre 2 öneri yap: ${JSON.stringify(stats)}`;
         const result = await model.generateContent(prompt);
         const text = result.response.text().trim();
         const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         return JSON.parse(jsonStr);
     } catch (error) {
         console.error("[GEMINI/DASHBOARD] Insight hatası:", error);
-        return {
-            trends: [
-                { id: "1", title: "Bel Sağlığı", subtitle: "#1 Trend", description: "Oturarak çalışma artışıyla bel egzersizleri revaçta.", tag: "Popüler" },
-                { id: "2", title: "Boyun Germe", subtitle: "Hızlı Yükselen", description: "Mobil cihaz kullanımı boyun ağrılarını artırıyor.", tag: "Yükselişte" }
-            ]
-        };
+        return fallback;
     }
 }
 
 export async function getPersonalizedGreeting(userName: string): Promise<string> {
+    const fallback = `Tekrar hoş geldiniz, Dr. ${userName.split(" ")[0]}! Bugün harika içerikler üretmeye hazırız.`;
     const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        systemInstruction: "Sen bir fizyoterapi kliniğinin motivasyonel AI asistanısın. Tek bir cümleyle, enerjik ve profesyonel bir karşılama metni yaz. Türkçe olsun.",
-    });
+    if (!genAI) return fallback;
 
     try {
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            systemInstruction: "Sen bir fizyoterapi kliniğinin motivasyonel AI asistanısın. Tek bir cümleyle, enerjik ve profesyonel bir karşılama metni yaz. Türkçe olsun.",
+        });
+
         const result = await model.generateContent(`${userName} için kısa bir karşılama yaz.`);
         return result.response.text().trim();
     } catch (error) {
-        return `Tekrar hoş geldiniz, Dr. ${userName.split(" ")[0]}! Bugün harika içerikler üretmeye hazırız.`;
+        return fallback;
     }
 }
