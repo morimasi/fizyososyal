@@ -31,9 +31,21 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ mediaUrl, aspectRatio: body.aspectRatio });
     } catch (error: any) {
         console.error("[AI-Studio] Görsel üretim hatası:", error);
+
+        // Vercel'deki loglara bakmadan tarayıcıdan hatayı anlayabilmek için:
+        let errorMessage = error.message || "Bilinmeyen hata";
+        let hint = undefined;
+
+        if (errorMessage.includes("NANOBANANA_API_KEY")) {
+            hint = "Vercel Dashboard > Settings > Environment Variables kısmına NANOBANANA_API_KEY eklenmemiş.";
+        } else if (errorMessage.includes("fetch")) {
+            hint = "NanoBanana API'sine erişilemiyor. İnternet veya servis sorunu olabilir.";
+        }
+
         return NextResponse.json({
             error: "Görsel üretimi başarısız",
-            details: error.message || "Bilinmeyen hata"
+            details: errorMessage,
+            hint: hint
         }, { status: 500 });
     }
 }
