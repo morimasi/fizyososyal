@@ -12,11 +12,13 @@ export async function POST(req: NextRequest) {
         }
 
         const { topic } = await req.json();
+        console.log("[API/OPTIMIZE] Gelen konu:", topic);
         if (!topic) {
             return NextResponse.json({ error: "Konu gereklidir" }, { status: 400 });
         }
 
         const optimized = await optimizePhysioPrompt(topic);
+        console.log("[API/OPTIMIZE] Optimize edilmiş sonuç:", optimized);
         return NextResponse.json({ optimized });
     } catch (error: any) {
         console.error("[API] Optimize Prompt Hatası:", error);

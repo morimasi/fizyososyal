@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { GenerateTextInput } from "@/types";
+import { GenerateTextInput } from "@/types";
+import { FormatSettings } from "@/types/studio";
 
 const PHYSIO_SYSTEM_PROMPT = `Sen dünyanın en iyi fizyoterapi kliniği içerik ekibisin. Şu 4 uzman kimliğiyle hareket et:
 1. Kıdemli Fizyoterapist: Tıbbi doğruluk ve hasta güvenliğinden sorumlu.
@@ -41,11 +42,17 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     const tone = input.tone ? toneMap[input.tone] : "samimi ve eğitici";
     const voice = input.brandVoice ? `Klinik marka sesi: "${input.brandVoice}". ` : "";
 
+    const settings = (input as any).settings as FormatSettings;
+    const style = settings?.visualStyle || "clinical";
+    const audience = settings?.targetAudience || "general";
+
     let formatInstruction = `"content" alanı içine tek sayfalık standart Instagram post metni yaz (150-300 kelime, emoji kullan, HTML <br/> ile paragraflara ayır).`;
     if (input.postFormat === "carousel") {
-        formatInstruction = `"content" alanı içine 5-8 sayfalık bir kaydırmalı (carousel) gönderi metni yaz. Her slayt için HTML yapısı kullan. Örnek: <b>Slayt 1: [Başlık]</b><br/>[Metin...]<br/><br/><b>Slayt 2: ...</b>`;
+        const slides = settings?.slideCount || 6;
+        formatInstruction = `"content" alanı içine tam ${slides} sayfalık bir kaydırmalı (carousel) gönderi metni yaz. Her slayt için HTML yapısı kullan. Örnek: <b>Slayt 1: [Başlık]</b><br/>[Metin...]<br/><br/><b>Slayt 2: ...</b>`;
     } else if (input.postFormat === "video") {
-        formatInstruction = `"content" alanı içine kısa bir Reels/TikTok video senaryosu yaz. HTML yapısı kullan. Örnek: <b>Sahne 1:</b> [Görüntü Açıklaması]<br/>🎤 <b>Seslendirme:</b> [Konuşma Metni...]<br/><br/>`;
+        const videoStyle = settings?.videoStyle || "informational";
+        formatInstruction = `"content" alanı içine bir ${videoStyle} tarzında Reels/TikTok video senaryosu yaz. HTML yapısı kullan. Örnek: <b>Sahne 1:</b> [Görüntü Açıklaması]<br/>🎤 <b>Seslendirme:</b> [Konuşma Metni...]<br/><br/>`;
     } else if (input.postFormat === "ad") {
         formatInstruction = `"content" alanı içine dikkat çekici, hasta dönüşümü odaklı (AIDA modeli) bir reklam broşürü/post metni yaz. HTML yapısı kullanıp, dikkat çekici yerleri <strong> ile vurgula. Call-to-action (Eyleme Çağrı) içersin.`;
     }
@@ -59,8 +66,12 @@ ${voice}
 Konu: "${input.topic}"
 Ton: ${tone}
 Format: ${input.postFormat ?? "post"}
-${input.trending ? "Bu konu şu an trend. Dikkat çekici bir açılış yap." : ""}
 ${evidencePrompt}
+
+Ek Direktifler:
+1. Görsel Stil: ${style} (Bu stili yansıtacak kelimeler seç).
+2. Hedef Kitle: ${audience} (Bu kitleye uygun bir dil ve hitabet kullan).
+3. Sanat Danışmanı Notu: İçerik premium ve prestijli hissettirmeli.
 
 Lütfen aşağıdaki JSON formatında yanıt ver:
 {
