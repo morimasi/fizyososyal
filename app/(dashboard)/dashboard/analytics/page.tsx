@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Users, Heart, Share2, Activity, Target, TrendingUp, BarChart2, PieChart as PieChartIcon } from "lucide-react";
@@ -30,6 +31,12 @@ const themeData = [
 ];
 
 export default function AnalyticsPage() {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const stats = [
         { title: "Profil Ziyareti", value: "8.2K", icon: Users, trend: 15, color: "violet" },
         { title: "Toplam Etkileşim", value: "35.9K", icon: Heart, trend: 22, color: "teal" },
@@ -81,27 +88,29 @@ export default function AnalyticsPage() {
                         <CardDescription>Son 30 gündeki Instagram etkileşimlerinin link-in-bio tıklamalarına oranı</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[350px] w-full mt-4">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorEtkilesim" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorRandevu" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend verticalAlign="top" height={36} iconType="circle" />
-                                <Area type="monotone" name="Etkileşim (Beğeni/Yorum)" dataKey="etkilesim" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorEtkilesim)" />
-                                <Area type="monotone" name="Randevu Tıklaması" dataKey="randevuTiklamasi" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorRandevu)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                        {mounted && (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorEtkilesim" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorRandevu" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                                    <Area type="monotone" name="Etkileşim (Beğeni/Yorum)" dataKey="etkilesim" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorEtkilesim)" />
+                                    <Area type="monotone" name="Randevu Tıklaması" dataKey="randevuTiklamasi" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorRandevu)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -116,24 +125,26 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent className="min-h-[350px] flex flex-col items-center justify-center">
                         <div className="w-full h-[220px]">
-                            <ResponsiveContainer width="100%" height="100%" minHeight={220}>
-                                <PieChart>
-                                    <Pie
-                                        data={themeData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {themeData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip content={<CustomTooltip />} />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            {mounted && (
+                                <ResponsiveContainer width="100%" height="100%" minHeight={220}>
+                                    <PieChart>
+                                        <Pie
+                                            data={themeData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {themeData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<CustomTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            )}
                         </div>
 
                         <div className="w-full mt-4 space-y-2">
@@ -160,21 +171,23 @@ export default function AnalyticsPage() {
                         <CardDescription>Bulunduğunuz şehirdeki diğer 3 kliniğin bu ayki Instagram performansı ile kliniğinizin karşılaştırması.</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[400px] w-full mt-4">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                                data={competitorData}
-                                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                                layout="vertical"
-                            >
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={true} vertical={false} />
-                                <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis dataKey="name" type="category" width={130} stroke="#94a3b8" fontSize={13} fontWeight="500" tickLine={false} axisLine={false} />
-                                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                                <Legend verticalAlign="top" height={36} iconType="circle" />
-                                <Bar name="Etkileşim Oranı (%)" dataKey="etkilesimOrani" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={20} />
-                                <Bar name="Paylaşılan Post Sayısı" dataKey="postSayisi" fill="#64748b" radius={[0, 4, 4, 0]} barSize={20} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {mounted && (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={competitorData}
+                                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                                    layout="vertical"
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={true} vertical={false} />
+                                    <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis dataKey="name" type="category" width={130} stroke="#94a3b8" fontSize={13} fontWeight="500" tickLine={false} axisLine={false} />
+                                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                                    <Bar name="Etkileşim Oranı (%)" dataKey="etkilesimOrani" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={20} />
+                                    <Bar name="Paylaşılan Post Sayısı" dataKey="postSayisi" fill="#64748b" radius={[0, 4, 4, 0]} barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </CardContent>
                 </Card>
             </div>

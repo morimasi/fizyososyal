@@ -34,6 +34,11 @@ export default function StudioPage() {
     const [selectedModel, setSelectedModel] = useState<"gemini-flash" | "gemini-pro">("gemini-flash");
     const [userRole, setUserRole] = useState<UserRole>("EDITOR");
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Hydration-safe persistence
     useEffect(() => {
@@ -122,7 +127,7 @@ export default function StudioPage() {
                         </h1>
                         <div className="flex items-center gap-2 mt-2">
                             <p className="text-slate-400">Omni-format içerik ve zeka merkezi.</p>
-                            {lastSaved && (
+                            {mounted && lastSaved && (
                                 <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1 animate-fade-in">
                                     <CheckCircle2 className="w-3 h-3" /> Otomatik Kaydedildi ({lastSaved.toLocaleTimeString()})
                                 </span>
