@@ -33,6 +33,12 @@ export const CalendarPostCard: React.FC<CalendarPostCardProps> = ({ post }) => {
         data: post
     });
 
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const style = transform ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
         zIndex: 50,
@@ -87,7 +93,10 @@ export const CalendarPostCard: React.FC<CalendarPostCardProps> = ({ post }) => {
                 <div className="flex items-center justify-between mt-1 pt-2 border-t border-white/5">
                     <div className="flex items-center gap-1.5 text-[10px] font-semibold opacity-70">
                         <Clock className="w-3 h-3" />
-                        {new Date(post.scheduledDate).toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' })}
+                        {mounted
+                            ? new Date(post.scheduledDate).toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' })
+                            : "--:--"
+                        }
                     </div>
 
                     <div className="flex items-center gap-1">

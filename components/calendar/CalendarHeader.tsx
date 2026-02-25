@@ -32,6 +32,12 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     isAutoFilling,
     onNewPost,
 }) => {
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     return (
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 p-6 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/5 blur-[100px] -z-10" />
@@ -65,7 +71,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
                     </Button>
                     <div className="px-4 min-w-[140px] text-center">
                         <span className="text-sm font-bold text-white uppercase tracking-widest">
-                            {format(currentDate, "MMMM yyyy", { locale: tr })}
+                            {mounted ? format(currentDate, "MMMM yyyy", { locale: tr }) : "..."}
                         </span>
                     </div>
                     <Button

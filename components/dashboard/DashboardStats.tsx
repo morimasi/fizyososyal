@@ -38,6 +38,12 @@ const iconMap = {
 };
 
 export const DashboardStats: React.FC<{ stats: StatProps[] }> = ({ stats }) => {
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, i) => {
@@ -67,7 +73,10 @@ export const DashboardStats: React.FC<{ stats: StatProps[] }> = ({ stats }) => {
                             </h4>
                             <div className="flex items-baseline gap-2 mt-1">
                                 <span className="text-3xl font-bold tracking-tight text-white group-hover:scale-105 transition-transform origin-left">
-                                    {typeof stat.value === 'number' ? stat.value.toLocaleString("tr-TR") : stat.value}
+                                    {mounted
+                                        ? (typeof stat.value === 'number' ? stat.value.toLocaleString("tr-TR") : stat.value)
+                                        : (typeof stat.value === 'number' ? "..." : stat.value)
+                                    }
                                 </span>
                             </div>
                         </div>
