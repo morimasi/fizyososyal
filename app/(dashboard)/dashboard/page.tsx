@@ -137,8 +137,12 @@ export default async function DashboardPage() {
                 </div>
             </div>
         );
-    } catch (fatalError) {
-        console.error("[DASHBOARD] Fatal Render Error:", fatalError);
+    } catch (fatalError: any) {
+        console.error("[DASHBOARD] Fatal Render Error Detail:", {
+            message: fatalError.message,
+            stack: fatalError.stack,
+            digest: fatalError.digest
+        });
         return (
             <div className="p-12 text-center bg-slate-900/40 rounded-[32px] border border-white/5 backdrop-blur-xl">
                 <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-rose-500/20">
@@ -148,7 +152,13 @@ export default async function DashboardPage() {
                 <p className="text-slate-400 max-w-sm mx-auto mb-8">
                     Dashboard yüklenirken teknik bir aksaklık yaşandı. Lütfen sayfayı yenilemeyi deneyin.
                 </p>
-                <button onClick={() => typeof window !== 'undefined' && window.location.reload()} className="px-8 py-3 rounded-xl bg-white text-black font-bold text-sm">
+                <div className="text-[10px] text-slate-600 mb-6 font-mono opacity-50">
+                    Hata Kodu: {fatalError.digest || "INTERNAL_RENDER_ERROR"}
+                </div>
+                <button
+                    onClick={() => typeof window !== 'undefined' && window.location.reload()}
+                    className="px-8 py-3 rounded-xl bg-white text-black font-bold text-sm hover:bg-slate-200 transition-colors"
+                >
                     Sayfayı Yenile
                 </button>
             </div>
