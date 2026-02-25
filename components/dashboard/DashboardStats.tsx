@@ -58,7 +58,7 @@ export const DashboardStats: React.FC<{ stats: StatProps[] }> = ({ stats }) => {
                         </h4>
                         <div className="flex items-baseline gap-2 mt-1">
                             <span className="text-3xl font-bold tracking-tight text-white group-hover:scale-105 transition-transform origin-left">
-                                {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                                {typeof stat.value === 'number' ? stat.value.toLocaleString("tr-TR") : stat.value}
                             </span>
                         </div>
                     </div>

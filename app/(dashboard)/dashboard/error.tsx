@@ -23,6 +23,11 @@ export default function DashboardError({
             <p className="text-slate-400 max-w-sm mx-auto mb-8">
                 Dashboard verileri yüklenirken beklenmeyen bir hata yaşandı. Lütfen bağlantınızı kontrol edip tekrar deneyin.
             </p>
+            {error.digest && (
+                <div className="mb-8 p-4 bg-black/30 rounded-xl border border-white/5 font-mono text-[10px] text-slate-500">
+                    Hata Kimliği: {error.digest}
+                </div>
+            )}
             <button
                 onClick={() => reset()}
                 className="px-8 py-3 rounded-xl bg-white text-black hover:bg-slate-200 font-bold transition-colors"

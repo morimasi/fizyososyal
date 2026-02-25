@@ -14,6 +14,12 @@ interface Post {
 }
 
 export const UpcomingPosts: React.FC<{ posts: Post[] }> = ({ posts }) => {
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     return (
         <Card glow className="lg:col-span-2 border-white/5">
             <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 pb-4">
@@ -53,10 +59,13 @@ export const UpcomingPosts: React.FC<{ posts: Post[] }> = ({ posts }) => {
                                         <h5 className="font-semibold text-white group-hover:text-violet-300 transition-colors line-clamp-1">
                                             {post.title || "Adsız Gönderi"}
                                         </h5>
-                                        <div className="flex items-center gap-3 mt-1">
-                                            <span className="flex items-center gap-1 text-xs text-slate-500">
+                                        <div className="flex items-center gap-3 mt-1 text-xs">
+                                            <span className="flex items-center gap-1 text-slate-500">
                                                 <Clock className="w-3 h-3" />
-                                                {new Date(post.scheduledDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {mounted
+                                                    ? new Date(post.scheduledDate).toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' })
+                                                    : "--:--"
+                                                }
                                             </span>
                                             <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 font-bold uppercase">
                                                 {post.platform}

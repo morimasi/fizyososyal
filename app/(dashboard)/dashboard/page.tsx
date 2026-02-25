@@ -148,7 +148,7 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-rose-500/20">
                     <Activity className="text-rose-400 w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-4">Bir Sorun Oluştu</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">⚠️ Teknik Bir Aksaklık</h2>
                 <p className="text-slate-400 max-w-sm mx-auto mb-8">
                     Dashboard yüklenirken teknik bir aksaklık yaşandı. Lütfen sayfayı yenilemeyi deneyin.
                 </p>
