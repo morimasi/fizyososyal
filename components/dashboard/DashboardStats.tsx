@@ -3,6 +3,7 @@
 import React from "react";
 import { Users, Heart, Activity, Share2, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
 
 interface StatProps {
     title: string;
@@ -12,12 +13,22 @@ interface StatProps {
     color: "violet" | "teal" | "blue" | "rose";
 }
 
-const colorMap = {
-    violet: "from-violet-500/20 to-purple-500/5 text-violet-400 border-violet-500/20 shadow-violet-500/10",
-    teal: "from-teal-500/20 to-emerald-500/5 text-teal-400 border-teal-500/20 shadow-teal-500/10",
-    blue: "from-blue-500/20 to-indigo-500/5 text-blue-400 border-blue-500/20 shadow-blue-500/10",
-    rose: "from-rose-500/20 to-pink-500/5 text-rose-400 border-rose-500/20 shadow-rose-500/10",
-};
+const statCardVariants = cva(
+    "relative group p-6 rounded-2xl border bg-gradient-to-br transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1",
+    {
+        variants: {
+            color: {
+                violet: "from-violet-500/20 to-purple-500/5 text-violet-400 border-violet-500/20 shadow-violet-500/10",
+                teal: "from-teal-500/20 to-emerald-500/5 text-teal-400 border-teal-500/20 shadow-teal-500/10",
+                blue: "from-blue-500/20 to-indigo-500/5 text-blue-400 border-blue-500/20 shadow-blue-500/10",
+                rose: "from-rose-500/20 to-pink-500/5 text-rose-400 border-rose-500/20 shadow-rose-500/10",
+            },
+        },
+        defaultVariants: {
+            color: "violet",
+        },
+    }
+);
 
 export const DashboardStats: React.FC<{ stats: StatProps[] }> = ({ stats }) => {
     return (
@@ -25,10 +36,7 @@ export const DashboardStats: React.FC<{ stats: StatProps[] }> = ({ stats }) => {
             {stats.map((stat, i) => (
                 <div
                     key={stat.title}
-                    className={cn(
-                        "relative group p-6 rounded-2xl border bg-gradient-to-br transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1",
-                        colorMap[stat.color]
-                    )}
+                    className={statCardVariants({ color: stat.color })}
                     style={{ animationDelay: `${i * 100}ms` }}
                 >
                     <div className="flex items-start justify-between">

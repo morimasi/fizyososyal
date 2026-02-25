@@ -5,6 +5,7 @@ import type {
     InstagramMediaItem,
     InstagramLongLivedTokenResponse,
 } from "@/types/instagram";
+import { env } from "@/lib/env";
 
 const GRAPH_API_BASE = "https://graph.facebook.com/v20.0";
 
@@ -77,7 +78,7 @@ export async function publishContainer(
 export async function exchangeForLongLivedToken(
     shortToken: string
 ): Promise<InstagramLongLivedTokenResponse> {
-    const url = `${GRAPH_API_BASE}/oauth/access_token?grant_type=fb_exchange_token&client_id=${process.env.META_APP_ID}&client_secret=${process.env.META_APP_SECRET}&fb_exchange_token=${shortToken}`;
+    const url = `${GRAPH_API_BASE}/oauth/access_token?grant_type=fb_exchange_token&client_id=${env.META_APP_ID}&client_secret=${env.META_APP_SECRET}&fb_exchange_token=${shortToken}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Token değişim hatası: ${res.statusText}`);
     return res.json();

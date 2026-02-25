@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { GenerateTextInput } from "@/types";
 import { FormatSettings } from "@/types/studio";
+import { env } from "@/lib/env";
+import { redis } from "@/lib/upstash";
 
 const PHYSIO_SYSTEM_PROMPT = `Sen dünyanın en iyi fizyoterapi kliniği içerik ekibisin. Şu 4 uzman kimliğiyle hareket et:
 1. Kıdemli Fizyoterapist: Tıbbi doğruluk ve hasta güvenliğinden sorumlu.
@@ -11,7 +13,7 @@ const PHYSIO_SYSTEM_PROMPT = `Sen dünyanın en iyi fizyoterapi kliniği içerik
 Tıbbi terimleri hasta dostu dile çevirirken reklamcı kimliğinle merak uyandır, tasarımcı kimliğinle görsel yapıyı (HTML tagları ile) kurgula. Türkçe yaz. Empati kur. Motivasyonel ol.`;
 
 const getGeminiClient = () => {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = env.GEMINI_API_KEY;
     if (!apiKey) {
         console.warn("[GEMINI] GEMINI_API_KEY eksik. AI özellikleri devre dışı kalabilir.");
         return null; // Don't throw, just return null
@@ -257,6 +259,19 @@ export async function getDashboardInsights(stats: any): Promise<{
         ]
     };
 
+    const cacheKey = "dashboard:insights";
+    try {
+        if (env.UPSTASH_REDIS_REST_URL) {
+            const cached = await redis.get(cacheKey);
+            if (cached) {
+                console.log("[REDIS/DASHBOARD] Cache hit for insights");
+                return cached as any;
+            }
+        }
+    } catch (e) {
+        console.warn("[REDIS] Cache read failed for insights:", e);
+    }
+
     const genAI = getGeminiClient();
     if (!genAI) return fallback;
 
@@ -277,7 +292,17 @@ Verilecek yanıt kesinlikle şu JSON formatında olmalıdır:
         const result = await model.generateContent(prompt);
         const text = result.response.text().trim();
         const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-        return JSON.parse(jsonStr);
+        const parsed = JSON.parse(jsonStr);
+
+        try {
+            if (env.UPSTASH_REDIS_REST_URL) {
+                await redis.setex(cacheKey, 14400, parsed); // Cache for 4 hours
+            }
+        } catch (e) {
+            console.warn("[REDIS] Cache write failed for insights:", e);
+        }
+
+        return parsed;
     } catch (error) {
         console.error("[GEMINI/DASHBOARD] Insight hatası:", error);
         return fallback;
@@ -286,6 +311,20 @@ Verilecek yanıt kesinlikle şu JSON formatında olmalıdır:
 
 export async function getPersonalizedGreeting(userName: string): Promise<string> {
     const fallback = `Tekrar hoş geldiniz, Dr. ${userName.split(" ")[0]}! Bugün harika içerikler üretmeye hazırız.`;
+
+    const cacheKey = `dashboard:greeting:${userName.replace(/\s+/g, '_')}`;
+    try {
+        if (env.UPSTASH_REDIS_REST_URL) {
+            const cached = await redis.get(cacheKey);
+            if (cached) {
+                console.log("[REDIS/DASHBOARD] Cache hit for greeting");
+                return cached as string;
+            }
+        }
+    } catch (e) {
+        console.warn("[REDIS] Cache read failed for greeting:", e);
+    }
+
     const genAI = getGeminiClient();
     if (!genAI) return fallback;
 
@@ -296,7 +335,17 @@ export async function getPersonalizedGreeting(userName: string): Promise<string>
         });
 
         const result = await model.generateContent(`${userName} için kısa bir karşılama yaz.`);
-        return result.response.text().trim();
+        const text = result.response.text().trim();
+
+        try {
+            if (env.UPSTASH_REDIS_REST_URL) {
+                await redis.setex(cacheKey, 43200, text); // Cache for 12 hours
+            }
+        } catch (e) {
+            console.warn("[REDIS] Cache write failed for greeting:", e);
+        }
+
+        return text;
     } catch (error) {
         return fallback;
     }

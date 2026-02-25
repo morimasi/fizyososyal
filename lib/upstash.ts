@@ -1,7 +1,14 @@
-import { Client } from "@upstash/qstash";
+import { Client as QStashClient } from "@upstash/qstash";
+import { Redis } from "@upstash/redis";
+import { env } from "@/lib/env";
 
-export const qstash = new Client({
-    token: process.env.QSTASH_TOKEN!,
+export const qstash = new QStashClient({
+    token: env.QSTASH_TOKEN || "",
+});
+
+export const redis = new Redis({
+    url: env.UPSTASH_REDIS_REST_URL || "",
+    token: env.UPSTASH_REDIS_REST_TOKEN || "",
 });
 
 export async function schedulePublish(postId: string, scheduledDate: Date) {
@@ -9,7 +16,7 @@ export async function schedulePublish(postId: string, scheduledDate: Date) {
     if (delay < 0) throw new Error("Zamanlanmış tarih geçmişte olamaz.");
 
     const response = await qstash.publishJSON({
-        url: process.env.QSTASH_WEBHOOK_URL!,
+        url: env.QSTASH_WEBHOOK_URL || "",
         body: { postId },
         delay: Math.floor(delay / 1000),
     });

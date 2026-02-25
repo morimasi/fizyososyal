@@ -1,7 +1,8 @@
 import type { TrendItem } from "@/types";
+import { env } from "@/lib/env";
 
-const GOOGLE_SEARCH_API_KEY = process.env.GOOGLE_SEARCH_API_KEY!;
-const GOOGLE_SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID!;
+const GOOGLE_SEARCH_API_KEY = env.GOOGLE_SEARCH_API_KEY!;
+const GOOGLE_SEARCH_ENGINE_ID = env.GOOGLE_SEARCH_ENGINE_ID!;
 
 const PHYSIO_KEYWORDS = [
     "fizyoterapi egzersiz",

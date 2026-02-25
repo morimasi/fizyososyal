@@ -1,12 +1,12 @@
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Users, Heart, Share2, Activity, Calendar, Zap } from "lucide-react";
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { UpcomingPosts } from "@/components/dashboard/UpcomingPosts";
 import { AITrendAnalysis } from "@/components/dashboard/AITrendAnalysis";
 import { getDashboardInsights, getPersonalizedGreeting } from "@/services/ai/gemini.service";
+import { getDashboardAnalyticsSum, getUpcomingPosts } from "@/services/db/dashboard.service";
 
 export const dynamic = "force-dynamic";
 
@@ -25,32 +25,11 @@ export default async function DashboardPage() {
             );
         }
 
-        // 1. Prisma'dan gerçek verileri çek (Hata yakalama ile)
-        let analyticsSum = { _sum: { likes: 0, comments: 0, reach: 0, saves: 0 } };
-        let upcomingPosts: any[] = [];
-
-        try {
-            const [aSum, uPosts] = await Promise.all([
-                prisma.analytics.aggregate({
-                    _sum: { likes: true, comments: true, reach: true, saves: true },
-                    where: { post: { userId } }
-                }),
-                prisma.post.findMany({
-                    where: {
-                        userId,
-                        status: "ONAYLANDI",
-                        scheduledDate: { gte: new Date() }
-                    },
-                    include: { media: { take: 1 } },
-                    orderBy: { scheduledDate: "asc" },
-                    take: 3
-                })
-            ]);
-            if (aSum) analyticsSum = aSum as any;
-            if (uPosts) upcomingPosts = uPosts;
-        } catch (dbError) {
-            console.error("[DASHBOARD] Veritabanı hatası:", dbError);
-        }
+        // 1. Prisma'dan gerçek verileri çek (Service Pattern üzerinden)
+        const [analyticsSum, upcomingPosts] = await Promise.all([
+            getDashboardAnalyticsSum(userId),
+            getUpcomingPosts(userId, 3)
+        ]);
 
         // 2. AI Verilerini çek (Hata yakalama ile)
         let greeting = `Tekrar hoş geldiniz, Dr. ${userName.split(" ")[0]}!`;
@@ -65,8 +44,8 @@ export default async function DashboardPage() {
             const [greet, insights] = await Promise.all([
                 getPersonalizedGreeting(userName),
                 getDashboardInsights({
-                    totalReach: analyticsSum._sum.reach || 0,
-                    totalInteractions: (analyticsSum._sum.likes || 0) + (analyticsSum._sum.comments || 0)
+                    totalReach: analyticsSum.reach,
+                    totalInteractions: analyticsSum.totalInteractions
                 })
             ]);
             if (greet) greeting = greet;
@@ -79,21 +58,21 @@ export default async function DashboardPage() {
         const stats = [
             {
                 title: "Toplam Erişim",
-                value: analyticsSum._sum.reach || 0,
+                value: analyticsSum.reach,
                 trend: 12,
                 icon: Activity,
                 color: "blue" as const
             },
             {
                 title: "Etkileşim (Interactions)",
-                value: (analyticsSum._sum.likes || 0) + (analyticsSum._sum.comments || 0),
+                value: analyticsSum.totalInteractions,
                 trend: 8,
                 icon: Heart,
                 color: "rose" as const
             },
             {
                 title: "Kaydedilme",
-                value: analyticsSum._sum.saves || 0,
+                value: analyticsSum.saves,
                 trend: 15,
                 icon: Share2,
                 color: "violet" as const

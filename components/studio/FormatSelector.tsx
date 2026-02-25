@@ -1,7 +1,38 @@
 import React from "react";
 import { LayoutTemplate, Images, Video, Megaphone, ChevronDown, Sparkles, Target, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { cva, type VariantProps } from "class-variance-authority";
 import { PostFormat, FormatSettings } from "@/types/studio";
+
+const formatButtonVariants = cva(
+    "flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200",
+    {
+        variants: {
+            selected: {
+                true: "bg-violet-600/20 border-violet-500 text-white",
+                false: "bg-slate-800/50 border-white/5 text-slate-400 hover:bg-slate-800 hover:border-white/10",
+            },
+        },
+        defaultVariants: {
+            selected: false,
+        },
+    }
+);
+
+const styleButtonVariants = cva(
+    "px-3 py-2 rounded-lg border text-[10px] font-bold uppercase transition-all",
+    {
+        variants: {
+            selected: {
+                true: "bg-violet-600 border-violet-500 text-white",
+                false: "bg-slate-800 border-white/5 text-slate-500 hover:text-white",
+            },
+        },
+        defaultVariants: {
+            selected: false,
+        },
+    }
+);
 
 interface FormatSelectorProps {
     selectedFormat: PostFormat;
@@ -50,12 +81,7 @@ export const FormatSelector: React.FC<FormatSelectorProps> = ({
                         <button
                             key={format.id}
                             onClick={() => onFormatChange(format.id)}
-                            className={cn(
-                                "flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200",
-                                selectedFormat === format.id
-                                    ? "bg-violet-600/20 border-violet-500 text-white"
-                                    : "bg-slate-800/50 border-white/5 text-slate-400 hover:bg-slate-800 hover:border-white/10"
-                            )}
+                            className={formatButtonVariants({ selected: selectedFormat === format.id })}
                         >
                             <format.icon className={cn("w-6 h-6 mb-2", selectedFormat === format.id ? "text-violet-400" : "text-slate-500")} />
                             <span className="text-xs font-medium">{format.label}</span>
@@ -125,12 +151,7 @@ export const FormatSelector: React.FC<FormatSelectorProps> = ({
                                 <button
                                     key={style}
                                     onClick={() => onSettingsChange({ videoStyle: style as any })}
-                                    className={cn(
-                                        "px-3 py-2 rounded-lg border text-[10px] font-bold uppercase transition-all",
-                                        settings.videoStyle === style
-                                            ? "bg-violet-600 border-violet-500 text-white"
-                                            : "bg-slate-800 border-white/5 text-slate-500 hover:text-white"
-                                    )}
+                                    className={styleButtonVariants({ selected: settings.videoStyle === style })}
                                 >
                                     {style}
                                 </button>
