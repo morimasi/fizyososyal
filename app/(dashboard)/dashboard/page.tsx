@@ -55,33 +55,33 @@ export default async function DashboardPage() {
         }
 
         // İstatistik objelerini hazırla
-        const stats = [
+        const stats: any[] = [
             {
                 title: "Toplam Erişim",
                 value: analyticsSum.reach,
                 trend: 12,
-                icon: Activity,
+                icon: "activity",
                 color: "blue" as const
             },
             {
                 title: "Etkileşim (Interactions)",
                 value: analyticsSum.totalInteractions,
                 trend: 8,
-                icon: Heart,
+                icon: "heart",
                 color: "rose" as const
             },
             {
                 title: "Kaydedilme",
                 value: analyticsSum.saves,
                 trend: 15,
-                icon: Share2,
+                icon: "share",
                 color: "violet" as const
             },
             {
                 title: "Aktif Postlar",
                 value: upcomingPosts.length,
                 trend: 5,
-                icon: Users,
+                icon: "users",
                 color: "teal" as const
             },
         ];
