@@ -21,6 +21,13 @@ const getGeminiClient = () => {
     return new GoogleGenerativeAI(apiKey);
 };
 
+const SAFETY_SETTINGS = [
+    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+];
+
 export async function generatePostText(input: GenerateTextInput): Promise<{
     content: string;
     hashtags: string;
@@ -101,6 +108,7 @@ Lütfen aşağıdaki JSON formatında yanıt ver:
             const model = genAI.getGenerativeModel({
                 model: modelId,
                 systemInstruction: PHYSIO_SYSTEM_PROMPT,
+                safetySettings: SAFETY_SETTINGS,
             });
 
             const result = await model.generateContent(prompt);
@@ -161,6 +169,7 @@ export async function generateVoiceCommandResponse(transcript: string): Promise<
         systemInstruction: `Sen bir fizyoterapi kliniğinin AI asistanısın. 
     Sesli komutları anlayıp ne tür içerik üretileceğini belirle. 
     Kısa, net JSON yanıtlar ver.`,
+        safetySettings: SAFETY_SETTINGS,
     });
 
     const prompt = `
@@ -184,13 +193,7 @@ export async function optimizePhysioPrompt(topic: string): Promise<string> {
     const genAI = getGeminiClient();
     if (!genAI) return topic;
 
-    // Strict safety settings to allow medical context simulation
-    const safetySettings = [
-        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-    ];
+    const safetySettings = SAFETY_SETTINGS;
 
     const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
     let resultText = topic;
@@ -278,6 +281,7 @@ export async function getDashboardInsights(stats: any): Promise<{
     try {
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
+            safetySettings: SAFETY_SETTINGS,
             systemInstruction: `Sen dünyanın en iyi dijital pazarlama ve sağlık trendleri analistisin. 
 Kullanıcının verilerini (analytics) ve fizyoterapi dünyasını analiz ederek 2 tane çok spesifik trend/öneri çıkar.
 Verilecek yanıt kesinlikle şu JSON formatında olmalıdır:
@@ -331,6 +335,7 @@ export async function getPersonalizedGreeting(userName: string): Promise<string>
     try {
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
+            safetySettings: SAFETY_SETTINGS,
             systemInstruction: "Sen bir fizyoterapi kliniğinin motivasyonel AI asistanısın. Tek bir cümleyle, enerjik ve profesyonel bir karşılama metni yaz. Türkçe olsun.",
         });
 
