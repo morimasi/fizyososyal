@@ -93,7 +93,7 @@ export default function AnalyticsPage() {
                                 <Activity className="w-8 h-8 text-slate-700 animate-spin" />
                             </div>
                         ) : (
-                            <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                            <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={0} debounce={100}>
                                 <AreaChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorEtkilesim" x1="0" y1="0" x2="0" y2="1">
@@ -106,7 +106,7 @@ export default function AnalyticsPage() {
                                         </linearGradient>
                                     </defs>
                                     <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                                    <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
                                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                     <Tooltip content={<CustomTooltip />} />
                                     <Legend verticalAlign="top" height={36} iconType="circle" />
@@ -132,7 +132,7 @@ export default function AnalyticsPage() {
                             {!mounted ? (
                                 <div className="w-full h-full flex items-center justify-center bg-slate-900/20 rounded-full animate-pulse border-8 border-slate-800/20" />
                             ) : (
-                                <ResponsiveContainer width="100%" height="100%" minHeight={220}>
+                                <ResponsiveContainer width="100%" height="100%" minHeight={220} minWidth={0} debounce={100}>
                                     <PieChart>
                                         <Pie
                                             data={themeData}
@@ -180,7 +180,7 @@ export default function AnalyticsPage() {
                         {!mounted ? (
                             <div className="w-full h-full flex items-center justify-center bg-slate-900/20 rounded-xl animate-pulse" />
                         ) : (
-                            <ResponsiveContainer width="100%" height="100%" minHeight={350}>
+                            <ResponsiveContainer width="100%" height="100%" minHeight={350} minWidth={0} debounce={100}>
                                 <BarChart
                                     data={competitorData}
                                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
