@@ -130,7 +130,7 @@ export default async function DashboardPage() {
                                 Verileriniz analiz edildi. Bu hafta "Fizyoterapi ve Yaşam" odaklı içerikler üretmek kliniğinizin görünürlüğünü %15 artırabilir.
                             </p>
                         </div>
-                        <button onClick={() => { }} className="px-6 py-3 rounded-xl bg-violet-600 text-white font-bold text-[13px] shadow-lg shadow-violet-600/20 hover:scale-105 transition-transform active:scale-95 uppercase tracking-widest">
+                        <button className="px-6 py-3 rounded-xl bg-violet-600 text-white font-bold text-[13px] shadow-lg shadow-violet-600/20 hover:scale-105 transition-transform active:scale-95 uppercase tracking-widest">
                             Raporu Gör
                         </button>
                     </div>
@@ -144,7 +144,7 @@ export default async function DashboardPage() {
             digest: fatalError.digest
         });
         return (
-            <div className="p-12 text-center bg-slate-900/40 rounded-[32px] border border-white/5 backdrop-blur-xl">
+            <div className="p-12 text-center bg-slate-900/40 rounded-[32px] border border-white/5 backdrop-blur-xl font-sans">
                 <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-rose-500/20">
                     <Activity className="text-rose-400 w-8 h-8" />
                 </div>
@@ -152,15 +152,15 @@ export default async function DashboardPage() {
                 <p className="text-slate-400 max-w-sm mx-auto mb-8">
                     Dashboard yüklenirken teknik bir aksaklık yaşandı. Lütfen sayfayı yenilemeyi deneyin.
                 </p>
-                <div className="text-[10px] text-slate-600 mb-6 font-mono opacity-50">
+                <div className="text-[10px] text-slate-600 mb-6 font-mono opacity-50 overflow-hidden text-ellipsis">
                     Hata Kodu: {fatalError.digest || "INTERNAL_RENDER_ERROR"}
                 </div>
-                <button
-                    onClick={() => typeof window !== 'undefined' && window.location.reload()}
-                    className="px-8 py-3 rounded-xl bg-white text-black font-bold text-sm hover:bg-slate-200 transition-colors"
+                <a
+                    href="/dashboard"
+                    className="inline-block px-8 py-3 rounded-xl bg-white text-black font-bold text-sm hover:bg-slate-200 transition-colors"
                 >
-                    Sayfayı Yenile
-                </button>
+                    Tekrar Dene
+                </a>
             </div>
         );
     }
