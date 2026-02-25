@@ -7,7 +7,19 @@ export default async function DashboardLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const session = await auth();
+    let session;
+    try {
+        session = await auth();
+    } catch (e: any) {
+        return (
+            <div className="p-8 text-center bg-red-900/50 text-white min-h-screen flex flex-col items-center justify-center">
+                <h1 className="text-2xl font-bold mb-4">Layout Auth Error</h1>
+                <pre className="text-sm bg-black/50 p-4 rounded max-w-2xl overflow-auto text-left">
+                    {e.message}{'\n'}{e.stack}
+                </pre>
+            </div>
+        );
+    }
 
     if (!session?.user?.id) {
         redirect("/login");
