@@ -51,10 +51,10 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
         };
     }
 
-    // Comprehensive fallback list for production reliability
-    const modelsToTry = input.model === "gemini-pro"
-        ? ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro", "gemini-pro"]
-        : ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", "gemini-pro"];
+    // Updated model list for production reliability (Prioritizing 2.0 Flash for cost-efficiency)
+    const modelsToTry = input.model === "gemini-1.5-pro"
+        ? ["gemini-1.5-pro", "gemini-2.0-flash"]
+        : ["gemini-2.0-flash", "gemini-1.5-pro"];
 
     const toneMap = {
         profesyonel: "resmi ve güven verici",
@@ -229,7 +229,7 @@ export async function optimizePhysioPrompt(
     if (!genAI) return topic;
 
     const safetySettings = SAFETY_SETTINGS;
-    const modelsToTry = ["gemini-1.5-pro", "gemini-1.5-flash"];
+    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-pro"];
     let resultText = topic;
     let success = false;
 

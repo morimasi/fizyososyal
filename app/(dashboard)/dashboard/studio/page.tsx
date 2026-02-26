@@ -32,7 +32,7 @@ export default function StudioPage() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isOptimizing, setIsOptimizing] = useState(false);
     const [generatedPost, setGeneratedPost] = useState<GeneratedPost | null>(null);
-    const [selectedModel, setSelectedModel] = useState<AIModel>("gemini-flash");
+    const [selectedModel, setSelectedModel] = useState<AIModel>("gemini-2.0-flash");
     const [userRole, setUserRole] = useState<UserRole>("EDITOR");
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const [mounted, setMounted] = useState(false);
@@ -106,7 +106,7 @@ export default function StudioPage() {
                 body: JSON.stringify({
                     prompt: textData.title || topic,
                     aspectRatio: postFormat === "video" ? "9:16" : "1:1",
-                    quality: selectedModel === "gemini-pro" ? "high" : "standard"
+                    quality: selectedModel === "gemini-1.5-pro" ? "high" : "standard"
                 }),
             });
 
