@@ -8,8 +8,9 @@ export const maxDuration = 60;
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         const session = await auth();
         if (!session?.user?.id) {
@@ -17,7 +18,7 @@ export async function POST(
         }
 
         const post = await prisma.post.findUnique({
-            where: { id: params.id },
+            where: { id },
         });
 
         if (!post) {
@@ -37,7 +38,7 @@ export async function POST(
         if (!user?.accessToken || !user?.instagramAccountId) {
             // Bağlantı yok ama yine de durum güncelle (simüle yayın)
             await prisma.post.update({
-                where: { id: params.id },
+                where: { id },
                 data: { status: "YAYINLANDI" },
             });
             return NextResponse.json({
@@ -48,7 +49,7 @@ export async function POST(
         }
 
         // Gerçek Instagram yayını
-        await publishPostNow(params.id);
+        await publishPostNow(id);
 
         return NextResponse.json({
             success: true,

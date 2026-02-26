@@ -7,8 +7,9 @@ export const dynamic = "force-dynamic";
 // GET: Tek bir postu getir
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         const session = await auth();
         if (!session?.user?.id) {
@@ -16,7 +17,7 @@ export async function GET(
         }
 
         const post = await prisma.post.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: { media: true, analytics: true },
         });
 
@@ -33,8 +34,9 @@ export async function GET(
 // PATCH: Postu güncelle (içerik, tarih, durum)
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         const session = await auth();
         if (!session?.user?.id) {
@@ -42,14 +44,14 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const post = await prisma.post.findUnique({ where: { id: params.id } });
+        const post = await prisma.post.findUnique({ where: { id } });
 
         if (!post || post.userId !== session.user.id) {
             return NextResponse.json({ error: "Post bulunamadı" }, { status: 404 });
         }
 
         const updated = await prisma.post.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 title: body.title ?? post.title,
                 content: body.content ?? post.content,
@@ -68,21 +70,22 @@ export async function PATCH(
 // DELETE: Postu sil
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         const session = await auth();
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
         }
 
-        const post = await prisma.post.findUnique({ where: { id: params.id } });
+        const post = await prisma.post.findUnique({ where: { id } });
 
         if (!post || post.userId !== session.user.id) {
             return NextResponse.json({ error: "Post bulunamadı" }, { status: 404 });
         }
 
-        await prisma.post.delete({ where: { id: params.id } });
+        await prisma.post.delete({ where: { id } });
 
         return NextResponse.json({ success: true, message: "Post silindi." });
     } catch (error: any) {

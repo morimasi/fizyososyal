@@ -7,8 +7,9 @@ export const dynamic = "force-dynamic";
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     try {
         const session = await auth();
         if (!session?.user?.id) {
@@ -23,7 +24,7 @@ export async function POST(
         }
 
         const post = await prisma.post.findUnique({
-            where: { id: params.id },
+            where: { id },
         });
 
         if (!post) {
@@ -34,7 +35,7 @@ export async function POST(
             return NextResponse.json({ error: "Bu post size ait değil" }, { status: 403 });
         }
 
-        await schedulePost(params.id, new Date(scheduledDate));
+        await schedulePost(id, new Date(scheduledDate));
 
         return NextResponse.json({
             success: true,

@@ -57,7 +57,10 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     };
 
     const tone = input.tone ? toneMap[input.tone] : "samimi ve eğitici";
-    const voice = input.brandVoice ? `Klinik marka sesi: "${input.brandVoice}". ` : "";
+    const voice = input.brandVoice ? `Aşağıdaki klinik marka sesi ve kimliğine KESİNLİKLE uy: "${input.brandVoice}". ` : "";
+    const keywords = (input as any).brandKeywords?.length > 0
+        ? `Aşağıdaki marka anahtar kelimelerini mutlaka içerikte yansıt: ${(input as any).brandKeywords.join(", ")}. `
+        : "";
 
     const settings = (input as any).settings as FormatSettings;
     const style = settings?.visualStyle || "clinical";
@@ -80,6 +83,7 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
 
     const prompt = `
 ${voice}
+${keywords}
 Konu: "${input.topic}"
 Ton: ${tone}
 Format: ${input.postFormat ?? "post"}

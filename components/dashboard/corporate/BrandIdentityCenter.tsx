@@ -2,16 +2,72 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { BrainCircuit, Sparkles, Wand2, Type, Music, Palette, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { BrainCircuit, Sparkles, Wand2, Type, Music, Palette, CheckCircle2, Save } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 export function BrandIdentityCenter() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [brandVoice, setBrandVoice] = useState("Samimi ve hastaya güven veren akademik bir dil.");
+    const [brandVoice, setBrandVoice] = useState("");
+    const [brandKeywords, setBrandKeywords] = useState<string[]>([]);
+
+    // Yükleme ve kaydetme durumları
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        const fetchBrand = async () => {
+            try {
+                const res = await fetch("/api/settings/brand");
+                if (res.ok) {
+                    const data = await res.json();
+                    setBrandVoice(data.brand?.brandVoice || "");
+                    setBrandKeywords(data.brand?.brandKeywords || []);
+                }
+            } catch (err) {
+                console.error("Marka kimliği yüklenemedi", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchBrand();
+    }, []);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const res = await fetch("/api/settings/brand", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    brandVoice,
+                    brandKeywords
+                }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert("Marka Kimliği başarıyla güncellendi!");
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err: any) {
+            alert(`Hata: ${err.message}`);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleKeywordToggle = (keyword: string) => {
+        setBrandKeywords(prev =>
+            prev.includes(keyword)
+                ? prev.filter(k => k !== keyword)
+                : [...prev, keyword]
+        );
+    };
 
     const handleAIAnalyze = () => {
         setIsAnalyzing(true);
+        // İleride Gemini AI ile otomatik marka kişiliği analizi eklenecek
         setTimeout(() => setIsAnalyzing(false), 2000);
     };
 
@@ -55,12 +111,36 @@ export function BrandIdentityCenter() {
                             className="w-full h-32 bg-slate-900 border border-white/10 rounded-xl p-4 text-white focus:ring-2 focus:ring-amber-500 outline-none resize-none text-sm leading-relaxed"
                             placeholder="Markanızın konuşma dilini buraya yazın..."
                         />
-                        <div className="flex flex-wrap gap-2">
-                            {["Akademik", "Empatik", "Motivasyonel", "Otoriter"].map(tag => (
-                                <span key={tag} className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-500 uppercase tracking-wider">
-                                    {tag}
-                                </span>
-                            ))}
+                        <div className="flex flex-wrap gap-2 mt-4">
+                            {["Akademik", "Empatik", "Motivasyonel", "Otoriter", "Eğlenceli", "Kurumsal"].map(tag => {
+                                const isActive = brandKeywords.includes(tag);
+                                return (
+                                    <button
+                                        key={tag}
+                                        onClick={() => handleKeywordToggle(tag)}
+                                        className={cn(
+                                            "px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-wider transition-all",
+                                            isActive
+                                                ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20"
+                                                : "bg-amber-500/5 text-amber-500/70 border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-500"
+                                        )}
+                                    >
+                                        {tag}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="pt-4 mt-6 border-t border-white/5 flex justify-end">
+                            <Button
+                                variant="primary"
+                                className="bg-amber-500 hover:bg-amber-600 border-0 shadow-lg shadow-amber-500/20 text-white"
+                                onClick={handleSave}
+                                disabled={isLoading || isSaving}
+                                isLoading={isSaving}
+                            >
+                                <Save className="w-4 h-4 mr-2" /> Değişiklikleri Kaydet
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>

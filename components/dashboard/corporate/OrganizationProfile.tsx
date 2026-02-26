@@ -3,12 +3,58 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Stethoscope, Camera, MapPin, Globe, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function OrganizationProfile() {
-    const [clinicName, setClinicName] = useState("Klinik Fizyo");
-    const [website, setWebsite] = useState("https://klinikfizyo.com");
-    const [address, setAddress] = useState("Levent, İstanbul");
+    const [clinicName, setClinicName] = useState("");
+    const [website, setWebsite] = useState("");
+    const [address, setAddress] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await fetch("/api/settings/profile");
+                if (res.ok) {
+                    const data = await res.json();
+                    setClinicName(data.profile?.clinicName || "");
+                    setWebsite(data.profile?.clinicWebsite || "");
+                    setAddress(data.profile?.clinicAddress || "");
+                }
+            } catch (err) {
+                console.error("Profil yüklenemedi", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProfile();
+    }, []);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const res = await fetch("/api/settings/profile", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    clinicName,
+                    clinicWebsite: website,
+                    clinicAddress: address
+                }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert("Profil başarıyla güncellendi!");
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (err: any) {
+            alert(`Hata: ${err.message}`);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
@@ -76,7 +122,13 @@ export function OrganizationProfile() {
                     </div>
 
                     <div className="pt-4 border-t border-white/5 flex justify-end">
-                        <Button variant="primary" className="bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-900/20">
+                        <Button
+                            variant="primary"
+                            className="bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-900/20"
+                            onClick={handleSave}
+                            disabled={isLoading || isSaving}
+                            isLoading={isSaving}
+                        >
                             <Save className="w-4 h-4 mr-2" /> Profili Güncelle
                         </Button>
                     </div>
