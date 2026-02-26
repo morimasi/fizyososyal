@@ -9,6 +9,7 @@ export function OrganizationProfile() {
     const [clinicName, setClinicName] = useState("");
     const [website, setWebsite] = useState("");
     const [address, setAddress] = useState("");
+    const [logoUrl, setLogoUrl] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -21,6 +22,7 @@ export function OrganizationProfile() {
                     setClinicName(data.profile?.clinicName || "");
                     setWebsite(data.profile?.clinicWebsite || "");
                     setAddress(data.profile?.clinicAddress || "");
+                    setLogoUrl(data.profile?.logoUrl || "");
                 }
             } catch (err) {
                 console.error("Profil yüklenemedi", err);
@@ -40,14 +42,15 @@ export function OrganizationProfile() {
                 body: JSON.stringify({
                     clinicName,
                     clinicWebsite: website,
-                    clinicAddress: address
+                    clinicAddress: address,
+                    logoUrl
                 }),
             });
             const data = await res.json();
             if (res.ok) {
                 alert("Profil başarıyla güncellendi!");
             } else {
-                throw new Error(data.error);
+                throw new Error(data.error || "Güncelleme başarısız.");
             }
         } catch (err: any) {
             alert(`Hata: ${err.message}`);
@@ -70,7 +73,11 @@ export function OrganizationProfile() {
                     <div className="flex flex-col md:flex-row gap-8 items-start">
                         <div className="relative group">
                             <div className="w-32 h-32 rounded-2xl bg-slate-800 border-2 border-dashed border-white/20 flex items-center justify-center overflow-hidden transition-all group-hover:border-teal-500/50">
-                                <Stethoscope className="w-12 h-12 text-slate-600 group-hover:text-teal-500/50 transition-colors" />
+                                {logoUrl ? (
+                                    <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                                ) : (
+                                    <Stethoscope className="w-12 h-12 text-slate-600 group-hover:text-teal-500/50 transition-colors" />
+                                )}
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
                                     <Camera className="w-6 h-6 text-white" />
                                 </div>
@@ -89,6 +96,7 @@ export function OrganizationProfile() {
                                             value={clinicName}
                                             onChange={(e) => setClinicName(e.target.value)}
                                             className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 pl-10 text-white focus:ring-2 focus:ring-teal-500 outline-none"
+                                            placeholder="Klinik Adını Giriniz"
                                         />
                                     </div>
                                 </div>
@@ -101,6 +109,7 @@ export function OrganizationProfile() {
                                             value={website}
                                             onChange={(e) => setWebsite(e.target.value)}
                                             className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 pl-10 text-white focus:ring-2 focus:ring-teal-500 outline-none"
+                                            placeholder="https://fizyososyal.com"
                                         />
                                     </div>
                                 </div>
@@ -115,6 +124,7 @@ export function OrganizationProfile() {
                                         value={address}
                                         onChange={(e) => setAddress(e.target.value)}
                                         className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 pl-10 text-white focus:ring-2 focus:ring-teal-500 outline-none"
+                                        placeholder="Klinik Adresi"
                                     />
                                 </div>
                             </div>

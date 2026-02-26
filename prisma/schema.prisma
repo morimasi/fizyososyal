@@ -32,12 +32,6 @@ model User {
   instagramAccountId String?
   accessToken        String?      @db.Text
   subscriptionType   String       @default("free")
-  clinicName         String?
-  clinicWebsite      String?
-  clinicAddress      String?
-  brandVoice         String?      @db.Text
-  brandColors        String[]     @default(["#8b5cf6", "#1e293b"])
-  brandKeywords      String[]     @default([])
   logoUrl            String?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
@@ -58,7 +52,12 @@ model Team {
   members     TeamMember[]
   invites     TeamInvite[]
   posts       Post[]
+  clinicName         String?
+  clinicWebsite      String?
+  clinicAddress      String?
+  brandVoice         String?      @db.Text
   brandColors String[]     @default(["#8b5cf6", "#1e293b"])
+  brandKeywords      String[]     @default([])
 }
 
 enum Role {

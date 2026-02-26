@@ -10,6 +10,7 @@ export function BrandIdentityCenter() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [brandVoice, setBrandVoice] = useState("");
     const [brandKeywords, setBrandKeywords] = useState<string[]>([]);
+    const [brandColors, setBrandColors] = useState<string[]>(["#8b5cf6", "#1e293b"]);
 
     // Yükleme ve kaydetme durumları
     const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +24,7 @@ export function BrandIdentityCenter() {
                     const data = await res.json();
                     setBrandVoice(data.brand?.brandVoice || "");
                     setBrandKeywords(data.brand?.brandKeywords || []);
+                    setBrandColors(data.brand?.brandColors || ["#8b5cf6", "#1e293b"]);
                 }
             } catch (err) {
                 console.error("Marka kimliği yüklenemedi", err);
@@ -41,14 +43,15 @@ export function BrandIdentityCenter() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     brandVoice,
-                    brandKeywords
+                    brandKeywords,
+                    brandColors
                 }),
             });
             const data = await res.json();
             if (res.ok) {
                 alert("Marka Kimliği başarıyla güncellendi!");
             } else {
-                throw new Error(data.error);
+                throw new Error(data.error || "Güncelleme başarısız.");
             }
         } catch (err: any) {
             alert(`Hata: ${err.message}`);
@@ -88,7 +91,7 @@ export function BrandIdentityCenter() {
                 <Button
                     onClick={handleAIAnalyze}
                     isLoading={isAnalyzing}
-                    className="bg-violet-600 hover:bg-violet-700 border-0 shadow-lg shadow-violet-900/40"
+                    className="bg-violet-600 hover:bg-violet-700 border-0 shadow-lg shadow-violet-900/40 font-bold"
                     size="lg"
                 >
                     <Sparkles className="w-4 h-4 mr-2" /> Analiz Et ve Oluştur
@@ -134,7 +137,7 @@ export function BrandIdentityCenter() {
                         <div className="pt-4 mt-6 border-t border-white/5 flex justify-end">
                             <Button
                                 variant="primary"
-                                className="bg-amber-500 hover:bg-amber-600 border-0 shadow-lg shadow-amber-500/20 text-white"
+                                className="bg-amber-500 hover:bg-amber-600 border-0 shadow-lg shadow-amber-500/20 text-white font-bold"
                                 onClick={handleSave}
                                 disabled={isLoading || isSaving}
                                 isLoading={isSaving}
@@ -157,9 +160,13 @@ export function BrandIdentityCenter() {
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Renk Paleti</label>
                             <div className="flex gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-violet-600 border border-white/10" />
-                                <div className="w-8 h-8 rounded-lg bg-indigo-500 border border-white/10" />
-                                <div className="w-8 h-8 rounded-lg bg-slate-200 border border-white/10" />
+                                {brandColors.map((color, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="w-8 h-8 rounded-lg border border-white/10 ring-2 ring-transparent hover:ring-white/20 transition-all"
+                                        style={{ backgroundColor: color }}
+                                    />
+                                ))}
                                 <button className="w-8 h-8 rounded-lg border border-dashed border-white/20 flex items-center justify-center hover:border-white/40 transition-colors">
                                     <span className="text-sm text-slate-500">+</span>
                                 </button>
@@ -167,7 +174,7 @@ export function BrandIdentityCenter() {
                         </div>
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold text-slate-500 uppercase">Yazı Tipleri</label>
-                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                            <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between transition-all hover:bg-white/[0.07]">
                                 <span className="text-sm font-medium text-white">Inter / Outfit</span>
                                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                             </div>
