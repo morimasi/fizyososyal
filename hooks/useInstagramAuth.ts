@@ -1,27 +1,50 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 interface InstagramAuthState {
     isConnected: boolean;
     accountId: string | null;
+    username: string | null;
     isLoading: boolean;
     error: string | null;
 }
 
-export function useInstagramAuth(initialAccountId?: string | null): InstagramAuthState & {
+export function useInstagramAuth(_initialAccountId?: string | null): InstagramAuthState & {
     connect: () => Promise<void>;
-    disconnect: () => void;
+    disconnect: () => Promise<void>;
+    refresh: () => Promise<void>;
 } {
     const [state, setState] = useState<InstagramAuthState>({
-        isConnected: !!initialAccountId,
-        accountId: initialAccountId ?? null,
-        isLoading: false,
+        isConnected: false,
+        accountId: null,
+        username: null,
+        isLoading: true,
         error: null,
     });
 
+    // DB'den gerçek bağlantı durumunu çek
+    const refresh = useCallback(async () => {
+        setState(s => ({ ...s, isLoading: true, error: null }));
+        try {
+            const res = await fetch("/api/instagram/status");
+            const data = await res.json();
+            setState({
+                isConnected: data.connected,
+                accountId: data.accountId ?? null,
+                username: data.username ?? null,
+                isLoading: false,
+                error: null,
+            });
+        } catch {
+            setState(s => ({ ...s, isLoading: false, error: "Durum sorgulanamadı" }));
+        }
+    }, []);
+
+    useEffect(() => { refresh(); }, [refresh]);
+
     const connect = useCallback(async () => {
-        setState((s) => ({ ...s, isLoading: true, error: null }));
+        setState(s => ({ ...s, isLoading: true, error: null }));
         try {
             const res = await fetch("/api/instagram/auth", { method: "POST" });
             const data = await res.json();
@@ -31,7 +54,7 @@ export function useInstagramAuth(initialAccountId?: string | null): InstagramAut
                 throw new Error("Auth URL alınamadı");
             }
         } catch (err) {
-            setState((s) => ({
+            setState(s => ({
                 ...s,
                 isLoading: false,
                 error: err instanceof Error ? err.message : "Bağlantı hatası",
@@ -39,9 +62,20 @@ export function useInstagramAuth(initialAccountId?: string | null): InstagramAut
         }
     }, []);
 
-    const disconnect = useCallback(() => {
-        setState({ isConnected: false, accountId: null, isLoading: false, error: null });
+    const disconnect = useCallback(async () => {
+        setState(s => ({ ...s, isLoading: true, error: null }));
+        try {
+            const res = await fetch("/api/instagram/status", { method: "DELETE" });
+            if (!res.ok) throw new Error("Bağlantı kesilemedi");
+            setState({ isConnected: false, accountId: null, username: null, isLoading: false, error: null });
+        } catch (err) {
+            setState(s => ({
+                ...s,
+                isLoading: false,
+                error: err instanceof Error ? err.message : "Bağlantı kesme hatası",
+            }));
+        }
     }, []);
 
-    return { ...state, connect, disconnect };
+    return { ...state, connect, disconnect, refresh };
 }

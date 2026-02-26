@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { UpcomingPosts } from "@/components/dashboard/UpcomingPosts";
 import { AITrendAnalysis } from "@/components/dashboard/AITrendAnalysis";
+import { ApprovalPanel } from "@/components/dashboard/ApprovalPanel";
 import { getDashboardInsights, getPersonalizedGreeting } from "@/services/ai/gemini.service";
 import { getDashboardAnalyticsSum, getUpcomingPosts } from "@/services/db/dashboard.service";
 
@@ -103,6 +104,9 @@ export default async function DashboardPage() {
 
                 {/* İstatistikler (Real-time) */}
                 <DashboardStats stats={stats} />
+
+                {/* Onay Bekleyen İçerikler (APPROVER/ADMIN için) */}
+                <ApprovalPanel />
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Gelecek Postlar (Real-time) */}
