@@ -198,35 +198,38 @@ export async function optimizePhysioPrompt(topic: string): Promise<string> {
     if (!genAI) return topic;
 
     const safetySettings = SAFETY_SETTINGS;
-
     const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
     let resultText = topic;
     let success = false;
 
-    // Stage 1: Professional Artistic Expansion
+    // Stage 1: Ultra-Creative Artistic Expansion
     for (const modelId of modelsToTry) {
         try {
             console.log(`[GEMINI/OPTIMIZE] Stage 1 deneniyor: ${modelId}`);
             const model = genAI.getGenerativeModel({
                 model: modelId,
                 safetySettings,
-                generationConfig: { temperature: 1.0, topP: 0.95 },
-                systemInstruction: `Sen profesyonel bir Görsel Sanat Yönetmeni ve Prompt Mühendisisin. 
-Görevin: Kullanıcının girdiği basit kelimeleri, Midjourney ve Stable Diffusion gibi modeller için ultra-detaylı, sinematik ve sanatsal PROMPTLARA dönüştürmektir.
+                generationConfig: {
+                    temperature: 0.9,
+                    topP: 1,
+                    maxOutputTokens: 500
+                },
+                systemInstruction: `Sen dünyanın en iyi prompt mühendisi ve görsel sanat yönetmenisin. 
+Görevin: Kullanıcının girdiği basit kelimeleri, profesyonel bir fizyoterapi kliniği için büyüleyici, sinematik ve zengin bir senaryoya/prompt'a dönüştürmektir.
 
-KRİTİK TALİMATLAR:
-1. Kullanıcının girdisini ASLA ama ASLA aynen geri verme.
-2. Girdiyi en az 10 katına çıkararak genişlet. 
-3. Sahneye: "Cinematic lighting, 8k resolution, anatomical precision, professional physiotherapy clinic background, hyper-realistic, depth of field" gibi terimler ekle.
-4. Çıktı SADECE zenginleştirilmiş metin olmalıdır, başka hiçbir açıklama yapma.`,
+KESİN KURALLAR:
+1. Girdi metnini ASLA olduğu gibi bırakma. Onu devasa bir hikayeye dönüştür.
+2. Sahneyi betimle: Arka plan, ışıklandırma (golden hour, studio lighting), atmosfer ve teknik detaylar ekle.
+3. Tıbbi derinlik: Fizyoterapi materyalleri, anatomi posterleri, modern cihazlar ve profesyonel bir duruş ekle.
+4. Çıktı SADECE zenginleştirilmiş metin olmalıdır. "Burada gelişim şöyledir" gibi açıklamalar yapma, doğrudan yeni prompt'u yaz.`,
             });
 
-            const prompt = `Şu basit konuyu al ve onu en az 100 kelimelik profesyonel, sanatsal ve ultra-detaylı bir görsel üretim promptuna dönüştür: "${topic}"`;
+            const prompt = `Lütfen şu konuyu al ve onu en az 150 kelimelik, ultra-detaylı, hastaya güven veren ve sanatsal bir içerik promptuna dönüştür: "${topic}"`;
             const result = await model.generateContent(prompt);
             const text = result.response.text().trim();
 
-            if (text && text.length > topic.length + 10) {
-                console.log(`[GEMINI/OPTIMIZE] Stage 1 başarılı.`);
+            if (text && text.length > topic.length + 15) {
+                console.log(`[GEMINI/OPTIMIZE] Stage 1 başarılı. Uzunluk: ${text.length}`);
                 resultText = text;
                 success = true;
                 break;
@@ -236,12 +239,12 @@ KRİTİK TALİMATLAR:
         }
     }
 
-    // Stage 2: Emergency Minimal Expansion (if Stage 1 fails or returns original)
+    // Stage 2: Prompt Engineering Fallback
     if (!success) {
         try {
-            console.log("[GEMINI/OPTIMIZE] Stage 2 (Emergency) başlatıldı.");
+            console.log("[GEMINI/OPTIMIZE] Stage 2 (Backup) başlatıldı.");
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
-            const prompt = `Kullanıcının girdiği şu konuyu bir profesyonel fizyoterapist bakış açısıyla zenginleştirerek 3 cümlelik bir senaryoya dönüştür: "${topic}"`;
+            const prompt = `Kullanıcının girdiği şu basit konuyu, profesyonel bir sosyal medya içerik yöneticisi gibi ele al ve onu 3 farklı perspektifle (anatomik, psikolojik ve pratik çözüm) genişleterek tek bir paragrafta birleştir: "${topic}"`;
             const result = await model.generateContent(prompt);
             const text = result.response.text().trim();
             if (text && text.length > topic.length) {

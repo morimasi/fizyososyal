@@ -159,8 +159,15 @@ export default function StudioPage() {
     };
 
     const handleSave = async () => {
-        if (!generatedPost) return;
+        if (!generatedPost || !generatedPost.content) {
+            console.error("[STUDIO] Kayıt denemesi başarısız: İçerik boş.");
+            setSaveStatus("error");
+            return;
+        }
+
         setSaveStatus("saving");
+        console.log("[STUDIO] Kaydediliyor...", { title: generatedPost.title });
+
         try {
             const res = await fetch("/api/posts", {
                 method: "POST",
@@ -174,13 +181,20 @@ export default function StudioPage() {
                     platform,
                 }),
             });
-            if (!res.ok) throw new Error("Kaydetme hatası");
+
             const data = await res.json();
+
+            if (!res.ok) {
+                console.error("[STUDIO] API Kaydetme Hatası:", data);
+                throw new Error(data.error || "Kaydetme hatası");
+            }
+
             setSavedPostId(data.post.id);
             setSaveStatus("saved");
             setLastSaved(new Date());
-        } catch (err) {
-            console.error("[STUDIO] Kaydetme hatası:", err);
+            console.log("[STUDIO] Kayıt başarılı:", data.post.id);
+        } catch (err: any) {
+            console.error("[STUDIO] Kaydetme hatası catch:", err);
             setSaveStatus("error");
             setTimeout(() => setSaveStatus("idle"), 3000);
         }

@@ -45,28 +45,39 @@ export async function POST(req: NextRequest) {
     try {
         const session = await auth();
         if (!session?.user?.id) {
+            console.warn("[API/POSTS] Yetkisiz POST isteği.");
             return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
         }
 
         const body = await req.json();
+        console.log("[API/POSTS] Gelen veri:", JSON.stringify(body).slice(0, 100) + "...");
+
         const { title, content, hashtags, mediaUrl, postFormat, platform, scheduledDate } = body;
 
-        if (!content) {
-            return NextResponse.json({ error: "İçerik gereklidir" }, { status: 400 });
+        if (!content || content.trim() === "") {
+            console.warn("[API/POSTS] BOŞ İÇERİK HATASI: Content eksik.");
+            return NextResponse.json({ error: "İçerik gereklidir (Content is empty)" }, { status: 400 });
         }
 
-        // 1. Kullanıcının takımını bul
-        const team = await prisma.team.findFirst({
-            where: { ownerId: session.user.id },
-            select: { id: true }
-        });
+        // 1. Kullanıcının ve Takımın varlığını kontrol et (Opsiyonel)
+        let teamId = null;
+        try {
+            const team = await prisma.team.findFirst({
+                where: { ownerId: session.user.id },
+                select: { id: true }
+            });
+            teamId = team?.id || null;
+        } catch (teamErr) {
+            console.error("[API/POSTS] Team sorgusu hatası (Yoksayılıyor):", teamErr);
+        }
 
+        console.log("[API/POSTS] Veritabanına kayıt başlatılıyor...");
         const post = await prisma.post.create({
             data: {
                 userId: session.user.id,
-                teamId: team?.id || null, // Varsa takıma bağla
+                teamId: teamId,
                 title: title || null,
-                content,
+                content: content,
                 hashtags: hashtags || null,
                 trendTopic: platform || "instagram",
                 status: scheduledDate ? "ONAYLANDI" : "TASLAK",
@@ -84,9 +95,20 @@ export async function POST(req: NextRequest) {
             include: { media: true },
         });
 
+        console.log("[API/POSTS] Kayıt başarılı. Post ID:", post.id);
         return NextResponse.json({ post }, { status: 201 });
     } catch (error: any) {
-        console.error("[API/POSTS] POST hatası:", error);
-        return NextResponse.json({ error: "Post kaydedilirken bir hata oluştu", details: error.message }, { status: 500 });
+        console.error("[API/POSTS] KRİTİK KAYIT HATASI:", {
+            message: error.message,
+            code: error.code,
+            meta: error.meta
+        });
+
+        // P2002, P2003 gibi Prisma hatalarını yakala
+        return NextResponse.json({
+            error: "Post kaydedilirken bir veritabanı hatası oluştu",
+            details: error.message,
+            code: error.code
+        }, { status: 500 });
     }
 }
