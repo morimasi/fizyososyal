@@ -15,7 +15,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@google/generative-ai": "^0.24.1",
     "@hello-pangea/dnd": "^18.0.1",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^7.4.1",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@upstash/qstash": "^2.9.0",
     "@upstash/redis": "^1.36.2",
@@ -38,7 +38,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "prisma": "^5.22.0",
+    "prisma": "^7.4.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
