@@ -68,6 +68,35 @@ function buildPhysioPrompt(base: string, style?: string): string {
 }
 
 export async function addLogoWatermark(imageUrl: string, logoUrl: string): Promise<string> {
-    console.warn("[NANOBANANA/GEMINI] Logo watermark servisi devre dışı.");
-    return imageUrl;
+    const apiKey = env.NANOBANANA_API_KEY;
+    if (!apiKey) return imageUrl;
+
+    console.log("[NANOBANANA] Logo Watermark uygulanıyor...");
+
+    try {
+        const response = await fetch(`${API_URL}/images/edit`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                image_url: imageUrl,
+                mask_url: logoUrl, // Nanobanana uses mask_url for overlays/logos in some endpoints or specific logic
+                prompt: "apply the logo to the bottom right corner with 50% opacity",
+                response_format: "url"
+            }),
+        });
+
+        if (!response.ok) {
+            console.error("[NANOBANANA] Watermark API Hatası");
+            return imageUrl;
+        }
+
+        const data = await response.json();
+        return data.data?.[0]?.url || imageUrl;
+    } catch (error) {
+        console.error("[NANOBANANA] Watermark uygulanırken hata:", error);
+        return imageUrl;
+    }
 }

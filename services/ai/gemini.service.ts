@@ -418,3 +418,38 @@ export async function getPersonalizedGreeting(userName: string): Promise<string>
         return fallback;
     }
 }
+
+export async function getWeeklyStrategy(stats: any, brandData?: any): Promise<{ title: string; description: string }> {
+    const fallback = {
+        title: "Haftalık Stratejiniz Hazır!",
+        description: "Verileriniz analiz edildi. Bu hafta 'Fizyoterapi ve Yaşam' odaklı içerikler üretmek kliniğinizin görünürlüğünü %15 artırabilir."
+    };
+
+    const genAI = getGeminiClient();
+    if (!genAI) return fallback;
+
+    try {
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            safetySettings: SAFETY_SETTINGS,
+            systemInstruction: `Sen bir üst düzey Klinik İşletme Stratejistisin. 
+Kullanıcının haftalık analitik verilerini ve marka kimliğini kullanarak ona tek cümlelik vurucu bir stratejik başlık ve kısa bir açıklama üret.
+Başlık: Dikkat çekici ve profesyonel olmalı.
+Açıklama: Veriye dayalı bir aksiyon önerisi içermeli.`,
+        });
+
+        const prompt = `
+İstatistikler: ${JSON.stringify(stats)}
+Marka Sesi: ${brandData?.voice || "Profesyonel"}
+Anahtar Kelimeler: ${brandData?.keywords?.join(", ") || "Fizyoterapi"}
+
+Lütfen JSON dön: { "title": "...", "description": "..." }`;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim();
+        const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        return JSON.parse(jsonStr);
+    } catch (error) {
+        return fallback;
+    }
+}

@@ -37,3 +37,21 @@ export async function getUpcomingPosts(userId: string, limit: number = 3) {
         return [];
     }
 }
+export async function getTeamBrandData(userId: string) {
+    try {
+        const team = await prisma.team.findFirst({
+            where: { ownerId: userId },
+            select: {
+                brandVoice: true,
+                brandKeywords: true,
+                clinicName: true,
+            }
+        });
+        return {
+            voice: team?.brandVoice || "Profesyonel",
+            keywords: team?.brandKeywords || []
+        };
+    } catch (error) {
+        return { voice: "Profesyonel", keywords: [] };
+    }
+}

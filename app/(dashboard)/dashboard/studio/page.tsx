@@ -37,6 +37,7 @@ export default function StudioPage() {
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const [mounted, setMounted] = useState(false);
     const [savedPostId, setSavedPostId] = useState<string | null>(null);
+    const [applyLogo, setApplyLogo] = useState(true);
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
     useEffect(() => {
@@ -55,6 +56,7 @@ export default function StudioPage() {
                 if (data.postFormat) setPostFormat(data.postFormat);
                 if (data.selectedModel) setSelectedModel(data.selectedModel);
                 if (data.formatSettings) setFormatSettings(data.formatSettings);
+                if (typeof data.applyLogo === 'boolean') setApplyLogo(data.applyLogo);
             } catch (e) { console.error(e); }
         }
     }, []);
@@ -62,12 +64,12 @@ export default function StudioPage() {
     // Selection persistence
     useEffect(() => {
         const timeout = setTimeout(() => {
-            const data = { topic, generatedPost, platform, postFormat, selectedModel, formatSettings };
+            const data = { topic, generatedPost, platform, postFormat, selectedModel, formatSettings, applyLogo };
             localStorage.setItem("physio_studio_draft", JSON.stringify(data));
             setLastSaved(new Date());
         }, 1000);
         return () => clearTimeout(timeout);
-    }, [topic, generatedPost, platform, postFormat, selectedModel, formatSettings]);
+    }, [topic, generatedPost, platform, postFormat, selectedModel, formatSettings, applyLogo]);
 
     // Voice integration
     useEffect(() => {
@@ -106,7 +108,8 @@ export default function StudioPage() {
                 body: JSON.stringify({
                     prompt: textData.title || topic,
                     aspectRatio: postFormat === "video" ? "9:16" : "1:1",
-                    quality: selectedModel === "gemini-1.5-pro" ? "high" : "standard"
+                    quality: selectedModel === "gemini-1.5-pro" ? "high" : "standard",
+                    applyLogo: applyLogo
                 }),
             });
 
@@ -372,7 +375,7 @@ export default function StudioPage() {
                             setTopic={setTopic}
                             isListening={isListening}
                             transcript={transcript}
-                            error={error}
+                            error={voiceError}
                             isOptimizing={isOptimizing}
                             startListening={startListening}
                             stopListening={stopListening}
@@ -394,6 +397,31 @@ export default function StudioPage() {
                                     />
                                     <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-500"></div>
                                 </label>
+                            </div>
+
+                            {/* Görsel/Logo Seçenekleri */}
+                            <div className="flex items-center justify-between p-4 bg-slate-900/50 border border-white/5 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                        <Sparkles className="w-5 h-5 text-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-white">Logomu Ekle</p>
+                                        <p className="text-[10px] text-slate-500">Klinik logonuz görsele basılır.</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setApplyLogo(!applyLogo)}
+                                    className={cn(
+                                        "w-12 h-6 rounded-full transition-all duration-300 relative",
+                                        applyLogo ? "bg-emerald-600" : "bg-slate-700"
+                                    )}
+                                >
+                                    <div className={cn(
+                                        "absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300",
+                                        applyLogo ? "left-7" : "left-1"
+                                    )} />
+                                </button>
                             </div>
 
                             <Button

@@ -6,8 +6,8 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { UpcomingPosts } from "@/components/dashboard/UpcomingPosts";
 import { AITrendAnalysis } from "@/components/dashboard/AITrendAnalysis";
 import { ApprovalPanel } from "@/components/dashboard/ApprovalPanel";
-import { getDashboardInsights, getPersonalizedGreeting } from "@/services/ai/gemini.service";
-import { getDashboardAnalyticsSum, getUpcomingPosts } from "@/services/db/dashboard.service";
+import { getDashboardInsights, getPersonalizedGreeting, getWeeklyStrategy } from "@/services/ai/gemini.service";
+import { getDashboardAnalyticsSum, getUpcomingPosts, getTeamBrandData } from "@/services/db/dashboard.service";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +27,10 @@ export default async function DashboardPage() {
         }
 
         // 1. Prisma'dan gerçek verileri çek (Service Pattern üzerinden)
-        const [analyticsSum, upcomingPosts] = await Promise.all([
+        const [analyticsSum, upcomingPosts, brandData] = await Promise.all([
             getDashboardAnalyticsSum(userId),
-            getUpcomingPosts(userId, 3)
+            getUpcomingPosts(userId, 3),
+            getTeamBrandData(userId)
         ]);
 
         // 2. AI Verilerini çek (Hata yakalama ile)
@@ -40,17 +41,23 @@ export default async function DashboardPage() {
                 { id: "2", title: "Boyun Germe", subtitle: "Hızlı Yükselen", description: "Mobil cihaz kullanımı boyun ağrılarını artırıyor.", tag: "Yükselişte" }
             ]
         };
+        let weeklyStrategy = {
+            title: "Haftalık Stratejiniz Hazır!",
+            description: "Verileriniz analiz edildi. Bu hafta 'Fizyoterapi ve Yaşam' odaklı içerikler üretmek kliniğinizin görünürlüğünü %15 artırabilir."
+        };
 
         try {
-            const [greet, insights] = await Promise.all([
+            const [greet, insights, strategy] = await Promise.all([
                 getPersonalizedGreeting(userName),
                 getDashboardInsights({
                     totalReach: analyticsSum.reach,
                     totalInteractions: analyticsSum.totalInteractions
-                })
+                }, brandData),
+                getWeeklyStrategy(analyticsSum, brandData)
             ]);
             if (greet) greeting = greet;
             if (insights) aiInsights = insights;
+            if (strategy) weeklyStrategy = strategy;
         } catch (aiError) {
             console.error("[DASHBOARD] AI Servis hatası:", aiError);
         }
@@ -111,7 +118,7 @@ export default async function DashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Gelecek Postlar (Real-time) */}
                     <UpcomingPosts
-                        posts={upcomingPosts.map(p => ({
+                        posts={upcomingPosts.map((p: any) => ({
                             id: p.id,
                             title: p.title || "Adsız",
                             scheduledDate: p.scheduledDate!,
@@ -129,9 +136,9 @@ export default async function DashboardPage() {
                     <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/5 blur-[100px] -z-10 group-hover:bg-violet-600/10 transition-all duration-700" />
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                         <div>
-                            <h3 className="text-xl font-bold text-white mb-2">Haftalık Stratejiniz Hazır!</h3>
+                            <h3 className="text-xl font-bold text-white mb-2">{weeklyStrategy.title}</h3>
                             <p className="text-slate-400 text-sm max-w-lg">
-                                Verileriniz analiz edildi. Bu hafta "Fizyoterapi ve Yaşam" odaklı içerikler üretmek kliniğinizin görünürlüğünü %15 artırabilir.
+                                {weeklyStrategy.description}
                             </p>
                         </div>
                         <button className="px-6 py-3 rounded-xl bg-violet-600 text-white font-bold text-[13px] shadow-lg shadow-violet-600/20 hover:scale-105 transition-transform active:scale-95 uppercase tracking-widest">
