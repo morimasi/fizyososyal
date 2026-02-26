@@ -76,13 +76,13 @@ export async function POST(req: NextRequest) {
             data: {
                 userId: session.user.id,
                 teamId: teamId,
-                title: title || null,
+                title: title || "Yeni Gönderi (Studio)",
                 content: content,
-                hashtags: hashtags || null,
+                hashtags: hashtags ? String(hashtags) : null,
                 trendTopic: platform || "instagram",
                 status: scheduledDate ? "ONAYLANDI" : "TASLAK",
                 scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
-                ...(mediaUrl && {
+                ...(mediaUrl ? {
                     media: {
                         create: {
                             mediaUrl,
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
                             aspectRatio: postFormat === "video" ? "9:16" : "1:1",
                         }
                     }
-                })
+                } : {})
             },
             include: { media: true },
         });

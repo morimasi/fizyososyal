@@ -198,11 +198,11 @@ export async function optimizePhysioPrompt(topic: string): Promise<string> {
     if (!genAI) return topic;
 
     const safetySettings = SAFETY_SETTINGS;
-    const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
+    const modelsToTry = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"];
     let resultText = topic;
     let success = false;
 
-    // Stage 1: Ultra-Creative Artistic Expansion
+    // Uzmanlaşmış, Düşünce Zinciri (Chain of Thought - CoT) destekli Prompt Mühendisliği
     for (const modelId of modelsToTry) {
         try {
             console.log(`[GEMINI/OPTIMIZE] Stage 1 deneniyor: ${modelId}`);
@@ -210,27 +210,41 @@ export async function optimizePhysioPrompt(topic: string): Promise<string> {
                 model: modelId,
                 safetySettings,
                 generationConfig: {
-                    temperature: 0.9,
+                    temperature: 0.8, // Daha tutarlı yapı için biraz düşürüldü
                     topP: 1,
-                    maxOutputTokens: 500
+                    maxOutputTokens: 600,
+                    responseMimeType: "application/json" // Çıktıyı kesin garantiye al
                 },
-                systemInstruction: `Sen dünyanın en iyi prompt mühendisi ve görsel sanat yönetmenisin. 
-Görevin: Kullanıcının girdiği basit kelimeleri, profesyonel bir fizyoterapi kliniği için büyüleyici, sinematik ve zengin bir senaryoya/prompt'a dönüştürmektir.
+                systemInstruction: `Sen dünyanın en inovatif fizyoterapi ve sağlık içerik stratejistisin. 
+Kullanıcının verdiği basit kelimeyi veya fikri, tam teşekküllü ve derinlikli bir içerik projesine ('prompt'a) çevirmelisin.
+
+DÜŞÜNCE ZİNCİRİ (Chain of Thought):
+1. [Agresif/Gerçekçi Problem]: Hastanın bu konuda yaşadığı asıl zorluk nedir? (Örn: "Sırt ağrısından uyuyamamak")
+2. [Bilimsel/Anatomik Neden]: Bu sorunun arkasında hangi biyomekanik veya fizyolojik gerçek var? (Örn: "Postürel kas zayıflığı")
+3. [Eyleme Dönük Çözüm]: Fizyoterapi kliniği burada nasıl nokta atışı bir çözüm sunar? (Örn: "3 adımlı postür düzeltici manipülasyon")
 
 KESİN KURALLAR:
-1. Girdi metnini ASLA olduğu gibi bırakma. Onu devasa bir hikayeye dönüştür.
-2. Sahneyi betimle: Arka plan, ışıklandırma (golden hour, studio lighting), atmosfer ve teknik detaylar ekle.
-3. Tıbbi derinlik: Fizyoterapi materyalleri, anatomi posterleri, modern cihazlar ve profesyonel bir duruş ekle.
-4. Çıktı SADECE zenginleştirilmiş metin olmalıdır. "Burada gelişim şöyledir" gibi açıklamalar yapma, doğrudan yeni prompt'u yaz.`,
+1. Girdi metnini kopyalama, doğrudan genişlet.
+2. Anlatımı 3. tekil şahıs yerine, doğrudan bir senaryo veya manifesto gibi yaz.
+3. Çıktıyı SADECE JSON olarak dön.`
             });
 
-            const prompt = `Lütfen şu konuyu al ve onu en az 150 kelimelik, ultra-detaylı, hastaya güven veren ve sanatsal bir içerik promptuna dönüştür: "${topic}"`;
+            const prompt = `Girdi Fikri: "${topic}"
+
+Lütfen bu fikri al ve aşağıdaki JSON formatına birebir uyan, 2-3 paragraflık etkileyici bir metne dönüştür:
+{
+  "optimized_prompt": "Buraya minimum 100 kelimelik, güçlü kancası (hook) olan, anatomik bilgiler içeren ve hastayı kliniğe davet eden büyüleyici metni yaz."
+}`;
+
             const result = await model.generateContent(prompt);
             const text = result.response.text().trim();
 
-            if (text && text.length > topic.length + 15) {
-                console.log(`[GEMINI/OPTIMIZE] Stage 1 başarılı. Uzunluk: ${text.length}`);
-                resultText = text;
+            // JSON ayrıştırma güvenliği
+            const parsed = JSON.parse(text.replace(/```json\n?/g, "").replace(/```\n?/g, ""));
+
+            if (parsed.optimized_prompt && parsed.optimized_prompt.length > topic.length + 10) {
+                console.log(`[GEMINI/OPTIMIZE] Stage 1 başarılı. Uzunluk: ${parsed.optimized_prompt.length}`);
+                resultText = parsed.optimized_prompt;
                 success = true;
                 break;
             }
@@ -244,12 +258,11 @@ KESİN KURALLAR:
         try {
             console.log("[GEMINI/OPTIMIZE] Stage 2 (Backup) başlatıldı.");
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
-            const prompt = `Kullanıcının girdiği şu basit konuyu, profesyonel bir sosyal medya içerik yöneticisi gibi ele al ve onu 3 farklı perspektifle (anatomik, psikolojik ve pratik çözüm) genişleterek tek bir paragrafta birleştir: "${topic}"`;
+            const prompt = `Kullanıcının girdiği şu basit konuyu, profesyonel bir sağlık iletişimcisi gibi ele al ve onu detaylı, tıbbi ama anlaşılır, 3 farklı perspektifle (anatomik, psikolojik ve pratik çözüm) genişleterek tek bir zengin bağlam paragrafına çevir. Eski metni tekrar etme! Fikir: "${topic}"`;
             const result = await model.generateContent(prompt);
             const text = result.response.text().trim();
             if (text && text.length > topic.length) {
                 resultText = text;
-                success = true;
             }
         } catch (err: any) {
             console.error("[GEMINI/OPTIMIZE] Stage 2 başarısız:", err.message);
@@ -259,13 +272,21 @@ KESİN KURALLAR:
     return resultText;
 }
 
-export async function getDashboardInsights(stats: any): Promise<{
-    trends: Array<{ id: string; title: string; subtitle: string; description: string; tag: string }>;
+export async function getDashboardInsights(stats: any, brandData?: { voice?: string, keywords?: string[] }): Promise<{
+    trends: Array<{
+        id: string;
+        title: string;
+        subtitle: string;
+        description: string;
+        tag: string;
+        score: number;
+        strategy: string;
+    }>;
 }> {
     const fallback = {
         trends: [
-            { id: "1", title: "Bel Sağlığı", subtitle: "#1 Trend", description: "Oturarak çalışma artışıyla bel egzersizleri revaçta.", tag: "Popüler" },
-            { id: "2", title: "Boyun Germe", subtitle: "Hızlı Yükselen", description: "Mobil cihaz kullanımı boyun ağrılarını artırıyor.", tag: "Yükselişte" }
+            { id: "1", title: "Bel Sağlığı & Ergonomi", subtitle: "#1 Trend", description: "Oturarak çalışma artışıyla bel egzersizleri revaçta.", tag: "Popüler", score: 85, strategy: "Ofis çalışanlarına yönelik '3 Dakikada Bel Rahatlatma' videosu çekin." },
+            { id: "2", title: "Boyun Germe Teknikleri", subtitle: "Hızlı Yükselen", description: "Mobil cihaz kullanımı boyun ağrılarını artırıyor.", tag: "Yükselişte", score: 72, strategy: "Shorts/Reels formatında 'Tech-Neck' çözüm egzersizleri paylaşın." }
         ]
     };
 
@@ -289,25 +310,41 @@ export async function getDashboardInsights(stats: any): Promise<{
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
             safetySettings: SAFETY_SETTINGS,
-            systemInstruction: `Sen dünyanın en iyi dijital pazarlama ve sağlık trendleri analistisin. 
-Kullanıcının verilerini (analytics) ve fizyoterapi dünyasını analiz ederek 2 tane çok spesifik trend/öneri çıkar.
-Verilecek yanıt kesinlikle şu JSON formatında olmalıdır:
-{
-  "trends": [
-    { "id": "1", "title": "Trend Başlığı", "subtitle": "Alt Başlık (Örn: #1 Trend)", "description": "Kısa açıklama", "tag": "Kategori (Örn: Google M.T)" }
-  ]
-}`,
+            systemInstruction: `Sen dünyanın en iyi dijital sağlık stratejisti ve fizyoterapi trend analistisin. 
+Görevin: Kullanıcının kliniğine ait verileri ve marka kimliğini analiz ederek, ona sosyal medyada en yüksek etkileşimi getirecek 3 adet nokta atışı içerik fikri (trend) sunmaktır.
+
+ANALİZ KRİTERLERİ:
+1. Marka Sesi: ${brandData?.voice || "Profesyonel ve Güven Verici"}
+2. Anahtar Kelimeler: ${brandData?.keywords?.join(", ") || "Fizyoterapi, Sağlık"}
+3. Klinik İstatistikleri: ${JSON.stringify(stats)}
+
+ÇIKTI FORMATI (KESİN JSON):
+Üreteceğin trendler şu yapıda olmalı:
+- id: string
+- title: Çarpıcı başlık (max 40 karakter)
+- subtitle: Trendin durumu (Örn: "Yüksek Etkileşim Potansiyeli")
+- description: Neden bu içeriği paylaşmalı? (max 100 karakter)
+- tag: Kategori (Örn: "Egzersiz" veya "Eğitici")
+- score: 0-100 arası başarı tahmin puanı (number)
+- strategy: Bu fikri nasıl hayata geçirmeli? (Örn: "Reels videosu çek", "Carousel hazırla")
+
+Lütfen sadece JSON dön.`,
         });
 
-        const prompt = `Şu anki kullanıcı istatistikleri ve genel fizyoterapi trendlerine göre 2 öneri yap: ${JSON.stringify(stats)}`;
+        const prompt = `Şu anki gerçek zamanlı verilere dayanarak kliniğim için en iyi 3 stratejik içerik fikrini üret.`;
         const result = await model.generateContent(prompt);
         const text = result.response.text().trim();
         const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         const parsed = JSON.parse(jsonStr);
 
+        // API'den bazen beklenen format gelmeyebilir, doğrula
+        if (!parsed.trends || !Array.isArray(parsed.trends)) {
+            throw new Error("Geçersiz AI yanıt formatı");
+        }
+
         try {
             if (env.UPSTASH_REDIS_REST_URL) {
-                await redis.setex(cacheKey, 14400, parsed); // Cache for 4 hours
+                await redis.setex(cacheKey, 7200, parsed); // 2 saatlik cache
             }
         } catch (e) {
             console.warn("[REDIS] Cache write failed for insights:", e);
