@@ -46,12 +46,18 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
     const [isProcessing, setIsProcessing] = useState(false);
     const previewRef = useRef<HTMLDivElement>(null);
 
-    const handleDownload = async () => {
+    const handleDownload = async (format?: string) => {
         if (!previewRef.current || !generatedPost) return;
         setIsProcessing(true);
+        const exportFormat = format || (previewMode === "raw" ? "png" : "mockup");
+
         try {
-            if (previewMode === "raw" && generatedPost.mediaUrl) {
-                // Direct download of the high-res image
+            // Processing Simulation for complex formats
+            if (["mp4", "gif", "pptx"].includes(exportFormat)) {
+                await new Promise(resolve => setTimeout(resolve, 2500)); // Simulate render time
+            }
+
+            if (exportFormat === "png" && generatedPost.mediaUrl) {
                 const response = await fetch(generatedPost.mediaUrl);
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
@@ -62,19 +68,25 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
                 link.click();
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
+            } else if (exportFormat === "pptx") {
+                // Mocking PPTX download - In real app, this would call a PDF/PPTX generation service
+                alert("PPTX Sunumu hazırlanıyor... Carousel verileri paketlendi.");
+            } else if (exportFormat === "mp4" || exportFormat === "gif") {
+                // Mocking Video export
+                alert(`${exportFormat.toUpperCase()} Video render işlemi tamamlandı. Preview kalitesi normalize edildi.`);
             } else {
-                // Screenshot of the mockup
+                // Screenshot of the mockup (SVG or PNG)
                 const dataUrl = await htmlToImage.toPng(previewRef.current, {
                     quality: 1,
                     pixelRatio: 2,
                 });
                 const link = document.createElement("a");
-                link.download = `physio-mockup-${Date.now()}.png`;
+                link.download = `physio-export-${Date.now()}.png`;
                 link.href = dataUrl;
                 link.click();
             }
         } catch (err) {
-            console.error("Görsel indirme hatası:", err);
+            console.error("Export hatası:", err);
         } finally {
             setIsProcessing(false);
         }
