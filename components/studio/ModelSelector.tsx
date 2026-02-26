@@ -10,7 +10,7 @@ interface ModelSelectorProps {
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onSelect }) => {
     const models = [
-        { id: "gemini-2.0-flash" as const, label: "2.0 Flash", icon: Zap, desc: "Ultra Hızlı & Ücret Dostu" },
+        { id: "gemini-3.1-flash-preview" as const, label: "3.1 Flash (Beta)", icon: Zap, desc: "Multimodal & Ücretsiz Seviye" },
         { id: "gemini-1.5-pro" as const, label: "1.5 Pro", icon: BrainCircuit, desc: "Derin Analiz" },
     ];
 

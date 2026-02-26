@@ -51,10 +51,10 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
         };
     }
 
-    // Updated model list for production reliability (Prioritizing 2.0 Flash for cost-efficiency)
+    // Frontier Model Transition: Using Gemini 3.1 Flash Preview (Multimodal & Cost-Efficient)
     const modelsToTry = input.model === "gemini-1.5-pro"
-        ? ["gemini-1.5-pro", "gemini-2.0-flash"]
-        : ["gemini-2.0-flash", "gemini-1.5-pro"];
+        ? ["gemini-1.5-pro", "gemini-3.1-flash-preview"]
+        : ["gemini-3.1-flash-preview", "gemini-1.5-pro"];
 
     const toneMap = {
         profesyonel: "resmi ve güven verici",
@@ -229,7 +229,7 @@ export async function optimizePhysioPrompt(
     if (!genAI) return topic;
 
     const safetySettings = SAFETY_SETTINGS;
-    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-pro"];
+    const modelsToTry = ["gemini-3.1-flash-preview", "gemini-1.5-pro"];
     let resultText = topic;
     let success = false;
 

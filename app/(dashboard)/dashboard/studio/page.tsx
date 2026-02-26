@@ -32,7 +32,7 @@ export default function StudioPage() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isOptimizing, setIsOptimizing] = useState(false);
     const [generatedPost, setGeneratedPost] = useState<GeneratedPost | null>(null);
-    const [selectedModel, setSelectedModel] = useState<AIModel>("gemini-2.0-flash");
+    const [selectedModel, setSelectedModel] = useState<AIModel>("gemini-3.1-flash-preview");
     const [userRole, setUserRole] = useState<UserRole>("EDITOR");
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const [mounted, setMounted] = useState(false);
