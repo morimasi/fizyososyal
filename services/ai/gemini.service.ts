@@ -73,42 +73,58 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     const style = settings?.visualStyle || "clinical";
     const audience = settings?.targetAudience || "general";
 
-    let formatInstruction = `"content" alanı içine tek sayfalık standart Instagram post metni yaz (150-300 kelime, emoji kullan, HTML <br/> ile paragraflara ayır).`;
+    let formatInstruction = "";
     if (input.postFormat === "carousel") {
         const slides = settings?.slideCount || 6;
-        formatInstruction = `"content" alanı içine tam ${slides} sayfalık bir kaydırmalı (carousel) gönderi metni yaz. Her slayt için HTML yapısı kullan. Örnek: <b>Slayt 1: [Başlık]</b><br/>[Metin...]<br/><br/><b>Slayt 2: ...</b>`;
+        formatInstruction = `BU BİR CAROUSEL (KAYDIRMALI) GÖNDERİDİR. 
+        - Tam ${slides} sayfalık bir akış oluştur.
+        - Her sayfa için: <b>Sayfa [No]: [Dikkat Çekici Başlık]</b><br/>[Metin...]<br/><br/> yapısını kullan.
+        - İlk sayfa güçlü bir "Kanca" (Hook), son sayfa ise "Eyleme Çağrı" (CTA) olmalıdır. 
+        - İçerik, kullanıcının kaydırmasını sağlayacak bir hikaye örgüsü izlemelidir.`;
     } else if (input.postFormat === "video") {
         const videoStyle = settings?.videoStyle || "informational";
-        formatInstruction = `"content" alanı içine bir ${videoStyle} tarzında Reels/TikTok video senaryosu yaz. HTML yapısı kullan. Örnek: <b>Sahne 1:</b> [Görüntü Açıklaması]<br/>🎤 <b>Seslendirme:</b> [Konuşma Metni...]<br/><br/>`;
+        formatInstruction = `BU BİR REELS/TIKTOK VİDEO SENARYOSUDUR. (${videoStyle.toUpperCase()} tarzında)
+        - Sahne bazlı bir akış yaz.
+        - Yapı: <b>Saniye 0-3 (Hook):</b> [Görüntü + Seslendirme]<br/><b>Saniye 3-15 (Gövde):</b> [Eylem Açıklaması + Metin]<br/><b>Saniye 15-30 (Kapanış):</b> [CTA]<br/>
+        - Seslendirme metni akıcı, enerjik ve fizyoterapist otoritesini yansıtacak şekilde olmalıdır.`;
     } else if (input.postFormat === "ad") {
-        formatInstruction = `"content" alanı içine dikkat çekici, hasta dönüşümü odaklı (AIDA modeli) bir reklam broşürü/post metni yaz. HTML yapısı kullanıp, dikkat çekici yerleri <strong> ile vurgula. Call-to-action (Eyleme Çağrı) içersin.`;
+        formatInstruction = `BU BİR REKLAM (AD) GÖNDERİSİDİR. 
+        - AIDA (Attention, Interest, Desire, Action) modelini maksimize et.
+        - HTML <strong> etiketlerini kullanarak hastanın "Acı Noktalarını" (Pain Points) vurgula.
+        - Çok güçlü, net ve reddedilemez bir randevu çağrısı (CTA) oluştur.
+        - Klinik güvenini ve başarısını kanıtlayan bir dil kullan.`;
+    } else {
+        formatInstruction = `BU STANDART BİR SOSYAL MEDYA GÖNDERİSİDİR (SINGLE POST).
+        - 150-300 kelime arası, zengin, HTML <br/> ile ayrılmış, bol ikonlu ve profesyonel bir metin yaz.
+        - İlk cümle okuyucuyu durduracak kadar keskin olmalıdır.
+        - Bilimsel veriyi günlük dille harmanla.`;
     }
 
     const evidencePrompt = input.evidenceBased
-        ? "DİKKAT KANITA DAYALI İÇERİK: Üreteceğin bu içerikte mutlaka gerçek fizyoterapi literatüründen, Cochrane derleme veya JOSPT gibi popüler tıbbi makalelerden referanslar ver. 'Kaynaklar' başlığı altında metnin sonunda alıntıları (yazar, yıl, dergi) listele. Asla uydurma (hallucination) bilgi verme."
+        ? "!!! KRİTİK: KANITA DAYALILIK (RAG) MODU AKTİF !!! Metnin içine mutlaka (Örn: Smith et al., 2023) şeklinde gerçek literatür atıfları ekle. En sona 'Klinik Referanslar' başlığı aç ve detaylı kaynakçayı listele. Asla hayal ürünü tıbbi bilgi verme."
         : "";
 
     const prompt = `
-${voice}
-${keywords}
-KONU: "${input.topic}"
-TON: ${tone}
-FORMAT: ${input.postFormat ?? "post"}
+[MARKA SESİ]: ${voice || "Profesyonel Klinik Otorite"}
+[MARKA ANAHTAR KELİME]: ${keywords || "Sağlık, Bilim, Rehabilitasyon"}
+[HEDEF KİTLE]: ${audience}
+[ESTETİK]: ${style}
+[TON]: ${tone}
+[FORMAT]: ${input.postFormat?.toUpperCase() || "POST"}
+
+[ANA GÖREV]: "${input.topic}" konusunu yukarıdaki parametrelerle %100 uyumlu, elit bir fizyoterapi içeriğine dönüştür.
+
+[FORMAT ÖZEL TALİMATI]:
+${formatInstruction}
+
 ${evidencePrompt}
 
-STRATEJİK DİREKTİFLER:
-1. GÖRSEL DİL: ${style} (Bu estetik algıyı kelimelerle betimle).
-2. HEDEF KİTLE: ${audience} (Segmentasyona uygun hitabet ve kelime dağarcığı kullan).
-3. CTA: İçeriğin sonuna profesyonel bir randevu veya bilgi alma çağrısı ekle.
-4. FORMAT TALİMATI: ${formatInstruction}
+[JSON ÇIKTI KURALLARI]:
+1. "title": Maksimum 55 karakter, tıklama odaklı (clickbait değil, stratejik).
+2. "content": Yukarıdaki format talimatına TAM UYGUN, zengin HTML etiketli metin.
+3. "hashtags": Konuyla ilgili 25 adet, stratejik hashtag.
 
-Lütfen aşağıdaki JSON formatında, hatasız yanıt ver:
-{
-  "title": "Stratejik Başlık (max 55 karakter)",
-  "content": "Buraya içerik metnini yazın",
-  "hashtags": "25 adet hashtag"
-}
-`;
+Lütfen sadece JSON formatında yanıt ver. Gereksiz giriş/çıkış metni ekleme.`;
 
     let text: string = "";
     let success = false;
