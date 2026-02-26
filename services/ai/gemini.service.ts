@@ -202,80 +202,72 @@ Bu komuttan içerik üretim parametreleri çıkar ve aşağıdaki JSON formatın
     return result.response.text();
 }
 
-export async function optimizePhysioPrompt(topic: string): Promise<string> {
-    console.log("[GEMINI/OPTIMIZE] Başlatıldı. Konu:", topic);
+export async function optimizePhysioPrompt(
+    topic: string,
+    context?: { platform?: string; postFormat?: string; settings?: FormatSettings }
+): Promise<string> {
+    console.log("[GEMINI/OPTIMIZE] Başlatıldı. Bağlam:", { topic, ...context });
     const genAI = getGeminiClient();
     if (!genAI) return topic;
 
     const safetySettings = SAFETY_SETTINGS;
-    const modelsToTry = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"];
+    const modelsToTry = ["gemini-1.5-pro", "gemini-1.5-flash"];
     let resultText = topic;
     let success = false;
 
-    // Uzmanlaşmış, Düşünce Zinciri (Chain of Thought - CoT) destekli Prompt Mühendisliği
     for (const modelId of modelsToTry) {
         try {
-            console.log(`[GEMINI/OPTIMIZE] Stage 1 deneniyor: ${modelId}`);
+            console.log(`[GEMINI/OPTIMIZE] Derin Mod Deneniyor: ${modelId}`);
             const model = genAI.getGenerativeModel({
                 model: modelId,
                 safetySettings,
                 generationConfig: {
-                    temperature: 0.8, // Daha tutarlı yapı için biraz düşürüldü
+                    temperature: 0.9,
                     topP: 1,
-                    maxOutputTokens: 600,
-                    responseMimeType: "application/json" // Çıktıyı kesin garantiye al
+                    maxOutputTokens: 1000,
+                    responseMimeType: "application/json"
                 },
-                systemInstruction: `Sen dünyanın en inovatif fizyoterapi ve sağlık içerik stratejistisin. 
-Kullanıcının verdiği basit kelimeyi veya fikri, tam teşekküllü ve derinlikli bir içerik projesine ('prompt'a) çevirmelisin.
+                systemInstruction: `Sen dünyanın en kıdemli Fizyoterapi Klinik Şefi ve Sağlık İçerik Stratejistisin. 
+Görevin: Kullanıcının girdiği kısıtlı "Konu" bilgisini alıp, onu seçilen platformun ve formatın ruhuna uygun, tıbbi derinliği olan, hastada güven uyandıran ve MUTLAKA aksiyon aldıran (conversion-focused) devasa bir içeriğe/senaryoya dönüştürmektir.
 
-DÜŞÜNCE ZİNCİRİ (Chain of Thought):
-1. [Agresif/Gerçekçi Problem]: Hastanın bu konuda yaşadığı asıl zorluk nedir? (Örn: "Sırt ağrısından uyuyamamak")
-2. [Bilimsel/Anatomik Neden]: Bu sorunun arkasında hangi biyomekanik veya fizyolojik gerçek var? (Örn: "Postürel kas zayıflığı")
-3. [Eyleme Dönük Çözüm]: Fizyoterapi kliniği burada nasıl nokta atışı bir çözüm sunar? (Örn: "3 adımlı postür düzeltici manipülasyon")
+DERİN ANALİZ VE MUHAKEME PROTOKOLÜ (ozel):
+1. [KLİNİK ANALİZ]: Bu konunun (örn: ${topic}) arkasındaki anatomik zinciri düşün. Pelvik instabilite mi? Fasiyal gerginlik mi? Bunu açıkça tanımla.
+2. [HEDEF KİTLE PSİKOLOJİSİ]: ${context?.settings?.targetAudience || "Genel"} kitle bu sorunu neden yaşıyor? Gece uyuyamıyor mu? Çocuğunu kucağına alamıyor mu? Duygusal kancayı buraya tak.
+3. [FORMAT OPTİMİZASYONU]: Seçilen format ${context?.postFormat || "post"} ise içeriği ona göre yapılandır. 
+   - Carousel ise: En az 6 sayfalık, merak uyandıran bir akış planla.
+   - Video (Reels/TikTok) ise: İlk 3 saniyede "Hook" (Kanca) atacak, profesyonel bir senaryo taslağı oluştur.
+4. [STRATEJİK GENİŞLETME]: Kullanıcının yazdığı metni asla aynen bırakma. En az %300 daha zengin, daha tıbbi ve daha profesyonel bir hale getir.
 
-KESİN KURALLAR:
-1. Girdi metnini kopyalama, doğrudan genişlet.
-2. Anlatımı 3. tekil şahıs yerine, doğrudan bir senaryo veya manifesto gibi yaz.
-3. Çıktıyı SADECE JSON olarak dön.`
+ÇIKTI KURALLARI:
+- Asla "İşte sizin için bir içerik..." gibi girişler yapma. Doğrudan optimize edilmiş profesyonel metni döndür.
+- Sadece Türkçe kullan.
+- JSON formatında yanıt ver.`
             });
 
-            const prompt = `Girdi Fikri: "${topic}"
+            const prompt = `
+KONU: "${topic}"
+PLATFORM: ${context?.platform || "sosyal medya"}
+FORMAT: ${context?.postFormat || "post"}
+HEDEF KİTLE: ${context?.settings?.targetAudience || "genel"}
 
-Lütfen bu fikri al ve aşağıdaki JSON formatına birebir uyan, 2-3 paragraflık etkileyici bir metne dönüştür:
+Lütfen bu verileri kullanarak, ${topic} konusunu devrimsel bir fizyoterapi içeriğine dönüştür. Metin o kadar derin ve ikna edici olmalı ki, okuyan kişi kliniğe gelme ihtiyacı hissetmeli.
+
 {
-  "optimized_prompt": "Buraya minimum 100 kelimelik, güçlü kancası (hook) olan, anatomik bilgiler içeren ve hastayı kliniğe davet eden büyüleyici metni yaz."
+  "optimized_prompt": "Buraya en az 150-200 kelimelik, bölümlere ayrılmış (Merak Uyandırıcı Kanca, Tıbbi Analiz, Pratik Çözüm, Profesyonel Çağrı), anatomik terimleri profesyonelce kullanan zengin metni yaz."
 }`;
 
             const result = await model.generateContent(prompt);
             const text = result.response.text().trim();
+            const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+            const parsed = JSON.parse(jsonStr);
 
-            // JSON ayrıştırma güvenliği
-            const parsed = JSON.parse(text.replace(/```json\n?/g, "").replace(/```\n?/g, ""));
-
-            if (parsed.optimized_prompt && parsed.optimized_prompt.length > topic.length + 10) {
-                console.log(`[GEMINI/OPTIMIZE] Stage 1 başarılı. Uzunluk: ${parsed.optimized_prompt.length}`);
+            if (parsed.optimized_prompt) {
                 resultText = parsed.optimized_prompt;
                 success = true;
                 break;
             }
         } catch (err: any) {
-            console.warn(`[GEMINI/OPTIMIZE] Stage 1 (${modelId}) hatası:`, err.message);
-        }
-    }
-
-    // Stage 2: Prompt Engineering Fallback
-    if (!success) {
-        try {
-            console.log("[GEMINI/OPTIMIZE] Stage 2 (Backup) başlatıldı.");
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", safetySettings });
-            const prompt = `Kullanıcının girdiği şu basit konuyu, profesyonel bir sağlık iletişimcisi gibi ele al ve onu detaylı, tıbbi ama anlaşılır, 3 farklı perspektifle (anatomik, psikolojik ve pratik çözüm) genişleterek tek bir zengin bağlam paragrafına çevir. Eski metni tekrar etme! Fikir: "${topic}"`;
-            const result = await model.generateContent(prompt);
-            const text = result.response.text().trim();
-            if (text && text.length > topic.length) {
-                resultText = text;
-            }
-        } catch (err: any) {
-            console.error("[GEMINI/OPTIMIZE] Stage 2 başarısız:", err.message);
+            console.warn(`[GEMINI/OPTIMIZE] Hata (${modelId}):`, err.message);
         }
     }
 

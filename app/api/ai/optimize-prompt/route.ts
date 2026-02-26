@@ -11,14 +11,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
         }
 
-        const { topic } = await req.json();
-        console.log("[API/OPTIMIZE] Gelen konu:", topic);
+        const { topic, platform, postFormat, settings } = await req.json();
+        console.log("[API/OPTIMIZE] Gelen bağlam:", { topic, platform, postFormat });
         if (!topic) {
             return NextResponse.json({ error: "Konu gereklidir" }, { status: 400 });
         }
 
-        const optimized = await optimizePhysioPrompt(topic);
-        console.log("[API/OPTIMIZE] Optimize edilmiş sonuç:", optimized);
+        const optimized = await optimizePhysioPrompt(topic, { platform, postFormat, settings });
+        console.log("[API/OPTIMIZE] Derin sonuç üretildi.");
         return NextResponse.json({ optimized });
     } catch (error: any) {
         console.error("[API] Optimize Prompt Hatası:", error);
