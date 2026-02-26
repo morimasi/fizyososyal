@@ -98,12 +98,13 @@ STRATEJİK DİREKTİFLER:
 1. GÖRSEL DİL: ${style} (Bu estetik algıyı kelimelerle betimle).
 2. HEDEF KİTLE: ${audience} (Segmentasyona uygun hitabet ve kelime dağarcığı kullan).
 3. CTA: İçeriğin sonuna profesyonel bir randevu veya bilgi alma çağrısı ekle.
+4. FORMAT TALİMATI: ${formatInstruction}
 
 Lütfen aşağıdaki JSON formatında, hatasız yanıt ver:
 {
-  "title": "Stratejik Başlık (max 55 karakter, merak uyandırıcı)",
-  "content": ${formatInstruction},
-  "hashtags": "Maksimum etkileşim için seçilmiş 20-25 adet spesifik hashtag"
+  "title": "Stratejik Başlık (max 55 karakter)",
+  "content": "Buraya içerik metnini yazın",
+  "hashtags": "25 adet hashtag"
 }
 `;
 
@@ -118,6 +119,10 @@ Lütfen aşağıdaki JSON formatında, hatasız yanıt ver:
                 model: modelId,
                 systemInstruction: PHYSIO_SYSTEM_PROMPT,
                 safetySettings: SAFETY_SETTINGS,
+                generationConfig: {
+                    temperature: 0.8,
+                    responseMimeType: "application/json"
+                }
             });
 
             const result = await model.generateContent(prompt);

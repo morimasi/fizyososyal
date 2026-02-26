@@ -94,6 +94,10 @@ export default function StudioPage() {
                     settings: formatSettings
                 }),
             });
+            if (!textRes.ok) {
+                const errorData = await textRes.json();
+                throw new Error(errorData.details || errorData.error || "Metin üretilemedi");
+            }
             const textData = await textRes.json();
 
             const mediaRes = await fetch("/api/ai/generate-media", {
@@ -105,19 +109,27 @@ export default function StudioPage() {
                     quality: selectedModel === "gemini-pro" ? "high" : "standard"
                 }),
             });
-            const mediaData = await mediaRes.json();
+
+            let mediaUrl = "";
+            if (mediaRes.ok) {
+                const mediaData = await mediaRes.json();
+                mediaUrl = mediaData.mediaUrl;
+            } else {
+                console.warn("[STUDIO] Görsel üretimi başarısız oldu, metin ile devam ediliyor.");
+            }
 
             setGeneratedPost({
-                title: textData.title,
-                content: textData.content,
-                hashtags: textData.hashtags,
-                mediaUrl: mediaData.mediaUrl,
+                title: textData.title || "Yeni İçerik",
+                content: textData.content || "İçerik üretilemedi.",
+                hashtags: textData.hashtags || "",
+                mediaUrl: mediaUrl,
                 postFormat: postFormat,
                 platform: platform,
                 settings: formatSettings
             });
-        } catch (err) {
+        } catch (err: any) {
             console.error("Üretim hatası:", err);
+            alert(`Üretim hatası: ${err.message}`);
         } finally {
             setIsGenerating(false);
         }
