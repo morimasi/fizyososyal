@@ -4,13 +4,18 @@ import { FormatSettings } from "@/types/studio";
 import { env } from "@/lib/env";
 import { redis } from "@/lib/upstash";
 
-const PHYSIO_SYSTEM_PROMPT = `Sen dünyanın en iyi fizyoterapi kliniği içerik ekibisin. Şu 4 uzman kimliğiyle hareket et:
-1. Kıdemli Fizyoterapist: Tıbbi doğruluk ve hasta güvenliğinden sorumlu.
-2. Kreatif Grafik Tasarımcı: Görsel hiyerarşi ve estetikten sorumlu.
-3. Dijital Reklamcı (Copywriter): Dönüşüm oranı (conversion) ve ilgi çekici metinlerden sorumlu.
-4. Sanat Danışmanı: Renk uyumu, kompozisyon ve marka prestijinden sorumlu.
+const PHYSIO_SYSTEM_PROMPT = `Sen dünyanın en seçkin fizyoterapi kliniği içerik strateji kurulunusun. Şu 4 Senior uzman kimliğiyle mutlak uyum içinde hareket et:
 
-Tıbbi terimleri hasta dostu dile çevirirken reklamcı kimliğinle merak uyandır, tasarımcı kimliğinle görsel yapıyı (HTML tagları ile) kurgula. Türkçe yaz. Empati kur. Motivasyonel ol.`;
+1. Senior Klinik Fizyoterapi Direktörü: İçeriğin anatomik ve tıbbi doğruluğunu kontrol eder. Kanıta dayalı (Evidence-Based) bilgiyi garanti altına alır.
+2. Psikolojik Rehabilitasyon Uzmanı: Hastanın kaygılarını anlar, motivasyonel ve güven verici bir dil (Bedside Manner) kullanır.
+3. Kreatif Sosyal Medya Mühendisi: Görsel hiyerarşiyi, trendleri ve platform algoritmalarını optimize eder.
+4. Profesyonel Metin Yazarı (Expert Copywriter): Dikkat çekici kancalar (Hooks), akıcı bir hikayeleştirme (Storytelling) ve eyleme çağrı (CTA) kısımlarını kurgular.
+
+TEMEL PRENSİPLER:
+- Anatomik Terimler: Doğru kullan ama halkın anlayacağı metaforlarla destekle.
+- Görsel Yapı: Metni bloklara böl, liste işaretleri ve emojilerle zenginleştir.
+- Marka Prestiji: Asla ucuz sloganlar kullanma. Premium, bilimsel ve güvene dayalı bir otorite inşa et.
+- Çıktı: Sadece Türkçe yaz. Profesyonel ama samimi bir ton kullan.`;
 
 const getGeminiClient = () => {
     const apiKey = env.GEMINI_API_KEY;
@@ -84,21 +89,21 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     const prompt = `
 ${voice}
 ${keywords}
-Konu: "${input.topic}"
-Ton: ${tone}
-Format: ${input.postFormat ?? "post"}
+KONU: "${input.topic}"
+TON: ${tone}
+FORMAT: ${input.postFormat ?? "post"}
 ${evidencePrompt}
 
-Ek Direktifler:
-1. Görsel Stil: ${style} (Bu stili yansıtacak kelimeler seç).
-2. Hedef Kitle: ${audience} (Bu kitleye uygun bir dil ve hitabet kullan).
-3. Sanat Danışmanı Notu: İçerik premium ve prestijli hissettirmeli.
+STRATEJİK DİREKTİFLER:
+1. GÖRSEL DİL: ${style} (Bu estetik algıyı kelimelerle betimle).
+2. HEDEF KİTLE: ${audience} (Segmentasyona uygun hitabet ve kelime dağarcığı kullan).
+3. CTA: İçeriğin sonuna profesyonel bir randevu veya bilgi alma çağrısı ekle.
 
-Lütfen aşağıdaki JSON formatında yanıt ver:
+Lütfen aşağıdaki JSON formatında, hatasız yanıt ver:
 {
-  "title": "Başlık (max 60 karakter)",
+  "title": "Stratejik Başlık (max 55 karakter, merak uyandırıcı)",
   "content": ${formatInstruction},
-  "hashtags": "25 adet sektörel hashtag (# ile başlayan, aralarında boşluk)"
+  "hashtags": "Maksimum etkileşim için seçilmiş 20-25 adet spesifik hashtag"
 }
 `;
 
