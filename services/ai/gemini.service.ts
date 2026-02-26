@@ -310,25 +310,33 @@ export async function getDashboardInsights(stats: any, brandData?: { voice?: str
         const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
             safetySettings: SAFETY_SETTINGS,
+            generationConfig: {
+                temperature: 0.7,
+                responseMimeType: "application/json"
+            },
             systemInstruction: `Sen dünyanın en iyi dijital sağlık stratejisti ve fizyoterapi trend analistisin. 
 Görevin: Kullanıcının kliniğine ait verileri ve marka kimliğini analiz ederek, ona sosyal medyada en yüksek etkileşimi getirecek 3 adet nokta atışı içerik fikri (trend) sunmaktır.
 
 ANALİZ KRİTERLERİ:
 1. Marka Sesi: ${brandData?.voice || "Profesyonel ve Güven Verici"}
-2. Anahtar Kelimeler: ${brandData?.keywords?.join(", ") || "Fizyoterapi, Sağlık"}
-3. Klinik İstatistikleri: ${JSON.stringify(stats)}
+2. Anahtar Kelimeler: ${brandData?.keywords?.join(", ") || "Fizyoterapi, Sağlık, Egzersiz, İyileşme"}
+3. Klinik İstatistikleri (Toplam Erişim, Etkileşimler vb.): ${JSON.stringify(stats)}
 
 ÇIKTI FORMATI (KESİN JSON):
-Üreteceğin trendler şu yapıda olmalı:
-- id: string
-- title: Çarpıcı başlık (max 40 karakter)
-- subtitle: Trendin durumu (Örn: "Yüksek Etkileşim Potansiyeli")
-- description: Neden bu içeriği paylaşmalı? (max 100 karakter)
-- tag: Kategori (Örn: "Egzersiz" veya "Eğitici")
-- score: 0-100 arası başarı tahmin puanı (number)
-- strategy: Bu fikri nasıl hayata geçirmeli? (Örn: "Reels videosu çek", "Carousel hazırla")
-
-Lütfen sadece JSON dön.`,
+Şu JSON şemasına tamamen uyan bir obje döndür:
+{
+  "trends": [
+    {
+      "id": "1",
+      "title": "Kısa ve çarpıcı içerik başlığı (max 50 karakter)",
+      "subtitle": "Durum etiketi (Örn: 'En Çok Etkileşim Alan')",
+      "description": "Neden bu içeriği paylaşmalı? Mevcut istatistiklerle bağ kurarak açıkla (max 100 karakter).",
+      "tag": "Kategori (Örn: 'Biyomekanik' veya 'Rehabilitasyon')",
+      "score": 95,
+      "strategy": "Kısa ve net eyleme geçirici taktik (Örn: '15 saniyelik Reels çek')"
+    }
+  ]
+}`
         });
 
         const prompt = `Şu anki gerçek zamanlı verilere dayanarak kliniğim için en iyi 3 stratejik içerik fikrini üret.`;
