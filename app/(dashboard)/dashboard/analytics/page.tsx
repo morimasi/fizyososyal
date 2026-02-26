@@ -34,7 +34,11 @@ export default function AnalyticsPage() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        // Grafikler için DOM'un tam yerleşmesini ve animasyonların bitmesini beklemek en güvenli yoldur
+        const timer = setTimeout(() => {
+            setMounted(true);
+        }, 500);
+        return () => clearTimeout(timer);
     }, []);
 
     const stats = [
@@ -93,7 +97,7 @@ export default function AnalyticsPage() {
                                 <Activity className="w-8 h-8 text-slate-700 animate-spin" />
                             </div>
                         ) : (
-                            <ResponsiveContainer width="100%" height="100%" minHeight={300} minWidth={0} debounce={100}>
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                                 <AreaChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorEtkilesim" x1="0" y1="0" x2="0" y2="1">
@@ -132,7 +136,7 @@ export default function AnalyticsPage() {
                             {!mounted ? (
                                 <div className="w-full h-full flex items-center justify-center bg-slate-900/20 rounded-full animate-pulse border-8 border-slate-800/20" />
                             ) : (
-                                <ResponsiveContainer width="100%" height="100%" minHeight={220} minWidth={0} debounce={100}>
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                                     <PieChart>
                                         <Pie
                                             data={themeData}
@@ -180,7 +184,7 @@ export default function AnalyticsPage() {
                         {!mounted ? (
                             <div className="w-full h-full flex items-center justify-center bg-slate-900/20 rounded-xl animate-pulse" />
                         ) : (
-                            <ResponsiveContainer width="100%" height="100%" minHeight={350} minWidth={0} debounce={100}>
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                                 <BarChart
                                     data={competitorData}
                                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
