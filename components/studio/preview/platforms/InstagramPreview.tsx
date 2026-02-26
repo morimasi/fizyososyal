@@ -151,7 +151,7 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post, isDark
                                 <span className="bg-white/10 px-2 py-1 rounded-md flex items-center gap-1">
                                     <Sparkles className="w-3 h-3 text-yellow-400" /> AI ile Üretildi
                                 </span>
-                                <span className="drop-shadow-sm font-medium">{post.hashtags.split(' ')[0]}</span>
+                                <span className="drop-shadow-sm font-medium">{post.hashtags?.split(' ')[0] || "#fizyoterapi"}</span>
                             </div>
                         </div>
                     </div>
