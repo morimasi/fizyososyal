@@ -55,9 +55,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "İçerik gereklidir" }, { status: 400 });
         }
 
+        // 1. Kullanıcının takımını bul
+        const team = await prisma.team.findFirst({
+            where: { ownerId: session.user.id },
+            select: { id: true }
+        });
+
         const post = await prisma.post.create({
             data: {
                 userId: session.user.id,
+                teamId: team?.id || null, // Varsa takıma bağla
                 title: title || null,
                 content,
                 hashtags: hashtags || null,
@@ -80,6 +87,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ post }, { status: 201 });
     } catch (error: any) {
         console.error("[API/POSTS] POST hatası:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: "Post kaydedilirken bir hata oluştu", details: error.message }, { status: 500 });
     }
 }

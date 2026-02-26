@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { generatePostText } from "@/services/ai/gemini.service";
 import type { GenerateTextInput } from "@/types";
 
@@ -8,14 +9,10 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
     try {
-        console.log("[AI-Studio] Metin üretimi API çağrıldı.");
+        console.log("[AI-Studio] Metin üretimi API başlatıldı.");
 
-        const session = await auth().catch(err => {
-            console.error("[AI-Studio] Auth hatası:", err);
-            throw new Error(`Oturum doğrulaması başarısız: ${err.message}`);
-        });
-
-        if (!session?.user) {
+        const session = await auth();
+        if (!session?.user?.id) {
             return NextResponse.json({ error: "Yetkisiz erişim" }, { status: 401 });
         }
 
@@ -24,14 +21,37 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Konu gereklidir" }, { status: 400 });
         }
 
-        const result = await generatePostText(body);
+        // 1. Kullanıcının (Klinik/Takım) marka verilerini çek
+        const team = await prisma.team.findFirst({
+            where: { ownerId: session.user.id },
+            select: {
+                brandVoice: true,
+                brandKeywords: true,
+            },
+        });
+
+        // 2. AI servisine marka verilerini enjekte et
+        const aiInput: GenerateTextInput = {
+            ...body,
+            brandVoice: team?.brandVoice || undefined,
+            brandKeywords: team?.brandKeywords || [],
+        };
+
+        console.log("[AI-Studio] Servis çağrılıyor...");
+        const result = await generatePostText(aiInput);
+
         return NextResponse.json(result);
     } catch (error: any) {
-        console.error("[AI-Studio] KRİTİK HATA (generate-text):", error);
+        console.error("[AI-Studio] KRİTİK HATA (generate-text):", {
+            message: error.message,
+            stack: error.stack,
+            cause: error.cause
+        });
+
         return NextResponse.json({
-            error: "Sistem hatası oluştu",
+            error: "İçerik üretiminde teknik bir sorun oluştu",
             details: error.message || "Bilinmeyen hata",
-            stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+            code: "AI_GENERATION_FAILED"
         }, { status: 500 });
     }
 }

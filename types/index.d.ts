@@ -51,6 +51,7 @@ export interface AnalyticsType {
 export interface GenerateTextInput {
     topic: string;
     brandVoice?: string;
+    brandKeywords?: string[];
     trending?: boolean;
     tone?: "profesyonel" | "samimi" | "eğitici" | "motive edici";
     postType?: "bilgi" | "egzersiz" | "motivasyon" | "hizmet";
