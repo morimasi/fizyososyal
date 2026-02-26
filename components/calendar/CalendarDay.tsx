@@ -13,13 +13,17 @@ interface CalendarDayProps {
     posts: any[];
     isCurrentMonth: boolean;
     onDayClick?: (date: Date) => void;
+    onPublishPost?: (postId: string) => void;
+    onDeletePost?: (postId: string) => void;
 }
 
 export const CalendarDay: React.FC<CalendarDayProps> = ({
     date,
     posts,
     isCurrentMonth,
-    onDayClick
+    onDayClick,
+    onPublishPost,
+    onDeletePost,
 }) => {
     const { isOver, setNodeRef } = useDroppable({
         id: date.toISOString(),
@@ -28,7 +32,7 @@ export const CalendarDay: React.FC<CalendarDayProps> = ({
 
     const dayOfWeek = getDay(date);
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    const isBestTime = dayOfWeek === 2 || dayOfWeek === 4; // Tuesdays & Thursdays logic
+    const isBestTime = dayOfWeek === 2 || dayOfWeek === 4;
 
     return (
         <div
@@ -63,7 +67,10 @@ export const CalendarDay: React.FC<CalendarDayProps> = ({
                             <Sparkles className="w-3 h-3 text-rose-400" />
                         </div>
                     )}
-                    <button className="opacity-0 group-hover:opacity-100 p-1 rounded-md bg-white/5 text-slate-500 hover:text-white transition-all">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); window.location.href = "/dashboard/studio"; }}
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded-md bg-white/5 text-slate-500 hover:text-white transition-all"
+                    >
                         <Plus className="w-3 h-3" />
                     </button>
                 </div>
@@ -71,11 +78,15 @@ export const CalendarDay: React.FC<CalendarDayProps> = ({
 
             <div className="space-y-2 relative z-10">
                 {posts.map(post => (
-                    <CalendarPostCard key={post.id} post={post} />
+                    <CalendarPostCard
+                        key={post.id}
+                        post={post}
+                        onPublish={onPublishPost}
+                        onDelete={onDeletePost}
+                    />
                 ))}
             </div>
 
-            {/* Empty State Hint */}
             {isCurrentMonth && posts.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     <span className="text-[10px] uppercase tracking-tighter font-bold text-slate-600">

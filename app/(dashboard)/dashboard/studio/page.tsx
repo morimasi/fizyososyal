@@ -36,6 +36,8 @@ export default function StudioPage() {
     const [userRole, setUserRole] = useState<UserRole>("EDITOR");
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const [mounted, setMounted] = useState(false);
+    const [savedPostId, setSavedPostId] = useState<string | null>(null);
+    const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
     useEffect(() => {
         setMounted(true);
@@ -156,6 +158,124 @@ export default function StudioPage() {
         }
     };
 
+    const handleSave = async () => {
+        if (!generatedPost) return;
+        setSaveStatus("saving");
+        try {
+            const res = await fetch("/api/posts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: generatedPost.title,
+                    content: generatedPost.content,
+                    hashtags: generatedPost.hashtags,
+                    mediaUrl: generatedPost.mediaUrl,
+                    postFormat,
+                    platform,
+                }),
+            });
+            if (!res.ok) throw new Error("Kaydetme hatası");
+            const data = await res.json();
+            setSavedPostId(data.post.id);
+            setSaveStatus("saved");
+            setLastSaved(new Date());
+        } catch (err) {
+            console.error("[STUDIO] Kaydetme hatası:", err);
+            setSaveStatus("error");
+            setTimeout(() => setSaveStatus("idle"), 3000);
+        }
+    };
+
+    const handlePublishNow = async () => {
+        if (!generatedPost) return;
+        // Önce kaydetmemişse kaydet
+        let postId = savedPostId;
+        if (!postId) {
+            setSaveStatus("saving");
+            try {
+                const res = await fetch("/api/posts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: generatedPost.title,
+                        content: generatedPost.content,
+                        hashtags: generatedPost.hashtags,
+                        mediaUrl: generatedPost.mediaUrl,
+                        postFormat,
+                        platform,
+                    }),
+                });
+                if (!res.ok) throw new Error("Kaydetme hatası");
+                const data = await res.json();
+                postId = data.post.id;
+                setSavedPostId(postId);
+                setSaveStatus("saved");
+            } catch (err) {
+                console.error("[STUDIO] Kaydetme hatası:", err);
+                setSaveStatus("error");
+                return;
+            }
+        }
+        // Yayınla
+        try {
+            const res = await fetch(`/api/posts/${postId}/publish`, { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            alert(data.message);
+        } catch (err: any) {
+            console.error("[STUDIO] Yayınlama hatası:", err);
+            alert(`Yayınlama hatası: ${err.message}`);
+        }
+    };
+
+    const handleSchedulePost = async (scheduledDate: Date) => {
+        if (!generatedPost) return;
+        // Önce kaydetmemişse kaydet
+        let postId = savedPostId;
+        if (!postId) {
+            setSaveStatus("saving");
+            try {
+                const res = await fetch("/api/posts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        title: generatedPost.title,
+                        content: generatedPost.content,
+                        hashtags: generatedPost.hashtags,
+                        mediaUrl: generatedPost.mediaUrl,
+                        postFormat,
+                        platform,
+                        scheduledDate: scheduledDate.toISOString(),
+                    }),
+                });
+                if (!res.ok) throw new Error("Kaydetme hatası");
+                const data = await res.json();
+                postId = data.post.id;
+                setSavedPostId(postId);
+                setSaveStatus("saved");
+            } catch (err) {
+                console.error("[STUDIO] Kaydetme hatası:", err);
+                setSaveStatus("error");
+                return;
+            }
+        } else {
+            // Mevcut postu zamanla
+            try {
+                const res = await fetch(`/api/posts/${postId}/schedule`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ scheduledDate: scheduledDate.toISOString() }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                alert(data.message);
+            } catch (err: any) {
+                console.error("[STUDIO] Zamanlama hatası:", err);
+                alert(`Zamanlama hatası: ${err.message}`);
+            }
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
@@ -268,6 +388,11 @@ export default function StudioPage() {
                     generatedPost={generatedPost}
                     isGenerating={isGenerating}
                     userRole={userRole}
+                    onSave={handleSave}
+                    onPublishNow={handlePublishNow}
+                    onSchedule={handleSchedulePost}
+                    saveStatus={saveStatus}
+                    isSaved={!!savedPostId}
                 />
             </div>
         </div>

@@ -11,11 +11,13 @@ import {
     Settings,
     LogOut,
     Activity,
+    FileText,
 } from "lucide-react";
 
 const navItems = [
     { name: "Genel Bakış", href: "/dashboard", icon: LayoutDashboard },
     { name: "AI Stüdyo", href: "/dashboard/studio", icon: Wand2 },
+    { name: "Postlarım", href: "/dashboard/posts", icon: FileText },
     { name: "İçerik Takvimi", href: "/dashboard/calendar", icon: CalendarDays },
     { name: "Analitik", href: "/dashboard/analytics", icon: BarChart3 },
     { name: "Ayarlar", href: "/dashboard/settings", icon: Settings },

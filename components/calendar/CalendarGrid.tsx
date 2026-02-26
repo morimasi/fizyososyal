@@ -11,6 +11,8 @@ interface CalendarGridProps {
     currentDate: Date;
     onDragEnd: (event: DragEndEvent) => void;
     onDayClick?: (date: Date) => void;
+    onPublishPost?: (postId: string) => void;
+    onDeletePost?: (postId: string) => void;
 }
 
 export const CalendarGrid: React.FC<CalendarGridProps> = ({
@@ -18,7 +20,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     posts,
     currentDate,
     onDragEnd,
-    onDayClick
+    onDayClick,
+    onPublishPost,
+    onDeletePost,
 }) => {
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -58,6 +62,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                                 posts={dayPosts}
                                 isCurrentMonth={date.getMonth() === currentDate.getMonth()}
                                 onDayClick={onDayClick}
+                                onPublishPost={onPublishPost}
+                                onDeletePost={onDeletePost}
                             />
                         );
                     })}

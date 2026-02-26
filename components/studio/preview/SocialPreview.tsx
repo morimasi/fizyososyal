@@ -22,12 +22,22 @@ interface SocialPreviewProps {
     } | null;
     isGenerating: boolean;
     userRole: "ADMIN" | "EDITOR" | "APPROVER";
+    onSave?: () => Promise<void>;
+    onPublishNow?: () => Promise<void>;
+    onSchedule?: (date: Date) => Promise<void>;
+    saveStatus?: "idle" | "saving" | "saved" | "error";
+    isSaved?: boolean;
 }
 
 export const SocialPreview: React.FC<SocialPreviewProps> = ({
     generatedPost,
     isGenerating,
-    userRole
+    userRole,
+    onSave,
+    onPublishNow,
+    onSchedule,
+    saveStatus = "idle",
+    isSaved = false,
 }) => {
     const [isDarkMode, setIsDarkMode] = useState(true);
     const [zoom, setZoom] = useState(1);
@@ -198,10 +208,14 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
                         <PreviewActions
                             platform={generatedPost.platform}
                             userRole={userRole}
-                            onPublish={handlePublish}
+                            onPublish={onPublishNow || handlePublish}
                             onDownload={handleDownload}
+                            onSave={onSave}
+                            onSchedule={onSchedule}
                             isProcessing={isProcessing}
                             previewMode={previewMode}
+                            saveStatus={saveStatus}
+                            isSaved={isSaved}
                         />
                     </div>
                 )}
