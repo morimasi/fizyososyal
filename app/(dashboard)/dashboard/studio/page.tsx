@@ -71,12 +71,12 @@ export default function StudioPage() {
         return () => clearTimeout(timeout);
     }, [topic, generatedPost, platform, postFormat, selectedModel, formatSettings, applyLogo]);
 
-    // Voice integration
+    // Voice integration - Only update if voice result is truly new/changed by user voice action
     useEffect(() => {
-        if (result?.topic && result.topic !== topic && !isGenerating) {
+        if (result?.topic && result.topic !== topic && isListening === false && !isGenerating) {
             setTopic(result.topic);
         }
-    }, [result, topic, isGenerating]);
+    }, [result, isListening, isGenerating]);
 
     const handleGenerate = async () => {
         if (!topic.trim()) return;

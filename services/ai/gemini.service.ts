@@ -239,7 +239,7 @@ export async function optimizePhysioPrompt(
     if (!genAI) return topic;
 
     const safetySettings = SAFETY_SETTINGS;
-    const modelsToTry = ["gemini-3.1-pro-preview", "gemini-2.0-flash", "gemini-1.5-pro-latest"];
+    const modelsToTry = ["gemini-3.1-pro-preview", "gemini-2.0-flash", "gemini-1.5-pro-latest", "gemini-1.5-flash-latest"];
     let resultText = topic;
     let success = false;
 
