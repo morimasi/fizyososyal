@@ -89,6 +89,7 @@ export default function StudioPage() {
         setGeneratedPost(null);
 
         try {
+            // 1. Metin ve Strateji Üretimi (Gemini)
             const textRes = await fetch("/api/ai/generate-text", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -101,45 +102,53 @@ export default function StudioPage() {
                     settings: formatSettings
                 }),
             });
-            if (!textRes.ok) {
-                const contentType = textRes.headers.get("content-type");
-                if (contentType && contentType.includes("application/json")) {
-                    const errorData = await textRes.json();
-                    throw new Error(errorData.details || errorData.error || "Metin üretilemedi");
-                } else {
-                    const errorText = await textRes.text();
-                    console.error("[STUDIO] Sunucu Hatası (Non-JSON):", errorText);
-                    throw new Error(`Sunucu yanıt vermiyor (504/Timeout). Lütfen birazdan tekrar deneyin veya daha kısa bir konu girin.`);
-                }
-            }
+
+            if (!textRes.ok) throw new Error("Metin üretilemedi");
             const textData = await textRes.json();
 
+            // 2. Görsel Üretim Hazırlığı (Prompts)
+            let mediaUrl = "";
+            let mediaUrls: string[] = [];
+            const isCarousel = postFormat === "carousel" && textData.slides?.length > 0;
+
+            const mediaBody: any = {
+                aspectRatio: postFormat === "video" ? "9:16" : "1:1",
+                applyLogo,
+            };
+
+            if (isCarousel) {
+                // Her slaytın kendi visualPrompt'unu kullan
+                mediaBody.prompts = textData.slides.map((s: any) => s.visualPrompt || textData.visualPrompt || textData.title);
+            } else {
+                mediaBody.prompt = textData.visualPrompt || textData.title || topic;
+            }
+
+            // 3. Görsel Üretimi (Nanobanana Batch/Single)
             const mediaRes = await fetch("/api/ai/generate-media", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    prompt: textData.title || topic,
-                    aspectRatio: postFormat === "video" ? "9:16" : "1:1",
-                    quality: selectedModel === "gemini-1.5-pro-latest" ? "high" : "standard",
-                    applyLogo: applyLogo
-                }),
+                body: JSON.stringify(mediaBody),
             });
 
-            let mediaUrl = "";
             if (mediaRes.ok) {
                 const mediaData = await mediaRes.json();
-                mediaUrl = mediaData.mediaUrl;
-            } else {
-                console.warn("[STUDIO] Görsel üretimi başarısız oldu, metin ile devam ediliyor.");
+                if (isCarousel) {
+                    mediaUrls = mediaData.mediaUrls || [];
+                } else {
+                    mediaUrl = mediaData.mediaUrl;
+                }
             }
 
+            // 4. State Güncelleme
             setGeneratedPost({
                 title: textData.title || "Yeni İçerik",
                 content: textData.content || "İçerik üretilemedi.",
                 hashtags: textData.hashtags || "",
                 mediaUrl: mediaUrl,
-                postFormat: postFormat,
-                platform: platform,
+                mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+                slides: textData.slides || undefined,
+                postFormat,
+                platform,
                 settings: formatSettings
             });
         } catch (err: any) {

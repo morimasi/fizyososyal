@@ -10,11 +10,19 @@ export interface FormatSettings {
     targetAudience?: "athletes" | "elderly" | "office-workers" | "recovery" | "general";
 }
 
+export interface GeneratedSlide {
+    text: string;
+    mediaUrl?: string;
+    visualPrompt?: string;
+}
+
 export interface GeneratedPost {
     title: string;
     content: string;
     hashtags: string;
     mediaUrl?: string;
+    mediaUrls?: string[]; // Çoklu görseller (Carousel vb.) için
+    slides?: GeneratedSlide[]; // Yapısal slayt içeriği
     postFormat: PostFormat;
     platform: Platform;
     settings?: FormatSettings;

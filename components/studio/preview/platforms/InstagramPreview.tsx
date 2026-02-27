@@ -8,6 +8,8 @@ interface InstagramPreviewProps {
         content: string;
         hashtags: string;
         mediaUrl?: string;
+        mediaUrls?: string[]; // Çoklu görseller (Carousel vb.) için
+        slides?: any[]; // Yapısal slayt içeriği
         postFormat: "post" | "carousel" | "video" | "ad";
     };
     isDarkMode?: boolean;
@@ -21,7 +23,11 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post, isDark
     const isVideo = post.postFormat === "video";
     const isAd = post.postFormat === "ad";
     const isCarousel = post.postFormat === "carousel";
-    const totalSlides = 5; // Simulating 5 slides for carousel
+
+    // Gerçek veri varsa onu kullan, yoksa fallback simülasyonu
+    const totalSlides = isCarousel ? (post.mediaUrls?.length || post.slides?.length || 5) : 1;
+    const currentMediaUrl = isCarousel && post.mediaUrls ? post.mediaUrls[currentSlide - 1] : post.mediaUrl;
+    const currentSlideContent = isCarousel && post.slides ? post.slides[currentSlide - 1]?.text : post.content;
 
     // Video progress sim
     useEffect(() => {
@@ -72,16 +78,16 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post, isDark
                     {post.mediaUrl ? (
                         <div className="w-full h-full relative transition-all duration-500 ease-in-out">
                             <img
-                                src={post.mediaUrl}
-                                alt="AI Preview"
+                                src={currentMediaUrl}
+                                alt={`Slide ${currentSlide}`}
                                 className={cn(
                                     "w-full h-full object-cover transition-transform duration-700",
                                     isVideo && !isPlaying ? "scale-105 blur-[2px]" : "scale-100"
                                 )}
                             />
                             {/* Carousel Overlay */}
-                            {isCarousel && (
-                                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-2 flex justify-between opacity-0 group-hover/media:opacity-100 transition-opacity">
+                            {isCarousel && totalSlides > 1 && (
+                                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-2 flex justify-between opacity-0 group-hover/media:opacity-100 transition-opacity z-50">
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setCurrentSlide(prev => Math.max(1, prev - 1)) }}
                                         className="p-1.5 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 transition-colors"
@@ -189,7 +195,7 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post, isDark
                         <div className="mt-1 flex flex-col gap-1.5">
                             <p className="text-sm leading-relaxed">
                                 <span className="font-bold mr-2 text-blue-400">klinic_fizyo</span>
-                                <span className="opacity-90 leading-relaxed" dangerouslySetInnerHTML={{ __html: cleanClinicContent(post.content) }} />
+                                <span className="opacity-90 leading-relaxed" dangerouslySetInnerHTML={{ __html: cleanClinicContent(currentSlideContent) }} />
                             </p>
                             <p className="text-xs text-blue-500 font-bold tracking-tight">{post.hashtags}</p>
                         </div>

@@ -75,43 +75,41 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
 
     let formatInstruction = "";
     if (input.postFormat === "carousel") {
-        const slides = settings?.slideCount || 6;
+        const slidesCount = settings?.slideCount || 6;
         formatInstruction = `BU BİR MULTIMODAL CAROUSEL (KAYDIRMALI) STRATEJİSİDİR. 
-        - Tam ${slides} sayfalık bir "Görsel Hikaye" oluştur.
-        - Her sayfa için: 
-          <b>Sayfa [No]: [Görsel Vurgu Başlığı]</b>
-          [GÖRSEL ANALİZ]: Sayfada olması gereken görsel kompozisyonu (Kadraj, Işık, Renk Paleti) betimle.
-          [METİN]: Hastanın duygu durumuna hitap eden, teknik derinliği olan metin.
-          [DİNAMİK]: Sayfalar arası geçişi sağlayacak merak unsuru.
-        - İlk sayfa (Hook - Slide 1) "Pattern Interrupt" etkisi yaratmalı.
-        - Son sayfa (CTA) mutlak randevu dönüşümü kurgulamalı.`;
+        - Tam ${slidesCount} sayfalık bir "Görsel Hikaye" oluştur.
+        - ÇIKTI: Mutlaka "slides" adında bir array döndür. 
+        - Her slayt objesi şu alanları içermeli: 
+          - "text": Teknik derinliği olan, merak uyandıran metin.
+          - "visualPrompt": O slayt için Nanobanana'ya gönderilecek spesifik görsel betimleme (Detaylı, ışık ve kadraj içeren İngilizce prompt).
+          - "goal": Bu slaytın psikolojik amacı (Örn: Hook, Problem, Solution, CTA).
+        - İlk slayt (Hook) "Pattern Interrupt" etkisi yaratmalı.
+        - Son slayt (CTA) mutlak randevu dönüşümü kurgulamalı.`;
     } else if (input.postFormat === "video") {
         const videoStyle = settings?.videoStyle || "informational";
-        formatInstruction = `BU BİR MULTIMODAL VİDEO/REELS SENARYOSU ÜRETİMİDİR. (${videoStyle.toUpperCase()})
+        formatInstruction = `BU BİR ULTRA-PROFESYONEL VİDEO/REELS SENARYOSU VE GÖRSEL KURGUSUDUR. (${videoStyle.toUpperCase()})
         - Sahne sahne "Multimodal Yönetmen" gözüyle tasarla.
-        - Her sahne için:
-          <b>Zaman [Saniye]: [Eylem Başlığı]</b>
-          [KAMERA]: (Close-up, Wide, Handheld vb.) teknik detay ver.
-          [IŞIKLANDIRMA]: (Cinematic, Clinical, Warm vb.) atmosferi belirle.
-          [SES]: (Background Music türü, SFX - örn: kemik kütlemesi sesi) ekle.
-          [METİN/VO]: Akıcı, profesyonel klinik seslendirme metni.
-        - Video, izleyiciyi 1. saniyede yakalayıp son saniyede CTA'ya götüren bir hiyerarşide olmalı.`;
+        - "content" alanı içinde profesyonel bir senaryo (VO + Eylem) sun.
+        - "visualPrompt" alanı için Nanobanana'ya uygun, kinetik hareket içeren cinematic bir görsel direktif hazırla.
+        - Kamera hareketlerini (Zoom-in, Pan, Tilt) metin içinde betimle.`;
     } else if (input.postFormat === "ad") {
-        formatInstruction = `BU BİR MULTIMODAL REKLAM (AD) KAMPANYASI METNİDİR.
-        - Görsel Hiyerarşi (F-Pattern) odaklı bir yapı kur.
-        - [GÖRSEL STRATEJİ]: Reklam görselinde/videosunda olması gereken "Psikolojik Tetikleyiciler"i anlat.
-        - Metni <strong> ve HTML etiketleriyle "Tarama Odaklı" (Scannable) hale getir.
-        - AIDA modelini agresif kullan. Hastanın "Çözülmemiş Ağrısı"na odaklan.
-        - Randevu (Conversion) odaklı, reddedilemez bir teklif kurgula.`;
+        formatInstruction = `BU BİR YÜKSEK DÖNÜŞÜMLÜ REKLAM (AD) KAMPANYASI METNİDİR.
+        - Mutlaka AIDA (Attention, Interest, Desire, Action) modelini kullan.
+        - "content" alanı içinde: 
+          - [HOOK]: Dikkat çekici ilk cümle.
+          - [BODY]: Problemi deşen ve çözümü sunan tıbbi kanıtlı metin.
+          - [OFFER]: Reddedilemez teklif.
+          - [CTA]: Net eylem çağrısı.
+        - "visualPrompt" alanı Nanobanana için "High-End Commercial Photography" tarzında olmalı.`;
     } else {
         formatInstruction = `BU STANDART BİR MULTIMODAL POST GÖNDERİSİDİR.
         - [KOMPOZİSYON]: Görselde bulunması gereken klinik estetiği ve odak noktasını betimle.
         - Metni 250-400 kelime arası, derinlemesine, tıbbi terminolojisi yüksek ancak anlaşılır şekilde yaz.
-        - Hashtag ve Emojileri stratejik olarak yerleştir.`;
+        - "visualPrompt" alanı için Nanobanana'ya uygun profesyonel klinik görseli promptu hazırla.`;
     }
 
     const evidencePrompt = input.evidenceBased
-        ? "!!! KRİTİK: KANITA DAYALILIK (RAG) MODU AKTİF !!! Metnin içine mutlaka (Örn: Smith et al., 2023) şeklinde gerçek literatür atıfları ekle. En sona 'Klinik Referanslar' başlığı aç ve detaylı kaynakçayı listele. Asla hayal ürünü tıbbi bilgi verme."
+        ? "!!! KRİTİK: KANITA DAYALILIK (RAG) MODU AKTİF !!! Metnin içine mutlaka gerçek literatür atıfları ekle. Asla hayal ürünü tıbbi bilgi verme."
         : "";
 
     const prompt = `
@@ -130,11 +128,13 @@ ${formatInstruction}
 ${evidencePrompt}
 
 [JSON ÇIKTI KURALLARI]:
-1. "title": Maksimum 55 karakter, tıklama odaklı (clickbait değil, stratejik).
-2. "content": Yukarıdaki format talimatına TAM UYGUN, zengin HTML etiketli metin.
-3. "hashtags": Konuyla ilgili 25 adet, stratejik hashtag.
+1. "title": Maksimum 55 karakter, stratejik başlık.
+2. "content": Format talimatına uygun zengin metin.
+3. "visualPrompt": Nanobanana servisi için üretilecek ana görselin detaylı İNGİLİZCE promptu.
+4. "slides": (Sadece Carousel için) Yukarıdaki slayt yapısına uygun array.
+5. "hashtags": 25 adet stratejik hashtag.
 
-Lütfen sadece JSON formatında yanıt ver. Gereksiz giriş/çıkış metni ekleme.`;
+Lütfen sadece JSON formatında yanıt ver.`;
 
     let text: string = "";
     let success = false;
