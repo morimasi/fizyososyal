@@ -39,6 +39,8 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     content: string;
     hashtags: string;
     title: string;
+    visualPrompt?: string;
+    slides?: any[];
 }> {
     console.log("[GEMINI] İstek alındı:", { topic: input.topic, model: input.model });
 
@@ -194,6 +196,9 @@ Lütfen sadece JSON formatında yanıt ver.`;
                 parsed = parsed[0];
             }
 
+            // Güvenli okuma felsefesi
+            if (!parsed) throw new Error("Ayrıştırılan JSON boş (null).");
+
             // İçerik temizleme: Önizlemede kirlilik yaratan objeleri temizle
             let cleanContent = parsed.content || text;
 
@@ -206,6 +211,8 @@ Lütfen sadece JSON formatında yanıt ver.`;
                 title: parsed.title || parsed.header || "Fizyoterapi İçeriği",
                 content: cleanContent,
                 hashtags: parsed.hashtags || parsed.tags || "#fizyoterapi #sağlık",
+                visualPrompt: parsed.visualPrompt || parsed.visual_prompt,
+                slides: Array.isArray(parsed.slides) ? parsed.slides : undefined
             };
         } catch (jsonErr: any) {
             console.warn("[GEMINI] JSON ayrıştırma hatası, manuel yapı sökümü deneniyor.");
