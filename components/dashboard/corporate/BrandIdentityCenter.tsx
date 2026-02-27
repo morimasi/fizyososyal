@@ -68,10 +68,33 @@ export function BrandIdentityCenter() {
         );
     };
 
-    const handleAIAnalyze = () => {
+    const handleAIAnalyze = async () => {
         setIsAnalyzing(true);
-        // İleride Gemini AI ile otomatik marka kişiliği analizi eklenecek
-        setTimeout(() => setIsAnalyzing(false), 2000);
+        console.log("[BRAND] AI Marka Mimarı analizi başlatılıyor...");
+        try {
+            const res = await fetch("/api/ai/analyze-brand", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.details || "AI analizi başarısız oldu.");
+            }
+
+            const data = await res.json();
+            if (data.success && data.suggestion) {
+                setBrandVoice(data.suggestion.brandVoice);
+                setBrandKeywords(data.suggestion.brandKeywords);
+                console.log("[BRAND] AI Analizi başarılı:", data.suggestion);
+                // Burada bir başarı bildirimi veya animasyon tetiklenebilir
+            }
+        } catch (err: any) {
+            console.error("[BRAND] AI Analiz hatası:", err.message);
+            alert(`AI Analiz Hatası: ${err.message}`);
+        } finally {
+            setIsAnalyzing(false);
+        }
     };
 
     return (

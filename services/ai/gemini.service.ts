@@ -499,3 +499,51 @@ Lütfen JSON dön: { "title": "...", "description": "..." }`;
         return fallback;
     }
 }
+
+export async function analyzeClinicBrand(clinicData: {
+    name: string | null;
+    address: string | null;
+    website: string | null;
+    posts?: any[];
+}): Promise<{ brandVoice: string; brandKeywords: string[] }> {
+    const fallback = {
+        brandVoice: "Klinik olarak hastalarımıza profesyonel ve empatik bir yaklaşım sergiliyoruz.",
+        brandKeywords: ["Profesyonel", "Empatik", "Güvenilir"]
+    };
+
+    const genAI = getGeminiClient();
+    if (!genAI) return fallback;
+
+    try {
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-pro",
+            safetySettings: SAFETY_SETTINGS,
+            generationConfig: {
+                temperature: 0.8,
+                responseMimeType: "application/json"
+            },
+            systemInstruction: `Sen dünyanın en iyi marka mimarı ve sağlık sektörü pazarlama uzmanısın. 
+Görevin: Bir fizyoterapi kliniğinin verilerini analiz ederek, ona eşsiz bir "Marka Sesi" (Brand Voice) ve "Marka Anahtar Kelimeleri" (Brand Keywords) oluşturmaktır.
+
+Analiz edilecek veriler:
+- Klinik Adı: ${clinicData.name || "Bilinmiyor"}
+- Adres: ${clinicData.address || "Bilinmiyor"}
+- Web Sitesi: ${clinicData.website || "Bilinmiyor"}
+- Son İçerikleri: ${clinicData.posts?.map(p => p.title).join(", ") || "Henüz içerik yok"}
+
+ÇIKTI KURALLARI:
+1. "brandVoice": Markanın karakterini anlatan, 2-3 cümlelik derinlikli bir açıklama.
+2. "brandKeywords": Markayı en iyi temsil eden 6 adet tek kelimelik etiket (Örn: "Dinamik", "Akademik", "Sıcak").
+3. Dil kesinlikle Türkçe olmalı.`,
+        });
+
+        const prompt = `Lütfen bu verilere dayanarak kliniğimin marka kimliğini 'ozel' modda kurgula.`;
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim();
+        const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        return JSON.parse(jsonStr);
+    } catch (error) {
+        console.error("[GEMINI/BRAND] Analiz hatası:", error);
+        return fallback;
+    }
+}
