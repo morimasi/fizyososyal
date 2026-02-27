@@ -57,8 +57,14 @@ export async function POST(req: Request) {
       remainingCredits: user.aiCredits - 1
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("API AI Error:", error);
-    return NextResponse.json({ error: "Sunucu hatası" }, { status: 500 });
+    return NextResponse.json(
+      { 
+        error: "Sunucu hatası", 
+        message: error.message || "Bilinmeyen bir hata oluştu" 
+      }, 
+      { status: 500 }
+    );
   }
 }
