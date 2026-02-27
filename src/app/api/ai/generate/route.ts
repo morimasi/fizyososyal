@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const { prompt, type } = await req.json();
+    const { prompt, type, tone, language } = await req.json();
 
     if (!prompt) {
       return NextResponse.json({ error: "Prompt gerekli" }, { status: 400 });
@@ -44,7 +44,12 @@ export async function POST(req: Request) {
     }
 
     // İçeriği üret
-    const content = await generateContent(prompt, type);
+    const content = await generateContent({ 
+      userPrompt: prompt, 
+      type: type || "post", 
+      tone: tone || "professional", 
+      language: language || "tr" 
+    });
 
     // Krediyi düş
     await db.update(users)
