@@ -1,6 +1,6 @@
 import React from "react";
 import { MessageCircle, Share2, Globe, ThumbsUp, Repeat, Send, MoreHorizontal, UserPlus, ShieldCheck, Heart, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, cleanClinicContent } from "@/lib/utils";
 
 interface LinkedInPreviewProps {
     post: {
@@ -61,7 +61,7 @@ export const LinkedInPreview: React.FC<LinkedInPreviewProps> = ({ post, isDarkMo
             <div className="px-4 py-2 space-y-3">
                 <div
                     className="text-[14px] leading-[1.6] font-medium tracking-tight whitespace-pre-wrap selection:bg-blue-600/30 line-clamp-6"
-                    dangerouslySetInnerHTML={{ __html: post.content }}
+                    dangerouslySetInnerHTML={{ __html: cleanClinicContent(post.content) }}
                 />
                 <div className="flex flex-wrap gap-2 pt-1">
                     {post.hashtags.split(' ').map((tag, idx) => (

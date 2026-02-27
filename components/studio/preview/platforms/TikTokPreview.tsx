@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Heart, MessageCircle, Share2, Bookmark, Music2, Plus, Play, Sparkles, Volume2, ShieldCheck } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, cleanClinicContent } from "@/lib/utils";
 
 interface TikTokPreviewProps {
     post: {
@@ -143,7 +143,7 @@ export const TikTokPreview: React.FC<TikTokPreviewProps> = ({ post }) => {
                 <div className="relative">
                     <div
                         className="text-[14px] leading-snug drop-shadow-lg font-medium opacity-95 text-white/90 line-clamp-3"
-                        dangerouslySetInnerHTML={{ __html: post.content }}
+                        dangerouslySetInnerHTML={{ __html: cleanClinicContent(post.content) }}
                     />
                     <div className="flex flex-wrap gap-2 mt-2">
                         {post.hashtags.split(' ').map((tag, idx) => (

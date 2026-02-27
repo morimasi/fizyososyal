@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Heart, Share2, Video, Instagram, MessageCircle, Bookmark, MoreHorizontal, ChevronLeft, ChevronRight, Play, Pause, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, cleanClinicContent } from "@/lib/utils";
 
 interface InstagramPreviewProps {
     post: {
@@ -146,7 +146,7 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post, isDark
                                 <span className="font-bold text-sm shadow-sm">@klinic_fizyo</span>
                                 <button className="text-[10px] font-bold border border-white/60 px-2 py-1 rounded-lg backdrop-blur-sm hover:bg-white/10 transition-colors">Takip Et</button>
                             </div>
-                            <div className="text-sm line-clamp-2 drop-shadow-md font-medium" dangerouslySetInnerHTML={{ __html: post.content }} />
+                            <div className="text-sm line-clamp-2 drop-shadow-md font-medium" dangerouslySetInnerHTML={{ __html: cleanClinicContent(post.content) }} />
                             <div className="flex items-center gap-2 text-xs font-bold text-white opacity-90">
                                 <span className="bg-white/10 px-2 py-1 rounded-md flex items-center gap-1">
                                     <Sparkles className="w-3 h-3 text-yellow-400" /> AI ile Üretildi
@@ -189,7 +189,7 @@ export const InstagramPreview: React.FC<InstagramPreviewProps> = ({ post, isDark
                         <div className="mt-1 flex flex-col gap-1.5">
                             <p className="text-sm leading-relaxed">
                                 <span className="font-bold mr-2 text-blue-400">klinic_fizyo</span>
-                                <span className="opacity-90 leading-relaxed" dangerouslySetInnerHTML={{ __html: post.content }} />
+                                <span className="opacity-90 leading-relaxed" dangerouslySetInnerHTML={{ __html: cleanClinicContent(post.content) }} />
                             </p>
                             <p className="text-xs text-blue-500 font-bold tracking-tight">{post.hashtags}</p>
                         </div>

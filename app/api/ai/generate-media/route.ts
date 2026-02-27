@@ -25,19 +25,33 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Prompt gereklidir" }, { status: 400 });
         }
 
-        let mediaUrl = await generatePhysioImage(body);
+        console.log("[AI-Studio] Görsel üretimi API çağrıldı (Prompt: %s)", body.prompt.substring(0, 50) + "...");
 
-        // Kullanıcının logosu varsa watermark ekle
-        if (body.applyLogo) {
-            const user = await prisma.user.findUnique({
-                where: { id: session.user.id }
-            }).catch(err => {
-                console.error("[AI-Studio] Database hatası (User/Logo):", err);
-                return null; // Don't crash for logo
-            });
+        let mediaUrl = "";
+        try {
+            mediaUrl = await generatePhysioImage(body);
+        } catch (imgErr: any) {
+            console.error("[AI-Studio] Nanobanana üretim hatası:", imgErr.message);
+            return NextResponse.json({
+                error: "Görsel üretim servisi şu an yanıt vermiyor.",
+                details: imgErr.message
+            }, { status: 503 });
+        }
 
-            if (user?.logoUrl) {
-                mediaUrl = await addLogoWatermark(mediaUrl, user.logoUrl);
+        // Kullanıcının logosu varsa watermark ekle - Sessiz hata modu
+        if (body.applyLogo && mediaUrl) {
+            try {
+                const user = await prisma.user.findUnique({
+                    where: { id: session.user.id }
+                });
+
+                if (user?.logoUrl) {
+                    const watermarked = await addLogoWatermark(mediaUrl, user.logoUrl);
+                    if (watermarked) mediaUrl = watermarked;
+                }
+            } catch (logoErr: any) {
+                console.warn("[AI-Studio] Logo watermark eklenemedi (Sessiz Hata):", logoErr.message);
+                // Orijinal görselle devam et
             }
         }
 

@@ -181,19 +181,46 @@ Lütfen sadece JSON formatında yanıt ver. Gereksiz giriş/çıkış metni ekle
         const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
 
         try {
-            console.log("[GEMINI] JSON ayrıştırılıyor...");
-            const parsed = JSON.parse(jsonStr);
+            console.log("[GEMINI] JSON hiyerarşisi ayrıştırılıyor...");
+            let parsed = JSON.parse(jsonStr);
+
+            // Eğer yanıt bir dizi ise (bazı modeller hiyerarşik dizi dönebiliyor), ilk öğeyi al
+            if (Array.isArray(parsed)) {
+                parsed = parsed[0];
+            }
+
+            // İçerik temizleme: Önizlemede kirlilik yaratan objeleri temizle
+            let cleanContent = parsed.content || text;
+
+            // Eğer content bir obje olarak geldiyse (nadir ama mümkün), stringe çevir
+            if (typeof cleanContent === "object") {
+                cleanContent = JSON.stringify(cleanContent);
+            }
+
             return {
-                title: parsed.title ?? "Fizyoterapi İçeriği",
-                content: parsed.content ?? text,
-                hashtags: parsed.hashtags ?? "#fizyoterapi #physiotherapy #sağlık",
+                title: parsed.title || parsed.header || "Fizyoterapi İçeriği",
+                content: cleanContent,
+                hashtags: parsed.hashtags || parsed.tags || "#fizyoterapi #sağlık",
             };
         } catch (jsonErr: any) {
-            console.warn("[GEMINI] JSON ayrıştırma hatası, ham metin dönülüyor:", jsonErr.message);
+            console.warn("[GEMINI] JSON ayrıştırma hatası, manuel yapı sökümü deneniyor.");
+
+            // Manuel fall-back: Regex ile title, content ve hashtags yakalamaya çalış
+            const titleMatch = text.match(/"title":\s*"([^"]+)"/);
+            const contentMatch = text.match(/"content":\s*"((?:[^"\\]|\\.)*)"/);
+
+            if (titleMatch || contentMatch) {
+                return {
+                    title: titleMatch ? titleMatch[1] : input.topic,
+                    content: contentMatch ? contentMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"') : text,
+                    hashtags: "#fizyoterapi #sağlık"
+                };
+            }
+
             return {
                 title: input.topic,
                 content: text,
-                hashtags: "#fizyoterapi #physiotherapy #sağlık #egzersiz #rehabilitasyon",
+                hashtags: "#fizyoterapi #sağlık #egzersiz",
             };
         }
     } catch (apiErr: any) {

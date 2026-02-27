@@ -38,3 +38,23 @@ export function formatNumber(num: number): string {
     if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
     return num.toString();
 }
+
+/**
+ * AI tarafından üretilen teknik multimodal blokları temizleyen ve metni 
+ * önizleme için uygun hale getiren klinik filtre.
+ */
+export function cleanClinicContent(text: string): string {
+    if (!text) return "";
+
+    // 1. [GÖRSEL ANALİZ] bloklarını tamamen kaldır (İçsel notlar)
+    let cleaned = text.replace(/\[GÖRSEL ANALİZ\]:?[\s\S]*?(?=\[METİN\]|Sayfa \d+|$)/gi, "");
+
+    // 2. [METİN]: etiketlerini kaldır ama içeriği koru
+    cleaned = cleaned.replace(/\[METİN\]:?\s*/gi, "");
+
+    // 3. [DİNAMİK]: etiketlerini interaktif sembollerle değiştir veya temizle
+    cleaned = cleaned.replace(/\[DİNAMİK\]:?\s*/gi, "✨ ");
+
+    // 4. Gereksiz boşlukları temizle
+    return cleaned.trim();
+}
