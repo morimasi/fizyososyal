@@ -97,8 +97,15 @@ export default function StudioPage() {
                 }),
             });
             if (!textRes.ok) {
-                const errorData = await textRes.json();
-                throw new Error(errorData.details || errorData.error || "Metin üretilemedi");
+                const contentType = textRes.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const errorData = await textRes.json();
+                    throw new Error(errorData.details || errorData.error || "Metin üretilemedi");
+                } else {
+                    const errorText = await textRes.text();
+                    console.error("[STUDIO] Sunucu Hatası (Non-JSON):", errorText);
+                    throw new Error(`Sunucu yanıt vermiyor (504/Timeout). Lütfen birazdan tekrar deneyin veya daha kısa bir konu girin.`);
+                }
             }
             const textData = await textRes.json();
 

@@ -51,10 +51,10 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
         };
     }
 
-    // Frontier Model Transition: Using Gemini 3.1 Pro Preview (Frontier Multimodal Authority)
+    // Frontier Transition: Reduced fallback list to prevent 504 Gateway Timeouts
     const modelsToTry = input.model === "gemini-3.1-pro-preview"
-        ? ["gemini-3.1-pro-preview", "gemini-1.5-pro-latest", "gemini-2.0-flash"]
-        : ["gemini-3.1-pro-preview", "gemini-2.0-flash", "gemini-1.5-pro-latest"];
+        ? ["gemini-3.1-pro-preview", "gemini-2.0-flash"]
+        : ["gemini-2.0-flash", "gemini-1.5-pro-latest"];
 
     const toneMap = {
         profesyonel: "resmi ve güven verici",
