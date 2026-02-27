@@ -334,23 +334,6 @@ export default function StudioPage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 p-1.5 bg-slate-900/50 border border-white/5 rounded-xl self-start">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase px-2">Simülasyon Rolü:</span>
-                        {(["EDITOR", "APPROVER", "ADMIN"] as UserRole[]).map((r) => (
-                            <button
-                                key={r}
-                                onClick={() => setUserRole(r)}
-                                className={cn(
-                                    "px-3 py-1 rounded-lg text-[10px] font-bold transition-all border",
-                                    userRole === r
-                                        ? "bg-violet-600 text-white border-violet-500"
-                                        : "text-slate-500 border-transparent hover:text-white"
-                                )}
-                            >
-                                {r}
-                            </button>
-                        ))}
-                    </div>
                 </div>
                 <p className="text-slate-400 mt-2">Voice Chat veya metin ile saniyeler içinde post üretin.</p>
             </div>
@@ -474,6 +457,6 @@ export default function StudioPage() {
                     isSaved={!!savedPostId}
                 />
             </div>
-        </div >
+        </div>
     );
 }
