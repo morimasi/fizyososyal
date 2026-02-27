@@ -1,5 +1,5 @@
 import React from "react";
-import { Zap, BrainCircuit } from "lucide-react";
+import { Zap, BrainCircuit, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AIModel } from "@/types/studio";
 
@@ -10,8 +10,9 @@ interface ModelSelectorProps {
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onSelect }) => {
     const models = [
-        { id: "gemini-2.0-flash" as const, label: "2.0 Flash (Hızlı)", icon: Zap, desc: "Ultra-Hızlı & Multimodal" },
-        { id: "gemini-1.5-pro-latest" as const, label: "1.5 Pro (Derin)", icon: BrainCircuit, desc: "Derin Klinik Analiz" },
+        { id: "gemini-3.1-pro-preview" as const, label: "3.1 Pro (Frontier)", icon: Sparkles, desc: "Multimodal Zeka & En Güçlü" },
+        { id: "gemini-2.0-flash" as const, label: "2.0 Flash (Hızlı)", icon: Zap, desc: "Hız & Verimlilik" },
+        { id: "gemini-1.5-pro-latest" as const, label: "1.5 Pro (Derin)", icon: BrainCircuit, desc: "Klinik Analiz" },
     ];
 
     return (

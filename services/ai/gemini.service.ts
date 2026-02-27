@@ -51,10 +51,10 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
         };
     }
 
-    // Frontier Model Transition: Using Stable & High-Performance Models
-    const modelsToTry = input.model === "gemini-1.5-pro-latest"
-        ? ["gemini-1.5-pro-latest", "gemini-2.0-flash", "gemini-1.5-flash-latest"]
-        : ["gemini-2.0-flash", "gemini-1.5-pro-latest", "gemini-1.5-flash-latest"];
+    // Frontier Model Transition: Using Gemini 3.1 Pro Preview (Frontier Multimodal Authority)
+    const modelsToTry = input.model === "gemini-3.1-pro-preview"
+        ? ["gemini-3.1-pro-preview", "gemini-1.5-pro-latest", "gemini-2.0-flash"]
+        : ["gemini-3.1-pro-preview", "gemini-2.0-flash", "gemini-1.5-pro-latest"];
 
     const toneMap = {
         profesyonel: "resmi ve güven verici",
@@ -76,28 +76,38 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
     let formatInstruction = "";
     if (input.postFormat === "carousel") {
         const slides = settings?.slideCount || 6;
-        formatInstruction = `BU BİR CAROUSEL (KAYDIRMALI) GÖNDERİDİR. 
-        - Tam ${slides} sayfalık bir akış oluştur.
-        - Her sayfa için: <b>Sayfa [No]: [Dikkat Çekici Başlık]</b><br/>[Metin...]<br/><br/> yapısını kullan.
-        - İlk sayfa güçlü bir "Kanca" (Hook), son sayfa ise "Eyleme Çağrı" (CTA) olmalıdır. 
-        - İçerik, kullanıcının kaydırmasını sağlayacak bir hikaye örgüsü izlemelidir.`;
+        formatInstruction = `BU BİR MULTIMODAL CAROUSEL (KAYDIRMALI) STRATEJİSİDİR. 
+        - Tam ${slides} sayfalık bir "Görsel Hikaye" oluştur.
+        - Her sayfa için: 
+          <b>Sayfa [No]: [Görsel Vurgu Başlığı]</b>
+          [GÖRSEL ANALİZ]: Sayfada olması gereken görsel kompozisyonu (Kadraj, Işık, Renk Paleti) betimle.
+          [METİN]: Hastanın duygu durumuna hitap eden, teknik derinliği olan metin.
+          [DİNAMİK]: Sayfalar arası geçişi sağlayacak merak unsuru.
+        - İlk sayfa (Hook - Slide 1) "Pattern Interrupt" etkisi yaratmalı.
+        - Son sayfa (CTA) mutlak randevu dönüşümü kurgulamalı.`;
     } else if (input.postFormat === "video") {
         const videoStyle = settings?.videoStyle || "informational";
-        formatInstruction = `BU BİR REELS/TIKTOK VİDEO SENARYOSUDUR. (${videoStyle.toUpperCase()} tarzında)
-        - Sahne bazlı bir akış yaz.
-        - Yapı: <b>Saniye 0-3 (Hook):</b> [Görüntü + Seslendirme]<br/><b>Saniye 3-15 (Gövde):</b> [Eylem Açıklaması + Metin]<br/><b>Saniye 15-30 (Kapanış):</b> [CTA]<br/>
-        - Seslendirme metni akıcı, enerjik ve fizyoterapist otoritesini yansıtacak şekilde olmalıdır.`;
+        formatInstruction = `BU BİR MULTIMODAL VİDEO/REELS SENARYOSU ÜRETİMİDİR. (${videoStyle.toUpperCase()})
+        - Sahne sahne "Multimodal Yönetmen" gözüyle tasarla.
+        - Her sahne için:
+          <b>Zaman [Saniye]: [Eylem Başlığı]</b>
+          [KAMERA]: (Close-up, Wide, Handheld vb.) teknik detay ver.
+          [IŞIKLANDIRMA]: (Cinematic, Clinical, Warm vb.) atmosferi belirle.
+          [SES]: (Background Music türü, SFX - örn: kemik kütlemesi sesi) ekle.
+          [METİN/VO]: Akıcı, profesyonel klinik seslendirme metni.
+        - Video, izleyiciyi 1. saniyede yakalayıp son saniyede CTA'ya götüren bir hiyerarşide olmalı.`;
     } else if (input.postFormat === "ad") {
-        formatInstruction = `BU BİR REKLAM (AD) GÖNDERİSİDİR. 
-        - AIDA (Attention, Interest, Desire, Action) modelini maksimize et.
-        - HTML <strong> etiketlerini kullanarak hastanın "Acı Noktalarını" (Pain Points) vurgula.
-        - Çok güçlü, net ve reddedilemez bir randevu çağrısı (CTA) oluştur.
-        - Klinik güvenini ve başarısını kanıtlayan bir dil kullan.`;
+        formatInstruction = `BU BİR MULTIMODAL REKLAM (AD) KAMPANYASI METNİDİR.
+        - Görsel Hiyerarşi (F-Pattern) odaklı bir yapı kur.
+        - [GÖRSEL STRATEJİ]: Reklam görselinde/videosunda olması gereken "Psikolojik Tetikleyiciler"i anlat.
+        - Metni <strong> ve HTML etiketleriyle "Tarama Odaklı" (Scannable) hale getir.
+        - AIDA modelini agresif kullan. Hastanın "Çözülmemiş Ağrısı"na odaklan.
+        - Randevu (Conversion) odaklı, reddedilemez bir teklif kurgula.`;
     } else {
-        formatInstruction = `BU STANDART BİR SOSYAL MEDYA GÖNDERİSİDİR (SINGLE POST).
-        - 150-300 kelime arası, zengin, HTML <br/> ile ayrılmış, bol ikonlu ve profesyonel bir metin yaz.
-        - İlk cümle okuyucuyu durduracak kadar keskin olmalıdır.
-        - Bilimsel veriyi günlük dille harmanla.`;
+        formatInstruction = `BU STANDART BİR MULTIMODAL POST GÖNDERİSİDİR.
+        - [KOMPOZİSYON]: Görselde bulunması gereken klinik estetiği ve odak noktasını betimle.
+        - Metni 250-400 kelime arası, derinlemesine, tıbbi terminolojisi yüksek ancak anlaşılır şekilde yaz.
+        - Hashtag ve Emojileri stratejik olarak yerleştir.`;
     }
 
     const evidencePrompt = input.evidenceBased
@@ -229,7 +239,7 @@ export async function optimizePhysioPrompt(
     if (!genAI) return topic;
 
     const safetySettings = SAFETY_SETTINGS;
-    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-pro-latest", "gemini-1.5-flash-latest"];
+    const modelsToTry = ["gemini-3.1-pro-preview", "gemini-2.0-flash", "gemini-1.5-pro-latest"];
     let resultText = topic;
     let success = false;
 

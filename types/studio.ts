@@ -1,7 +1,7 @@
 export type PostFormat = "post" | "carousel" | "video" | "ad";
 export type Platform = "instagram" | "linkedin" | "tiktok";
 export type UserRole = "ADMIN" | "EDITOR" | "APPROVER";
-export type AIModel = "gemini-2.0-flash" | "gemini-1.5-pro-latest";
+export type AIModel = "gemini-3.1-pro-preview" | "gemini-2.0-flash" | "gemini-1.5-pro-latest";
 
 export interface FormatSettings {
     slideCount?: number;
