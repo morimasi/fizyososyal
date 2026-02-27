@@ -22,8 +22,72 @@ Stratejik Kurallar:
 5. GÖRSEL REHBER: Tasarımcıya/AI'ya (Imagen/DALL-E) hitap eden, klinik estetiği yansıtan çok detaylı görsel betimlemeler yap.
 `;
 
+function cleanJSONResponse(text: string): string {
+  let cleaned = text;
+  
+  cleaned = cleaned.replace(/```json\n?/g, "");
+  cleaned = cleaned.replace(/```\n?/g, "");
+  cleaned = cleaned.replace(/^```\w*\n?/g, "");
+  cleaned = cleaned.replace(/\n```$/g, "");
+  
+  cleaned = cleaned.trim();
+  
+  const jsonStart = cleaned.indexOf("{");
+  const jsonEnd = cleaned.lastIndexOf("}");
+  
+  if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+    cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+  }
+  
+  cleaned = cleaned.replace(/,\s*}/g, "}");
+  cleaned = cleaned.replace(/,\s*\]/g, "]");
+  
+  return cleaned;
+}
+
+function parseJSONWithFallback(text: string): object {
+  const cleaned = cleanJSONResponse(text);
+  
+  try {
+    return JSON.parse(cleaned);
+  } catch (firstError) {
+    console.log("First JSON parse failed, trying regex extraction");
+    
+    const jsonMatches = text.match(/\{[\s\S]*\}/g);
+    
+    if (jsonMatches) {
+      for (const match of jsonMatches) {
+        try {
+          const cleanedMatch = cleanJSONResponse(match);
+          const parsed = JSON.parse(cleanedMatch);
+          
+          if (parsed.title || parsed.caption || parsed.hook) {
+            return parsed;
+          }
+        } catch {
+          continue;
+        }
+      }
+    }
+    
+    console.error("All JSON parsing attempts failed");
+    
+    return {
+      error: "İçerik yapılandırılırken bir hata oluştu",
+      raw: text.slice(0, 500),
+      parsed: false,
+      title: "İçerik Başlığı",
+      hook: "Bu içerik için fizyoterapi uzmanınızdan randevu alın!",
+      caption: text.slice(0, 500),
+      hashtags: ["#fizyoterapi", "#rehabilitasyon", "#fizik tedavi", "#sağlık"],
+      imageDescription: "Modern bir fizyoterapi kliniği iç mekanı",
+      callToAction: "Detaylı bilgi için DM!"
+    };
+  }
+}
+
 export async function generateContent({ userPrompt, type, tone, language }: GenerateParams) {
-  const model = getModel("gemini-1.5-flash"); // Flash is faster and more widely available
+  const model = getModel("gemini-1.5-flash");
   
   let typeSpecificPrompt = "";
   if (type === "carousel") {
@@ -41,13 +105,14 @@ export async function generateContent({ userPrompt, type, tone, language }: Gene
     Dil: ${language}
     ${typeSpecificPrompt}
     
-    Lütfen yanıtı ŞEKİLLENDİRİLMİŞ JSON formatında döndür:
+    ÖNEMLİ: Yanıtını SADECE ve SADECE geçerli JSON olarak döndür. Başka hiçbir metin yazma.
+    JSON formatı:
     {
       "title": "İçerik Başlığı (Stratejik)",
       "hook": "Dikkat çekici kanca cümlesi",
       "caption": "Instagram Açıklaması (Emoji zengini, paragraflara bölünmüş)",
-      "hashtags": ["#fizyoterapi", "#rehabilitasyon", "... (en az 15 adet)"],
-      "imageDescription": "Görsel üretim modeli için ultra detaylı, ışıklandırma ve kompozisyon içeren prompt",
+      "hashtags": ["#fizyoterapi", "#rehabilitasyon", ...],
+      "imageDescription": "Görsel üretim modeli için ultra detaylı prompt",
       "carouselSlides": [
          {"slide": 1, "text": "Slayt metni", "visual": "Görsel betimleme"},
          {"slide": 2, "text": "...", "visual": "..."}
@@ -56,7 +121,7 @@ export async function generateContent({ userPrompt, type, tone, language }: Gene
          "scene1": {"duration": "0-3s", "action": "...", "voiceover": "..."},
          "scene2": "..."
       },
-      "suggestedMusic": "Spesifik bir trend müzik türü veya ritmi",
+      "suggestedMusic": "Trend müzik önerisi",
       "callToAction": "Etkili bir kapanış cümlesi"
     }
   `;
@@ -65,22 +130,12 @@ export async function generateContent({ userPrompt, type, tone, language }: Gene
   const response = await result.response;
   const text = response.text();
   
-  console.log("AI Raw Response:", text);
+  console.log("AI Raw Response length:", text.length);
 
-  try {
-    const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    return JSON.parse(jsonStr);
-  } catch (error) {
-    console.error("AI JSON Parse Error:", error);
-    // Try to extract JSON if there's text around it
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        return JSON.parse(jsonMatch[0]);
-      } catch (e) {
-        console.error("Second attempt JSON parse failed");
-      }
-    }
-    return { error: "İçerik yapılandırılırken bir hata oluştu.", raw: text };
-  }
+  const parsed = parseJSONWithFallback(text) as Record<string, unknown>;
+  
+  return {
+    ...parsed,
+    parsed: parsed.parsed !== false,
+  };
 }

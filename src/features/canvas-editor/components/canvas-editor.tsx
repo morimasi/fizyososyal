@@ -167,17 +167,34 @@ export function CanvasEditor() {
     if (!canvas) return;
     try {
       const dataURL = canvas.toDataURL({ format: "png", quality: 0.8, multiplier: 1 });
-      const payload = {
-        type: "post",
-        mediaUrl: dataURL.substring(0, 100) + "...", // Placeholder
-        caption: aiContent?.caption || "",
-        settings: canvas.toJSON(),
-        status: "draft"
-      };
+      
+      const blob = await (await fetch(dataURL)).blob();
+      const file = new File([blob], `design-${Date.now()}.png`, { type: "image/png" });
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("filename", file.name);
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      });
+      
+      const uploadData = await uploadRes.json();
+      if (!uploadData.success) {
+        alert("Görsel yüklenemedi: " + (uploadData.error || "Bilinmeyen hata"));
+        return;
+      }
+
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          type: "post",
+          mediaUrl: uploadData.url,
+          caption: aiContent?.caption || "",
+          settings: canvas.toJSON(),
+          status: "draft"
+        })
       });
       const data = await res.json();
       if (data.success) alert("Taslak başarıyla kaydedildi!");
@@ -192,14 +209,31 @@ export function CanvasEditor() {
     if (!confirm("Instagram hesabınızda anında paylaşılacak. Onaylıyor musunuz?")) return;
     try {
       const dataURL = canvas.toDataURL({ format: "png", quality: 0.8, multiplier: 1 });
-      const payload = {
-        imageUrl: dataURL.substring(0, 100) + "...", // Placeholder
-        caption: aiContent?.caption || "Fizyososyal ile oluşturuldu."
-      };
+      
+      const blob = await (await fetch(dataURL)).blob();
+      const file = new File([blob], `publish-${Date.now()}.png`, { type: "image/png" });
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("filename", file.name);
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      });
+      
+      const uploadData = await uploadRes.json();
+      if (!uploadData.success) {
+        alert("Görsel yüklenemedi: " + (uploadData.error || "Bilinmeyen hata"));
+        return;
+      }
+
       const res = await fetch("/api/instagram/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          imageUrl: uploadData.url,
+          caption: aiContent?.caption || "Fizyososyal ile oluşturuldu."
+        })
       });
       const data = await res.json();
       if (data.success) alert("Instagram'da paylaşıldı!");
