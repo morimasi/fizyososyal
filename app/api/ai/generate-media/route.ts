@@ -28,14 +28,37 @@ export async function POST(req: NextRequest) {
         console.log("[AI-Studio] Görsel üretimi API çağrıldı (Prompt: %s)", body.prompt.substring(0, 50) + "...");
 
         let mediaUrl = "";
-        try {
-            mediaUrl = await generatePhysioImage(body);
-        } catch (imgErr: any) {
-            console.error("[AI-Studio] Nanobanana üretim hatası:", imgErr.message);
-            return NextResponse.json({
-                error: "Görsel üretim servisi şu an yanıt vermiyor.",
-                details: imgErr.message
-            }, { status: 503 });
+        let attempt = 1;
+        const maxAttempts = 2;
+
+        while (attempt <= maxAttempts) {
+            try {
+                console.log(`[AI-Studio] Görsel üretimi denemesi ${attempt}/${maxAttempts}`);
+
+                // 2. denemede promptu basitleştir
+                const currentPrompt = attempt === 2
+                    ? `Minimalist physiotherapy style, ${body.prompt.split(',').slice(0, 3).join(',')}`
+                    : body.prompt;
+
+                mediaUrl = await generatePhysioImage({ ...body, prompt: currentPrompt });
+                break; // Başarılıysa döngüden çık
+            } catch (imgErr: any) {
+                console.warn(`[AI-Studio] Deneme ${attempt} hatası:`, imgErr.message);
+
+                if (attempt === maxAttempts) {
+                    console.error("[AI-Studio] Tüm görsel üretim denemeleri başarısız oldu.");
+                    return NextResponse.json({
+                        error: "Görsel üretim servisi şu an yoğun veya yanıt vermiyor.",
+                        details: imgErr.message
+                    }, { status: 503 });
+                }
+
+                // 503/504 ise bir süre bekle ve tekrar dene
+                if (imgErr.message.includes("503") || imgErr.message.includes("504")) {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+                attempt++;
+            }
         }
 
         // Kullanıcının logosu varsa watermark ekle - Sessiz hata modu

@@ -50,9 +50,17 @@ export const PreviewActions: React.FC<PreviewActionsProps> = ({
                 desc: "İçerik yöneticilere iletilecek."
             };
         }
+        if (userRole === "APPROVER") {
+            return {
+                label: "Onayla & Kuyruğa Al",
+                icon: CheckCircle2,
+                bg: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-xl shadow-emerald-500/20",
+                desc: "Klinik doğruluğu onayla ve sıraya ekle."
+            };
+        }
         return {
-            label: "Şimdi Yayınla",
-            icon: Send,
+            label: "Nihai Yayınla",
+            icon: Rocket,
             bg: "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-xl shadow-violet-500/20",
             desc: `İçerik şu an ${platform} üzerinde yayına girecek.`
         };

@@ -15,6 +15,7 @@ import { ModelSelector } from "@/components/studio/ModelSelector";
 import { PlatformSelector } from "@/components/studio/PlatformSelector";
 import { FormatSelector } from "@/components/studio/FormatSelector";
 import { TopicInput } from "@/components/studio/TopicInput";
+import { RoleSelector } from "@/components/studio/RoleSelector";
 import { AIModel, Platform, PostFormat, FormatSettings, GeneratedPost, UserRole } from "@/types/studio";
 
 export default function StudioPage() {
@@ -366,6 +367,12 @@ export default function StudioPage() {
                             onSelect={setSelectedModel}
                         />
 
+                        {/* simulation role choice */}
+                        <RoleSelector
+                            selectedRole={userRole}
+                            onSelect={setUserRole}
+                        />
+
                         {/* 1. Platform Selection */}
                         <PlatformSelector
                             selectedPlatform={platform}
@@ -439,10 +446,18 @@ export default function StudioPage() {
                                 onClick={handleGenerate}
                                 isLoading={isGenerating}
                                 disabled={!topic.trim() || isGenerating}
-                                className="w-full h-14 text-base font-bold shadow-xl shadow-violet-500/10"
+                                className={cn(
+                                    "w-full h-14 text-base font-bold shadow-xl transition-all duration-300",
+                                    userRole === "EDITOR" ? "bg-blue-600 hover:bg-blue-700 shadow-blue-500/10" :
+                                        userRole === "APPROVER" ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10" :
+                                            "bg-violet-600 hover:bg-violet-700 shadow-violet-500/10"
+                                )}
                             >
                                 <Wand2 className="w-5 h-5 mr-3" />
-                                {isGenerating ? "Yapay Zeka İçeriği Üretiyor..." : "Sihri Başlat"}
+                                {isGenerating ? "Yapay Zeka İçeriği Üretiyor..." :
+                                    userRole === "EDITOR" ? "Editör Olarak Hazırla" :
+                                        userRole === "APPROVER" ? "Onay İçin Gözden Geçir" :
+                                            "Yönetici Olarak Yayınla"}
                             </Button>
                         </div>
                     </CardContent>
@@ -459,6 +474,6 @@ export default function StudioPage() {
                     isSaved={!!savedPostId}
                 />
             </div>
-        </div>
+        </div >
     );
 }
