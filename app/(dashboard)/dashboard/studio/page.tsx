@@ -18,7 +18,7 @@ import { TopicInput } from "@/components/studio/TopicInput";
 import { AIModel, Platform, PostFormat, FormatSettings, GeneratedPost, UserRole } from "@/types/studio";
 
 export default function StudioPage() {
-    const { isListening, transcript, result, error, startListening, stopListening } = useVoiceCommand();
+    const { isListening, transcript, result, error: voiceError, startListening, stopListening } = useVoiceCommand();
     const [topic, setTopic] = useState("");
     const [platform, setPlatform] = useState<Platform>("instagram");
     const [postFormat, setPostFormat] = useState<PostFormat>("post");
