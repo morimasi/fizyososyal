@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
         let mediaUrl = "";
         let attempt = 1;
         const maxAttempts = 2;
-        const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1576091160550-217359f41f48?auto=format&fit=crop&w=1000&q=80"; // Profesyonel Klinik Görseli
+        const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?auto=format&fit=crop&w=1000&q=80"; // Doğrulanmış Klinik Görseli
 
         while (attempt <= maxAttempts) {
             try {

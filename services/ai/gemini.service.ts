@@ -183,9 +183,11 @@ Lütfen sadece JSON formatında yanıt ver. Gereksiz giriş/çıkış metni ekle
         try {
             console.log("[GEMINI] JSON hiyerarşisi ayrıştırılıyor...");
             let parsed = JSON.parse(jsonStr);
+            console.log("[GEMINI] Ham veri tipi:", typeof parsed, Array.isArray(parsed) ? "Dizi" : "Obje");
 
-            // Eğer yanıt bir dizi ise (bazı modeller hiyerarşik dizi dönebiliyor), ilk öğeyi al
-            if (Array.isArray(parsed)) {
+            // Derinlemesine dizi açma (Flattening) - Bazı modeller [[{...}]] dönebiliyor
+            while (Array.isArray(parsed) && parsed.length > 0) {
+                console.log("[GEMINI] Bir seviye dizi açıldı.");
                 parsed = parsed[0];
             }
 

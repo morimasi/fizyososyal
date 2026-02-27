@@ -46,15 +46,30 @@ export function formatNumber(num: number): string {
 export function cleanClinicContent(text: string): string {
     if (!text) return "";
 
+    // 0. Eğer metin hala bir JSON kırıntısı taşıyorsa ({ "title" gibi), önünü temizle
+    let cleaned = text.trim();
+    if (cleaned.startsWith("[") || cleaned.startsWith("{")) {
+        // Eğer yanlışlıkla ham JSON gelmişse, içindeki 'content' kısmını bulmaya çalış
+        const contentMatch = cleaned.match(/"content":\s*"((?:[^"\\]|\\.)*)"/);
+        if (contentMatch) {
+            cleaned = contentMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+        }
+    }
+
     // 1. [GÖRSEL ANALİZ] bloklarını tamamen kaldır (İçsel notlar)
-    let cleaned = text.replace(/\[GÖRSEL ANALİZ\]:?[\s\S]*?(?=\[METİN\]|Sayfa \d+|$)/gi, "");
+    cleaned = cleaned.replace(/\[\s*GÖRSEL ANALİZ\s*\]:?[\s\S]*?(?=\[\s*METİN\s*\]|Sayfa \d+|$)/gi, "");
 
     // 2. [METİN]: etiketlerini kaldır ama içeriği koru
-    cleaned = cleaned.replace(/\[METİN\]:?\s*/gi, "");
+    cleaned = cleaned.replace(/\[\s*METİN\s*\]:?\s*/gi, "");
 
     // 3. [DİNAMİK]: etiketlerini interaktif sembollerle değiştir veya temizle
-    cleaned = cleaned.replace(/\[DİNAMİK\]:?\s*/gi, "✨ ");
+    cleaned = cleaned.replace(/\[\s*DİNAMİK\s*\]:?\s*/gi, "✨ ");
 
-    // 4. Gereksiz boşlukları temizle
+    // 4. "Sayfa X:" veya "Slayt X:" gibi yapısal başlıkları profesyonelleştir
+    cleaned = cleaned.replace(/Sayfa \d+:?\s*/gi, "📍 ");
+
+    // 5. Gereksiz tırnak ve kod bloklarını temizle
+    cleaned = cleaned.replace(/["']+/g, "");
+
     return cleaned.trim();
 }
