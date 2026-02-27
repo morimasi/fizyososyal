@@ -12,7 +12,7 @@ export function InstagramConnect() {
   const handleConnect = () => {
     setLoading(true);
     // Gerçek uygulamada Meta Login penceresi açılacak
-    // window.location.href = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${process.env.NEXT_PUBLIC_META_APP_ID}&redirect_uri=${process.env.NEXT_PUBLIC_META_REDIRECT_URI}&scope=instagram_basic,instagram_content_publish,pages_read_engagement`;
+    // window.location.href = `/api/instagram/auth?client_id=${process.env.NEXT_PUBLIC_META_APP_ID}&redirect_uri=${process.env.NEXT_PUBLIC_META_REDIRECT_URI}`;
     
     // Simülasyon
     setTimeout(() => {
