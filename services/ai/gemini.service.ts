@@ -218,12 +218,16 @@ Lütfen sadece JSON formatında yanıt ver.`;
                 slides: Array.isArray(parsed.slides) ? parsed.slides : undefined
             };
         } catch (jsonErr: any) {
-            console.warn("[GEMINI] JSON parse hatası. Ham yanıt:", text.substring(0, 200));
+            console.warn("[GEMINI] JSON parse hatası. Ham yanıt (ilk 200):", text.substring(0, 200));
 
             // Manuel Fallback: Regex ile veri kurtarma
             const titleMatch = text.match(/"title":\s*"([^"]+)"/);
             const contentMatch = text.match(/"content":\s*"((?:[^"\\]|\\.)*)"/);
             const hashtagMatch = text.match(/"hashtags":\s*"([^"]+)"/);
+
+            if (!titleMatch && !contentMatch) {
+                throw new Error(`AI yanıtı JSON değil ve kurtarılamadı. Ham yanıt: ${text.substring(0, 500)}`);
+            }
 
             return {
                 title: titleMatch ? titleMatch[1] : (input.topic || "Fizyoterapi Uzmanlığı"),
@@ -234,11 +238,7 @@ Lütfen sadece JSON formatında yanıt ver.`;
         }
     } catch (finalErr: any) {
         console.error("[GEMINI] KRİTİK İŞLEME HATASI:", finalErr);
-        return {
-            title: input.topic || "Fizyoterapi İçeriği",
-            content: text || "İçerik işlenirken bir hata oluştu.",
-            hashtags: "#fizyoterapi #sağlık"
-        };
+        throw new Error(finalErr.message || "Bilinmeyen AI İşleme Hatası");
     }
 }
 

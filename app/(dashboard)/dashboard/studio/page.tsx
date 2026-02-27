@@ -103,8 +103,10 @@ export default function StudioPage() {
                 }),
             });
 
-            if (!textRes.ok) throw new Error("Metin üretilemedi");
-            const textData = await textRes.json();
+            const textData = await textRes.json().catch(() => ({}));
+            if (!textRes.ok) {
+                throw new Error(textData.details || textData.error || "Metin üretilemedi");
+            }
 
             // 2. Görsel Üretim Hazırlığı (Prompts)
             let mediaUrl = "";
