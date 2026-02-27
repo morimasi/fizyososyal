@@ -87,7 +87,7 @@ function parseJSONWithFallback(text: string): object {
 }
 
 export async function generateContent({ userPrompt, type, tone, language }: GenerateParams) {
-  const model = getModel("gemini-1.5-flash");
+  const model = getModel("gemini-2.0-flash");
   
   let typeSpecificPrompt = "";
   if (type === "carousel") {
