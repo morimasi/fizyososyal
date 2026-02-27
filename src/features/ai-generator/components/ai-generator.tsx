@@ -44,6 +44,9 @@ export function AIGenerator() {
     try {
       const response = await fetch("/api/ai/generate", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ prompt, type: contentType, tone, language }),
       });
       const data = await response.json();

@@ -44,12 +44,28 @@ export async function POST(req: Request) {
     }
 
     // İçeriği üret
-    const content = await generateContent({ 
-      userPrompt: prompt, 
-      type: type || "post", 
-      tone: tone || "professional", 
-      language: language || "tr" 
-    });
+    let content;
+    try {
+      content = await generateContent({ 
+        userPrompt: prompt, 
+        type: type || "post", 
+        tone: tone || "professional", 
+        language: language || "tr" 
+      });
+    } catch (aiError: any) {
+      console.error("Gemini Generation Error:", aiError);
+      return NextResponse.json({ 
+        error: "Yapay zeka içerik üretemedi", 
+        details: aiError.message 
+      }, { status: 500 });
+    }
+
+    if (!content || content.error) {
+      return NextResponse.json({ 
+        error: "AI Yanıt Hatası", 
+        details: content?.error || "AI boş yanıt döndürdü" 
+      }, { status: 500 });
+    }
 
     // Krediyi düş
     await db.update(users)

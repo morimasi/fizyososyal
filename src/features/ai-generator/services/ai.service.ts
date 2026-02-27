@@ -23,7 +23,7 @@ Stratejik Kurallar:
 `;
 
 export async function generateContent({ userPrompt, type, tone, language }: GenerateParams) {
-  const model = getModel("gemini-1.5-pro"); // Daha kaliteli sonuç için Pro kullanıyoruz
+  const model = getModel("gemini-1.5-flash"); // Flash is faster and more widely available
   
   let typeSpecificPrompt = "";
   if (type === "carousel") {
@@ -65,11 +65,22 @@ export async function generateContent({ userPrompt, type, tone, language }: Gene
   const response = await result.response;
   const text = response.text();
   
+  console.log("AI Raw Response:", text);
+
   try {
     const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
     return JSON.parse(jsonStr);
   } catch (error) {
     console.error("AI JSON Parse Error:", error);
+    // Try to extract JSON if there's text around it
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[0]);
+      } catch (e) {
+        console.error("Second attempt JSON parse failed");
+      }
+    }
     return { error: "İçerik yapılandırılırken bir hata oluştu.", raw: text };
   }
 }
