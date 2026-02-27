@@ -51,10 +51,13 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
         };
     }
 
-    // Frontier Transition: Reduced fallback list to prevent 504 Gateway Timeouts
-    const modelsToTry = input.model === "gemini-3.1-pro-preview"
-        ? ["gemini-3.1-pro-preview", "gemini-2.0-flash"]
-        : ["gemini-2.0-flash", "gemini-1.5-pro-latest"];
+    // Speed-First Transition: Prioritize Flash models to avoid Vercel 504 Gateway Timeouts
+    // Flash models are ~10x faster and sufficiently capable for these prompts.
+    const modelsToTry = [
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro-latest"
+    ];
 
     const toneMap = {
         profesyonel: "resmi ve güven verici",
