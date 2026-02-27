@@ -30,39 +30,40 @@ export async function POST(req: NextRequest) {
         let mediaUrl = "";
         let attempt = 1;
         const maxAttempts = 2;
+        const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1576091160550-217359f41f48?auto=format&fit=crop&w=1000&q=80"; // Profesyonel Klinik Görseli
 
         while (attempt <= maxAttempts) {
             try {
-                console.log(`[AI-Studio] Görsel üretimi denemesi ${attempt}/${maxAttempts}`);
+                console.log(`[AI-Studio] Görsel üretimi denemesi ${attempt}/${maxAttempts} (${attempt === 2 ? 'Simplified' : 'Full'})`);
 
-                // 2. denemede promptu basitleştir
-                const currentPrompt = attempt === 2
-                    ? `Minimalist physiotherapy style, ${body.prompt.split(',').slice(0, 3).join(',')}`
-                    : body.prompt;
-
-                mediaUrl = await generatePhysioImage({ ...body, prompt: currentPrompt });
-                break; // Başarılıysa döngüden çık
+                mediaUrl = await generatePhysioImage({
+                    ...body,
+                    simplified: attempt === 2
+                });
+                break;
             } catch (imgErr: any) {
                 console.warn(`[AI-Studio] Deneme ${attempt} hatası:`, imgErr.message);
 
                 if (attempt === maxAttempts) {
-                    console.error("[AI-Studio] Tüm görsel üretim denemeleri başarısız oldu.");
+                    console.error("[AI-Studio] Tüm görsel üretim denemeleri başarısız oldu. Fallback görseline geçiliyor.");
                     return NextResponse.json({
-                        error: "Görsel üretim servisi şu an yoğun veya yanıt vermiyor.",
-                        details: imgErr.message
-                    }, { status: 503 });
+                        mediaUrl: FALLBACK_IMAGE,
+                        aspectRatio: body.aspectRatio,
+                        isFallback: true,
+                        warning: "Görsel üretim servisi yoğun olduğu için standart bir klinik görseli atandı."
+                    });
                 }
 
                 // 503/504 ise bir süre bekle ve tekrar dene
                 if (imgErr.message.includes("503") || imgErr.message.includes("504")) {
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    await new Promise(resolve => setTimeout(resolve, 3000));
                 }
                 attempt++;
             }
         }
 
-        // Kullanıcının logosu varsa watermark ekle - Sessiz hata modu
-        if (body.applyLogo && mediaUrl) {
+        // Kullanıcının logosu varsa watermark ekle - SADECE İLK DENEME BAŞARILIYSA
+        if (body.applyLogo && mediaUrl && attempt === 1) {
             try {
                 const user = await prisma.user.findUnique({
                     where: { id: session.user.id }
@@ -74,7 +75,6 @@ export async function POST(req: NextRequest) {
                 }
             } catch (logoErr: any) {
                 console.warn("[AI-Studio] Logo watermark eklenemedi (Sessiz Hata):", logoErr.message);
-                // Orijinal görselle devam et
             }
         }
 

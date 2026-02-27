@@ -5,15 +5,15 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const API_URL = (env as any).NANOBANANA_API_URL || "https://api.nanobanana.io/v1";
 
-export async function generatePhysioImage(input: GenerateMediaInput): Promise<string> {
+export async function generatePhysioImage(input: GenerateMediaInput & { simplified?: boolean }): Promise<string> {
     const apiKey = env.NANOBANANA_API_KEY;
     if (!apiKey) {
         throw new Error("NANOBANANA_API_KEY eksik. Lütfen yapılandırmayı kontrol edin.");
     }
 
-    const enhancedPrompt = buildPhysioPrompt(input.prompt, input.style);
+    const enhancedPrompt = buildPhysioPrompt(input.prompt, input.style, input.simplified);
 
-    console.log("[NANOBANANA] Görsel üretimi başlatılıyor:", {
+    console.log("[NANOBANANA] Görsel üretimi başlatılıyor (%s):", input.simplified ? "SADELEŞTİRİLMİŞ" : "FULL", {
         promptLength: enhancedPrompt.length,
         aspectRatio: input.aspectRatio
     });
@@ -53,7 +53,11 @@ export async function generatePhysioImage(input: GenerateMediaInput): Promise<st
     }
 }
 
-function buildPhysioPrompt(base: string, style?: string): string {
+function buildPhysioPrompt(base: string, style?: string, simplified?: boolean): string {
+    if (simplified) {
+        return `professional physiotherapy photography, ${base.split(',').slice(0, 2).join(',')}, high resolution, clinical setting`;
+    }
+
     const physioContext =
         "anatomically accurate physiotherapy exercise illustration, " +
         "professional medical setting, clean bright studio, " +
