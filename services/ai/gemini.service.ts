@@ -177,67 +177,68 @@ Lütfen sadece JSON formatında yanıt ver.`;
     }
 
     if (!success) {
-        console.error("[GEMINI] Tüm model denemeleri başarısız oldu.");
         throw lastError || new Error("İçerik üretilemedi, Google API modellerine ulaşılamıyor.");
     }
 
     try {
         console.log("[GEMINI] Yanıt metni uzunluğu:", text.length);
-        const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+        // JSON Temizleme: Markdown bloklarını ve gereksiz boşlukları ayıkla
+        let jsonStr = text;
+        const jsonBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonBlockMatch) {
+            jsonStr = jsonBlockMatch[1];
+        } else {
+            jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+        }
+        jsonStr = jsonStr.trim();
 
         try {
-            console.log("[GEMINI] JSON hiyerarşisi ayrıştırılıyor...");
+            console.log("[GEMINI] JSON ayrıştırılıyor...");
             let parsed = JSON.parse(jsonStr);
-            console.log("[GEMINI] Ham veri tipi:", typeof parsed, Array.isArray(parsed) ? "Dizi" : "Obje");
 
-            // Derinlemesine dizi açma (Flattening) - Bazı modeller [[{...}]] dönebiliyor
+            // Derinlemesine dizi açma (Flattening)
             while (Array.isArray(parsed) && parsed.length > 0) {
-                console.log("[GEMINI] Bir seviye dizi açıldı.");
                 parsed = parsed[0];
             }
 
-            // Güvenli okuma felsefesi
-            if (!parsed) throw new Error("Ayrıştırılan JSON boş (null).");
-
-            // İçerik temizleme: Önizlemede kirlilik yaratan objeleri temizle
-            let cleanContent = parsed.content || text;
-
-            // Eğer content bir obje olarak geldiyse (nadir ama mümkün), stringe çevir
-            if (typeof cleanContent === "object") {
-                cleanContent = JSON.stringify(cleanContent);
+            if (!parsed || typeof parsed !== 'object') {
+                throw new Error("Ayrıştırılan yapı obje değil.");
             }
 
+            // İçerik temizleme
+            let cleanContent = parsed.content || parsed.text || text;
+            if (typeof cleanContent === "object") cleanContent = JSON.stringify(cleanContent);
+
             return {
-                title: parsed.title || parsed.header || "Fizyoterapi İçeriği",
+                title: parsed.title || parsed.header || input.topic || "FizyoSosyal İçeriği",
                 content: cleanContent,
                 hashtags: parsed.hashtags || parsed.tags || "#fizyoterapi #sağlık",
-                visualPrompt: parsed.visualPrompt || parsed.visual_prompt,
+                visualPrompt: parsed.visualPrompt || parsed.visual_prompt || parsed.image_prompt,
                 slides: Array.isArray(parsed.slides) ? parsed.slides : undefined
             };
         } catch (jsonErr: any) {
-            console.warn("[GEMINI] JSON ayrıştırma hatası, manuel yapı sökümü deneniyor.");
+            console.warn("[GEMINI] JSON parse hatası. Ham yanıt:", text.substring(0, 200));
 
-            // Manuel fall-back: Regex ile title, content ve hashtags yakalamaya çalış
+            // Manuel Fallback: Regex ile veri kurtarma
             const titleMatch = text.match(/"title":\s*"([^"]+)"/);
             const contentMatch = text.match(/"content":\s*"((?:[^"\\]|\\.)*)"/);
-
-            if (titleMatch || contentMatch) {
-                return {
-                    title: titleMatch ? titleMatch[1] : input.topic,
-                    content: contentMatch ? contentMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"') : text,
-                    hashtags: "#fizyoterapi #sağlık"
-                };
-            }
+            const hashtagMatch = text.match(/"hashtags":\s*"([^"]+)"/);
 
             return {
-                title: input.topic,
-                content: text,
-                hashtags: "#fizyoterapi #sağlık #egzersiz",
+                title: titleMatch ? titleMatch[1] : (input.topic || "Fizyoterapi Uzmanlığı"),
+                content: contentMatch ? contentMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"') : text,
+                hashtags: hashtagMatch ? hashtagMatch[1] : "#fizyoterapi #sağlık",
+                visualPrompt: input.topic
             };
         }
-    } catch (apiErr: any) {
-        console.error("[GEMINI] Veri İşleme Hatası:", apiErr.message);
-        throw apiErr;
+    } catch (finalErr: any) {
+        console.error("[GEMINI] KRİTİK İŞLEME HATASI:", finalErr);
+        return {
+            title: input.topic || "Fizyoterapi İçeriği",
+            content: text || "İçerik işlenirken bir hata oluştu.",
+            hashtags: "#fizyoterapi #sağlık"
+        };
     }
 }
 

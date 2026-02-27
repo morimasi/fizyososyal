@@ -21,9 +21,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Konu gereklidir" }, { status: 400 });
         }
 
-        // 1. Kullanıcının (Klinik/Takım) marka verilerini çek
+        // 1. Kullanıcının marka verilerini çek (Sahibi olduğu veya üyesi olduğu takım)
         const team = await prisma.team.findFirst({
-            where: { ownerId: session.user.id },
+            where: {
+                OR: [
+                    { ownerId: session.user.id },
+                    { members: { some: { userId: session.user.id } } }
+                ]
+            },
             select: {
                 brandVoice: true,
                 brandKeywords: true,
@@ -37,20 +42,21 @@ export async function POST(req: NextRequest) {
             brandKeywords: team?.brandKeywords || [],
         };
 
-        console.log("[AI-Studio] Servis çağrılıyor...");
+        console.log("[AI-Studio] Servis çağrılıyor (Konu: %s)", body.topic);
         const result = await generatePostText(aiInput);
 
         return NextResponse.json(result);
     } catch (error: any) {
+        const errorMsg = error.message || "Bilinmeyen AI Hatası";
         console.error("[AI-Studio] KRİTİK HATA (generate-text):", {
-            message: error.message,
-            stack: error.stack,
-            cause: error.cause
+            message: errorMsg,
+            stack: error.stack?.substring(0, 300),
+            name: error.name
         });
 
         return NextResponse.json({
             error: "İçerik üretiminde teknik bir sorun oluştu",
-            details: error.message || "Bilinmeyen hata",
+            details: errorMsg,
             code: "AI_GENERATION_FAILED"
         }, { status: 500 });
     }
