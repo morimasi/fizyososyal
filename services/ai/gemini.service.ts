@@ -51,10 +51,10 @@ export async function generatePostText(input: GenerateTextInput): Promise<{
         };
     }
 
-    // Frontier Model Transition: Using Gemini 3.1 Flash Preview (Multimodal & Cost-Efficient)
-    const modelsToTry = input.model === "gemini-1.5-pro"
-        ? ["gemini-1.5-pro", "gemini-3.1-flash-preview"]
-        : ["gemini-3.1-flash-preview", "gemini-1.5-pro"];
+    // Frontier Model Transition: Using Stable & High-Performance Models
+    const modelsToTry = input.model === "gemini-1.5-pro-latest"
+        ? ["gemini-1.5-pro-latest", "gemini-2.0-flash", "gemini-1.5-flash-latest"]
+        : ["gemini-2.0-flash", "gemini-1.5-pro-latest", "gemini-1.5-flash-latest"];
 
     const toneMap = {
         profesyonel: "resmi ve güven verici",
@@ -229,7 +229,7 @@ export async function optimizePhysioPrompt(
     if (!genAI) return topic;
 
     const safetySettings = SAFETY_SETTINGS;
-    const modelsToTry = ["gemini-3.1-flash-preview", "gemini-1.5-pro"];
+    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-pro-latest", "gemini-1.5-flash-latest"];
     let resultText = topic;
     let success = false;
 
@@ -245,16 +245,16 @@ export async function optimizePhysioPrompt(
                     maxOutputTokens: 1000,
                     responseMimeType: "application/json"
                 },
-                systemInstruction: `Sen dünyanın en kıdemli Fizyoterapi Klinik Şefi ve Sağlık İçerik Stratejistisin. (ozel PROTOKOLÜ UYGULA)
-Görevin: Kullanıcının girdiği kısıtlı "Konu" bilgisini alıp, onu seçilen platformun ve formatın ruhuna uygun, tıbbi derinliği olan, hastada güven uyandıran ve MUTLAKA aksiyon aldıran (conversion-focused) devasa bir içeriğe/senaryoya dönüştürmektir.
+                systemInstruction: `SEN DÜNYANIN EN RADİKAL VE BİLGİN FİZYOTERAPİ EDİTÖRÜSÜN. (ozel PROTOKOLÜ: HİPER-AGRESİF GENİŞLETME)
+Görevin: Kullanıcının girdiği "çöp" sayılabilecek kadar kısa veya hatalı (typo dolu) konuyu alıp, onu devasa bir TIBSAL MANİFESTOYA ve PROMPTA dönüştürmektir.
 
-DERİN ANALİZ VE MUHAKEME PROTOKOLÜ:
-1. [KLİNİK ANALİZ]: Bu konunun (${topic}) arkasındaki anatomik zinciri, biyomekanik kusurları ve fizyolojik etkileri bir bilim insanı gibi muhakeme et. 
-2. [HEDEF KİTLE ANALİZİ]: ${context?.settings?.targetAudience || "Genel"} kitlenin bilişsel yükünü ve fiziksel kısıtlamalarını düşünerek dili ayarla.
-3. [RADİKAL GENİŞLETME]: Kullanıcının yazdığı metni sadece kopyalama. Onu en az %300 daha zengin, daha tıbbi terimli ve daha profesyonel bir "İçerik Şablonu" haline getir. 
-   - Örn: "Bel ağrısı" girdiyse -> "Lumbar stabiliteyi bozan multifidus kas zayıflığına yönelik 3 aşamalı statik-dinamik mobilizasyon protokolü" haline getir.
+PROTOKOL KURALLARI:
+1. [TYPO DÜZELTME]: "Bacakalrım" -> "Alt Ekstremite", "oynatabılmek" -> "Mobilizasyon/Artikülasyon". Tüm yazım hatalarını tıbbi terminolojiyle onar.
+2. [HİPER-GENİŞLETME]: Kullanıcının 10 kelimelik girdisini en az 150 kelimelik zengin bir bağlama dönüştür. İçeriği anatomik, fizyolojik ve biyomekanik detaylarla boğ (elit bir şekilde).
+3. [BAĞLAM EKLEME]: Egzersiz dediyse; set, tekrar, dinlenme süresi, kontraendikasyonlar ve agonist/antagonist kas dengesi gibi detayları prompta dahil et.
+4. [STRATEJİK YAPI]: Platform (${context?.platform}) ve formatın (${context?.postFormat}) ruhunu promptun her hücresine işle.
 
-ÇIKTI: Sadece optimized_prompt içeren JSON dön. Metin hipnotize edici ve bilimsel otoriteye sahip olmalı.`
+ÇIKTI: Sadece optimized_prompt içeren JSON dön. Metin hipnotize edici, klinik olarak tartışılmaz ve çok detaylı olmalı.`
             });
 
             const prompt = `
