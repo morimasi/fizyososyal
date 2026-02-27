@@ -4,6 +4,7 @@ import { generateContent } from "@/features/ai-generator/services/ai.service";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { ratelimit } from "@/lib/upstash";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -13,6 +14,20 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Rate Limiting
+    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    
+    // Only apply rate limiting if Redis URL is configured
+    if (ratelimit) {
+      const { success } = await ratelimit.limit(ip);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Çok fazla istek gönderdiniz. Lütfen biraz bekleyin." },
+          { status: 429 }
+        );
+      }
+    }
+
     const { prompt, type } = await req.json();
 
     if (!prompt) {

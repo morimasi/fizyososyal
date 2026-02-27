@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, Sparkles } from "lucide-react";
+import { useStudioStore } from "@/features/studio/store/studio.store";
 
 export function AIGenerator() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const { aiContent: result, setAIContent: setResult } = useStudioStore();
 
   const handleGenerate = async () => {
     if (!prompt) return;

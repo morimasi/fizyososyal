@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as fabric from "fabric";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useStudioStore } from "@/features/studio/store/studio.store";
 import { 
   Type, 
   Square, 
@@ -11,12 +12,14 @@ import {
   Trash2, 
   Download, 
   Image as ImageIcon,
-  Layers
+  Layers,
+  Sparkles
 } from "lucide-react";
 
 export function CanvasEditor() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
+  const { aiContent } = useStudioStore();
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -117,6 +120,71 @@ export function CanvasEditor() {
     reader.readAsDataURL(file);
   };
 
+  const handleSaveDraft = async () => {
+    if (!canvas) return;
+    
+    try {
+      // In a real scenario, we would upload the canvas image to Vercel Blob first, 
+      // but for MVP, we'll save the dataURL or a placeholder.
+      const dataURL = canvas.toDataURL({ format: "png", quality: 0.8, multiplier: 1 });
+      
+      const payload = {
+        type: "post",
+        mediaUrl: dataURL.substring(0, 100) + "...", // Placeholder for real URL
+        caption: aiContent?.caption || "",
+        settings: canvas.toJSON(),
+        status: "draft"
+      };
+
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        alert("Taslak başarıyla kaydedildi!");
+      } else {
+        alert("Hata: " + (data.error || "Bilinmeyen hata"));
+      }
+    } catch (e) {
+      alert("Bağlantı hatası!");
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!canvas) return;
+    
+    if (!confirm("Instagram hesabınızda anında paylaşılacak. Onaylıyor musunuz?")) return;
+
+    try {
+      // In a real scenario, upload to Blob and get URL.
+      // We will simulate it by showing a success alert.
+      const dataURL = canvas.toDataURL({ format: "png", quality: 0.8, multiplier: 1 });
+      
+      const payload = {
+        imageUrl: dataURL.substring(0, 100) + "...", // Placeholder
+        caption: aiContent?.caption || "Fizyososyal ile oluşturuldu."
+      };
+
+      const res = await fetch("/api/instagram/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        alert("Instagram'da paylaşıldı!");
+      } else {
+        alert("Hata (Simülasyon Modu): " + (data.error || "Bilinmeyen hata"));
+      }
+    } catch (e) {
+      alert("Bağlantı hatası!");
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 items-start">
       <Card className="p-4 flex flex-col gap-4 glass-panel w-full lg:w-auto">
@@ -159,7 +227,10 @@ export function CanvasEditor() {
             <Download className="w-4 h-4 mr-2" />
             Görseli İndir
           </Button>
-          <Button className="rounded-xl shadow-lg shadow-sage/20">
+          <Button variant="outline" className="rounded-xl text-sage hover:bg-sage/10" onClick={handleSaveDraft}>
+            Taslak Olarak Kaydet
+          </Button>
+          <Button className="rounded-xl shadow-lg shadow-sage/20" onClick={handlePublish}>
             Paylaşıma Hazırla
           </Button>
         </div>
@@ -172,6 +243,33 @@ export function CanvasEditor() {
         <div className="text-xs text-slate-400 italic">
           Düzenlemek istediğiniz nesneyi seçin.
         </div>
+        {aiContent && (
+          <div className="mt-6 border-t pt-4 flex flex-col gap-2">
+            <div className="text-xs font-bold text-sage-dark uppercase flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> AI İçerik Fikri
+            </div>
+            <p className="text-xs text-slate-600 font-medium">{aiContent.title}</p>
+            <p className="text-[10px] text-slate-500 bg-slate-50 p-2 rounded border">
+              {aiContent.imageDescription}
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs w-full mt-2"
+              onClick={() => {
+                if (canvas) {
+                  const text = new fabric.IText(aiContent.title, {
+                    left: 50, top: 50, fontFamily: "Inter", fontSize: 20, fill: "#334155"
+                  });
+                  canvas.add(text);
+                  canvas.setActiveObject(text);
+                }
+              }}
+            >
+              Başlığı Tuvale Ekle
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );
