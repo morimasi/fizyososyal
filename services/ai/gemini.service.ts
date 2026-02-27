@@ -278,12 +278,21 @@ Lütfen bu verileri al ve bu konuyu devrimsel, tıbbi derinliği olan bir "Yapay
             const result = await model.generateContent(prompt);
             const text = result.response.text().trim();
             const jsonStr = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-            const parsed = JSON.parse(jsonStr);
-
-            if (parsed.optimized_prompt) {
-                resultText = parsed.optimized_prompt;
-                success = true;
-                break;
+            if (jsonStr) {
+                try {
+                    const parsed = JSON.parse(jsonStr);
+                    resultText = parsed.optimized_prompt || parsed.prompt || parsed.result || resultText;
+                    success = true;
+                    console.log(`[GEMINI/OPTIMIZE] ${modelId} ile JSON başarıyla ayrıştırıldı.`);
+                    break;
+                } catch (e) {
+                    console.warn(`[GEMINI/OPTIMIZE] JSON ayrıştırma hatası (${modelId}), ham metin deneniyor.`);
+                    if (text && text.length > 50) {
+                        resultText = text;
+                        success = true;
+                        break;
+                    }
+                }
             }
         } catch (err: any) {
             console.warn(`[GEMINI/OPTIMIZE] Hata (${modelId}):`, err.message);

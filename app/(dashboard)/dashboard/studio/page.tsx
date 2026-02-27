@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useVoiceCommand } from "@/hooks/useVoiceCommand";
@@ -71,10 +71,14 @@ export default function StudioPage() {
         return () => clearTimeout(timeout);
     }, [topic, generatedPost, platform, postFormat, selectedModel, formatSettings, applyLogo]);
 
-    // Voice integration - Only update if voice result is truly new/changed by user voice action
+    const lastProcessedResult = useRef<string | null>(null);
+
+    // Voice integration - Only update if voice result is truly new and hasn't been processed yet
     useEffect(() => {
-        if (result?.topic && result.topic !== topic && isListening === false && !isGenerating) {
+        if (result?.topic && result.topic !== lastProcessedResult.current && isListening === false && !isGenerating) {
             setTopic(result.topic);
+            lastProcessedResult.current = result.topic;
+            console.log("[STUDIO] Sesli komut konuya uygulandı.");
         }
     }, [result, isListening, isGenerating]);
 
