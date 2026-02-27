@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24 relative overflow-hidden">
@@ -15,9 +17,11 @@ export default function Home() {
             Saniyeler içinde profesyonel Instagram postları, rehberler ve hasta hikayeleri oluşturun.
           </p>
           <div className="flex gap-4 mt-4">
-            <button className="bg-sage text-white px-8 py-3 rounded-2xl font-semibold shadow-lg shadow-sage/30 hover:bg-sage-dark transition-all hover:-translate-y-1">
-              Ücretsiz Başla
-            </button>
+            <Link href="/login">
+              <button className="bg-sage text-white px-8 py-3 rounded-2xl font-semibold shadow-lg shadow-sage/30 hover:bg-sage-dark transition-all hover:-translate-y-1">
+                Ücretsiz Başla
+              </button>
+            </Link>
             <button className="bg-white/50 backdrop-blur text-slate-700 px-8 py-3 rounded-2xl font-semibold border border-white/50 hover:bg-white transition-all">
               Nasıl Çalışır?
             </button>
