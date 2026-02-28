@@ -167,8 +167,9 @@ export async function generateContent({
 
   const parsed = parseJSONWithFallback(text) as Record<string, unknown>;
   
-  const imageUrl = parsed.imageDescription 
-    ? "https://image.pollinations.ai/prompt/" + encodeURIComponent(String(parsed.imageDescription)) + encodeURIComponent(", highly detailed, professional photography, clinical lighting, 8k") + "?width=1080&height=1080&nologo=true"
+  let safePrompt = parsed.imageDescription ? String(parsed.imageDescription).substring(0, 400) : "";
+  const imageUrl = safePrompt 
+    ? "https://image.pollinations.ai/prompt/" + encodeURIComponent(safePrompt + ", highly detailed, professional photography, clinical") + "?width=1080&height=1080&nologo=true"
     : undefined;
   
   return {

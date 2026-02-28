@@ -92,7 +92,10 @@ export function CanvasEditor() {
       canvas.add(img);
       canvas.setActiveObject(img);
       canvas.renderAll();
-    }).catch(console.error);
+    }).catch((err) => {
+      console.error("AI Görseli yüklenemedi:", err);
+      alert("AI görseli yüklenirken bir hata oluştu (Geçici servis kesintisi olabilir). Lütfen tekrar deneyin.");
+    });
   };
 
   // --- Actions ---
