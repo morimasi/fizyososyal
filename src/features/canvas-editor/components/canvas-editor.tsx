@@ -85,6 +85,16 @@ export function CanvasEditor() {
     }
   }, []);
 
+  const addImageFromUrl = (url: string) => {
+    if (!canvas) return;
+    fabric.FabricImage.fromURL(url, { crossOrigin: 'anonymous' }).then((img) => {
+      img.scaleToWidth(300);
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+    }).catch(console.error);
+  };
+
   // --- Actions ---
   const addText = (initialText: string = "Metin Yazın") => {
     if (canvas) {
@@ -320,6 +330,16 @@ export function CanvasEditor() {
                     {t}
                   </Button>
                 ))}
+                {aiContent.generatedImageUrl && (
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="text-[10px] h-8 rounded-lg bg-sage hover:bg-sage-dark" 
+                    onClick={() => addImageFromUrl(aiContent.generatedImageUrl!)}
+                  >
+                    <ImageIcon className="w-3 h-3 mr-2" /> AI Görseli
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

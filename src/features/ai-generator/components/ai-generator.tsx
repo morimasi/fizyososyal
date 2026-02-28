@@ -229,12 +229,22 @@ export function AIGenerator() {
                       <div className="w-8 h-8 rounded-full bg-sage flex items-center justify-center text-white text-[10px] font-bold">F</div>
                       <span className="text-[11px] font-bold">klinik_fizyoterapi</span>
                     </div>
-                    <div className="aspect-square bg-slate-100 flex items-center justify-center p-6 text-center">
-                      <div className="flex flex-col gap-2">
-                        <Sparkles className="w-6 h-6 text-sage mx-auto" />
-                        <span className="text-xs font-bold text-slate-800 px-4">{result?.title}</span>
+                    {result?.generatedImageUrl ? (
+                      <div className="aspect-square w-full relative bg-slate-100 overflow-hidden">
+                        <img 
+                          src={result.generatedImageUrl} 
+                          alt="AI Generated" 
+                          className="w-full h-full object-cover" 
+                        />
                       </div>
-                    </div>
+                    ) : (
+                      <div className="aspect-square bg-slate-100 flex items-center justify-center p-6 text-center">
+                        <div className="flex flex-col gap-2">
+                          <Sparkles className="w-6 h-6 text-sage mx-auto" />
+                          <span className="text-xs font-bold text-slate-800 px-4">{result?.title}</span>
+                        </div>
+                      </div>
+                    )}
                     <div className="p-3 flex flex-col gap-2">
                       <div className="flex gap-3 items-center">
                         <Instagram className="w-5 h-5 text-slate-700" />

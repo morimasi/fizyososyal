@@ -112,7 +112,7 @@ export async function generateContent({ userPrompt, type, tone, language }: Gene
       "hook": "Dikkat çekici kanca cümlesi",
       "caption": "Instagram Açıklaması (Emoji zengini, paragraflara bölünmüş)",
       "hashtags": ["#fizyoterapi", "#rehabilitasyon", ...],
-      "imageDescription": "Görsel üretim modeli için ultra detaylı prompt",
+      "imageDescription": "Görsel üretim modeli (Stable Diffusion) için ultra detaylı İNGİLİZCE prompt",
       "carouselSlides": [
          {"slide": 1, "text": "Slayt metni", "visual": "Görsel betimleme"},
          {"slide": 2, "text": "...", "visual": "..."}
@@ -134,8 +134,13 @@ export async function generateContent({ userPrompt, type, tone, language }: Gene
 
   const parsed = parseJSONWithFallback(text) as Record<string, unknown>;
   
+  const imageUrl = parsed.imageDescription 
+    ? "https://image.pollinations.ai/prompt/" + encodeURIComponent(String(parsed.imageDescription)) + encodeURIComponent(", highly detailed, professional photography, clinical lighting, 8k") + "?width=1080&height=1080&nologo=true"
+    : undefined;
+  
   return {
     ...parsed,
+    generatedImageUrl: imageUrl,
     parsed: parsed.parsed !== false,
   };
 }

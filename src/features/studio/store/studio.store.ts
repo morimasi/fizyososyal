@@ -13,6 +13,7 @@ interface AIContent {
   reelsScript?: any;
   suggestedMusic?: string;
   callToAction: string;
+  generatedImageUrl?: string;
 }
 
 interface StudioState {
