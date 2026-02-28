@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
-export type ContentType = "post" | "carousel" | "reels" | "ad";
-export type ContentTone = "professional" | "friendly" | "scientific" | "motivational";
-export type TargetAudience = "general" | "athletes" | "elderly" | "office_workers" | "women_health";
+export type ContentType = "post" | "carousel" | "reels" | "ad" | "thread" | "story" | "article" | "newsletter";
+export type ContentTone = "professional" | "friendly" | "scientific" | "motivational" | "empathetic" | "bold" | "educational";
+export type TargetAudience = "general" | "athletes" | "elderly" | "office_workers" | "women_health" | "chronic_pain" | "post_op";
 export type PostLength = "short" | "medium" | "long";
 export type CallToActionType = "appointment" | "comment" | "save" | "share" | "dm";
 
@@ -29,11 +29,19 @@ interface AIContent {
     fontFamily: string;
     layoutType: "minimal" | "bold" | "scientific" | "modern";
   };
+  // Planning & Strategy
+  strategy?: {
+    bestTimeToPost: string;
+    targetKeywords: string[];
+    potentialReach: string;
+    contentPillar: string;
+  };
 }
 
 interface StudioState {
   // Input State
   prompt: string;
+  enhancedPrompt: string;
   contentType: ContentType;
   tone: ContentTone;
   language: string;
@@ -46,11 +54,13 @@ interface StudioState {
   
   // App State
   isGenerating: boolean;
+  isEnriching: boolean;
   aiContent: AIContent | null;
   history: AIContent[];
 
   // Actions
   setPrompt: (prompt: string) => void;
+  setEnhancedPrompt: (prompt: string) => void;
   setContentType: (type: ContentType) => void;
   setTone: (tone: ContentTone) => void;
   setLanguage: (lang: string) => void;
@@ -62,12 +72,14 @@ interface StudioState {
 
   setAIContent: (content: AIContent | null) => void;
   setIsGenerating: (status: boolean) => void;
+  setIsEnriching: (status: boolean) => void;
   addToHistory: (content: AIContent) => void;
   clearContent: () => void;
 }
 
 export const useStudioStore = create<StudioState>((set) => ({
   prompt: "",
+  enhancedPrompt: "",
   contentType: "post",
   tone: "professional",
   language: "tr",
@@ -78,10 +90,12 @@ export const useStudioStore = create<StudioState>((set) => ({
   useEmojis: true,
   
   isGenerating: false,
+  isEnriching: false,
   aiContent: null,
   history: [],
 
   setPrompt: (prompt) => set({ prompt }),
+  setEnhancedPrompt: (enhancedPrompt) => set({ enhancedPrompt }),
   setContentType: (contentType) => set({ contentType }),
   setTone: (tone) => set({ tone }),
   setLanguage: (language) => set({ language }),
@@ -93,6 +107,8 @@ export const useStudioStore = create<StudioState>((set) => ({
   
   setAIContent: (aiContent) => set({ aiContent }),
   setIsGenerating: (isGenerating) => set({ isGenerating }),
+  setIsEnriching: (isEnriching) => set({ isEnriching }),
   addToHistory: (content) => set((state) => ({ history: [content, ...state.history].slice(0, 10) })),
   clearContent: () => set({ aiContent: null }),
 }));
+

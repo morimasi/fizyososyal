@@ -1,7 +1,7 @@
 import { getModel } from "@/lib/google-ai";
 
-export type ContentType = "post" | "carousel" | "reels" | "ad";
-export type ContentTone = "professional" | "friendly" | "scientific" | "motivational";
+export type ContentType = "post" | "carousel" | "reels" | "ad" | "thread" | "story" | "article" | "newsletter";
+export type ContentTone = "professional" | "friendly" | "scientific" | "motivational" | "empathetic" | "bold" | "educational";
 
 interface GenerateParams {
   userPrompt: string;
@@ -90,6 +90,28 @@ function parseJSONWithFallback(text: string): object {
   }
 }
 
+export async function enrichPrompt(prompt: string): Promise<string> {
+  const model = getModel("gemini-2.0-flash");
+  const fullPrompt = `
+    Sen profesyonel bir Prompt Mühendisi ve Fizyoterapi İçerik Stratejistisin.
+    Aşağıdaki basit kullanıcı istemini, bir AI görsel ve metin üreticisinden en yüksek verimi alacak şekilde ultra profesyonel, detaylı ve klinik bağlamı güçlü bir prompte dönüştür.
+    
+    Kullanıcı İstemi: "${prompt}"
+    
+    Yeni prompt şunları içermeli:
+    - Klinik doğruluk ve tıbbi terminoloji (uygun yerlerde)
+    - Hedef kitlenin psikolojik tetikleyicileri
+    - Görsel kompozisyon detayları
+    - İçeriğin stratejik amacı (eğitici, güven verici, satış odaklı vb.)
+    
+    SADECE zenginleştirilmiş prompt metnini döndür.
+  `;
+
+  const result = await model.generateContent(fullPrompt);
+  const response = await result.response;
+  return response.text().trim();
+}
+
 export async function generateContent({ 
   userPrompt, type, tone, language, 
   targetAudience = "general", 
@@ -97,21 +119,28 @@ export async function generateContent({
   callToActionType = "appointment", 
   useEmojis = true 
 }: GenerateParams) {
-  const model = getModel("gemini-2.5-flash");
+  const model = getModel("gemini-2.0-flash");
   
   let typeSpecificPrompt = "";
   if (type === "carousel") {
-    typeSpecificPrompt = "Bu bir Carousel (kaydırmalı post) içeriğidir. Lütfen her slayt için ayrı metinler üret (En az 5 slayt).";
+    typeSpecificPrompt = "Bu bir Carousel (kaydırmalı post) içeriğidir. Her slayt için ayrı metinler üret. İlk slayt kanca, son slayt CTA olmalı. Toplam 6-10 slayt.";
   } else if (type === "reels") {
-    typeSpecificPrompt = "Bu bir Reels videosu senaryosudur. Saniye saniye çekim planı ve seslendirme (voiceover) metni üret.";
+    typeSpecificPrompt = "Bu bir Reels videosu senaryosudur. Saniye saniye çekim planı, görsel efektler ve seslendirme metni üret.";
+  } else if (type === "thread") {
+    typeSpecificPrompt = "Bu bir X (Twitter) thread'idir. Birbirine bağlı 5-10 tweet şeklinde yapılandır.";
+  } else if (type === "article") {
+    typeSpecificPrompt = "Bu derinlemesine bir makale/blog yazısıdır. H1, H2 başlıkları kullan, bilimsel referanslara atıfta bulun.";
   }
 
   // Audience context
   let audienceContext = "Genel kitle";
-  if (targetAudience === "athletes") audienceContext = "Sporcular ve aktif bireyler (spor yaralanmaları, performans, rehabilitasyon odaklı)";
-  else if (targetAudience === "elderly") audienceContext = "İleri yaş grubu (düşme önleme, osteoartrit, hareketliliği koruma, hafif ve güvenli egzersizler)";
-  else if (targetAudience === "office_workers") audienceContext = "Masa başı / ofis çalışanları (boyun-sırt ağrısı, ergonomi, duruş bozuklukları odaklı)";
-  else if (targetAudience === "women_health") audienceContext = "Kadın sağlığı (pelvik taban, hamilelik ve doğum sonrası rehabilitasyon)";
+  if (targetAudience === "athletes") audienceContext = "Sporcular ve aktif bireyler (performans ve sakatlık önleme)";
+  else if (targetAudience === "elderly") audienceContext = "İleri yaş grubu (yaşam kalitesi ve mobilite)";
+  else if (targetAudience === "office_workers") audienceContext = "Masa başı çalışanlar (ergonomi ve postür)";
+  else if (targetAudience === "women_health") audienceContext = "Kadın sağlığı ve rehabilitasyonu";
+  else if (targetAudience === "chronic_pain") audienceContext = "Kronik ağrı yaşayanlar (yaşam tarzı yönetimi)";
+  else if (targetAudience === "post_op") audienceContext = "Ameliyat sonrası rehabilitasyon sürecindekiler";
+
 
   // Length context
   let lengthContext = "Standart orta uzunlukta (Instagram algoritmasına uygun 3-4 paragraf)";
@@ -166,7 +195,13 @@ export async function generateContent({
          "scene2": "..."
       },
       "suggestedMusic": "Trend müzik önerisi",
-      "callToAction": "Etkili bir kapanış cümlesi"
+      "callToAction": "Etkili bir kapanış cümlesi",
+      "strategy": {
+         "bestTimeToPost": "Günün en iyi saati ve günü",
+         "targetKeywords": ["kelime 1", "kelime 2"],
+         "potentialReach": "Tahmini erişim aralığı",
+         "contentPillar": "Eğitici | Tanıtım | Eğlence | Haber"
+      }
     }
   `;
 
