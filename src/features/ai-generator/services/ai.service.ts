@@ -69,16 +69,20 @@ function parseJSONWithFallback(text: string): object {
 }
 
 export async function enrichPrompt(prompt: string): Promise<string> {
-  const model = getModel("gemini-1.5-flash");
-  const fullPrompt = `
-    Sen profesyonel bir Prompt Mühendisi ve Fizyoterapi İçerik Stratejistisin.
-    Aşağıdaki basit kullanıcı istemini, bir AI görsel ve metin üreticisinden en yüksek verimi alacak şekilde ultra profesyonel, detaylı ve klinik bağlamı güçlü bir prompte dönüştür.
-    Kullanıcı İstemi: "${prompt}"
-    SADECE zenginleştirilmiş prompt metnini döndür.
-  `;
-  const result = await model.generateContent(fullPrompt);
-  const response = await result.response;
-  return response.text().trim();
+  try {
+    const model = getModel("gemini-pro");
+    const fullPrompt = `
+      Sen profesyonel bir Prompt Mühendisi ve Fizyoterapi İçerik Stratejistisin.
+      Kullanıcı İstemi: "${prompt}"
+      SADECE zenginleştirilmiş prompt metnini döndür.
+    `;
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    return response.text().trim();
+  } catch (error) {
+    console.error("Enrichment error:", error);
+    return prompt; // Hata durumunda orijinal promptu döndür
+  }
 }
 
 export async function generateContent({ 
@@ -88,63 +92,75 @@ export async function generateContent({
   callToActionType = "appointment", 
   useEmojis = true 
 }: GenerateParams) {
-  const model = getModel("gemini-1.5-flash");
-  
-  let typeSpecificPrompt = "";
-  if (type === "carousel") typeSpecificPrompt = "Carousel içeriği. 6-10 slayt üret.";
-  else if (type === "reels") typeSpecificPrompt = "Reels senaryosu. Saniye saniye plan üret.";
-  else if (type === "thread") typeSpecificPrompt = "X/Twitter thread. 5-10 tweet.";
-  else if (type === "article") typeSpecificPrompt = "Detaylı makale. H1, H2 başlıkları kullan.";
+  try {
+    const model = getModel("gemini-pro");
+    
+    let typeSpecificPrompt = "";
+    if (type === "carousel") typeSpecificPrompt = "Carousel içeriği. 6-10 slayt üret.";
+    else if (type === "reels") typeSpecificPrompt = "Reels senaryosu. Saniye saniye plan üret.";
+    else if (type === "thread") typeSpecificPrompt = "X/Twitter thread. 5-10 tweet.";
+    else if (type === "article") typeSpecificPrompt = "Detaylı makale. H1, H2 başlıkları kullan.";
 
-  let audienceContext = "Genel kitle";
-  if (targetAudience === "athletes") audienceContext = "Sporcular";
-  else if (targetAudience === "elderly") audienceContext = "İleri yaş grubu";
-  else if (targetAudience === "office_workers") audienceContext = "Ofis çalışanları";
-  else if (targetAudience === "women_health") audienceContext = "Kadın sağlığı";
-  else if (targetAudience === "chronic_pain") audienceContext = "Kronik ağrı";
-  else if (targetAudience === "post_op") audienceContext = "Ameliyat sonrası";
+    let audienceContext = "Genel kitle";
+    if (targetAudience === "athletes") audienceContext = "Sporcular";
+    else if (targetAudience === "elderly") audienceContext = "İleri yaş grubu";
+    else if (targetAudience === "office_workers") audienceContext = "Ofis çalışanları";
+    else if (targetAudience === "women_health") audienceContext = "Kadın sağlığı";
+    else if (targetAudience === "chronic_pain") audienceContext = "Kronik ağrı";
+    else if (targetAudience === "post_op") audienceContext = "Ameliyat sonrası";
 
-  const fullPrompt = `
-    ${SYSTEM_INSTRUCTION}
-    Kullanıcı Talebi: ${userPrompt}
-    İçerik Türü: ${type} | Ton: ${tone} | Dil: ${language}
-    Hedef Kitle: ${audienceContext} | Uzunluk: ${postLength}
-    ${typeSpecificPrompt}
-    Yanıtını SADECE şu JSON formatında döndür:
-    {
-      "title": "Başlık",
-      "hook": "Kanca",
-      "mainHeadline": "Ana Başlık",
-      "subHeadline": "Alt Başlık",
-      "slogan": "Slogan",
-      "vignette": "Özet",
-      "highlights": ["Madde 1", "Madde 2"],
-      "caption": "Instagram Açıklaması",
-      "hashtags": ["#etiket1"],
-      "imageDescription": "Ultra detailed English prompt for image generation",
-      "designHints": {
-         "primaryColor": "#HEX",
-         "secondaryColor": "#HEX",
-         "fontFamily": "Inter",
-         "layoutType": "modern"
-      },
-      "strategy": {
-         "bestTimeToPost": "Saat",
-         "targetKeywords": ["kelime"],
-         "potentialReach": "Erişim",
-         "contentPillar": "Pillar"
+    const fullPrompt = `
+      ${SYSTEM_INSTRUCTION}
+      Kullanıcı Talebi: ${userPrompt}
+      İçerik Türü: ${type} | Ton: ${tone} | Dil: ${language}
+      Hedef Kitle: ${audienceContext} | Uzunluk: ${postLength}
+      ${typeSpecificPrompt}
+      Yanıtını SADECE şu JSON formatında döndür:
+      {
+        "title": "Başlık",
+        "hook": "Kanca",
+        "mainHeadline": "Ana Başlık",
+        "subHeadline": "Alt Başlık",
+        "slogan": "Slogan",
+        "vignette": "Özet",
+        "highlights": ["Madde 1", "Madde 2"],
+        "caption": "Instagram Açıklaması",
+        "hashtags": ["#etiket1"],
+        "imageDescription": "Ultra detailed English prompt for image generation",
+        "designHints": {
+           "primaryColor": "#HEX",
+           "secondaryColor": "#HEX",
+           "fontFamily": "Inter",
+           "layoutType": "modern"
+        },
+        "strategy": {
+           "bestTimeToPost": "Saat",
+           "targetKeywords": ["kelime"],
+           "potentialReach": "Erişim",
+           "contentPillar": "Pillar"
+        }
       }
-    }
-  `;
+    `;
 
-  const result = await model.generateContent(fullPrompt);
-  const response = await result.response;
-  const text = response.text();
-  const parsed = parseJSONWithFallback(text) as any;
-  
-  return {
-    ...parsed,
-    generatedImageBase64: undefined,
-    parsed: parsed.error ? false : true
-  };
+    const result = await model.generateContent(fullPrompt);
+    const response = await result.response;
+    const text = response.text();
+    const parsed = parseJSONWithFallback(text) as any;
+    
+    return {
+      ...parsed,
+      generatedImageBase64: undefined,
+      parsed: parsed.error ? false : true
+    };
+  } catch (error) {
+    console.error("Generation error:", error);
+    return {
+      error: "AI servisi şu an yanıt veremiyor.",
+      title: "Hata",
+      hook: "Hata",
+      caption: "İçerik üretilirken bir sorun oluştu. Lütfen tekrar deneyin.",
+      hashtags: [],
+      callToAction: "Tekrar Dene"
+    };
+  }
 }
