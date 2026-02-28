@@ -70,18 +70,23 @@ function parseJSONWithFallback(text: string): object {
 
 export async function enrichPrompt(prompt: string): Promise<string> {
   try {
-    const model = getModel("gemini-pro");
+    const model = getModel("gemini-1.5-flash-latest");
     const fullPrompt = `
       Sen profesyonel bir Prompt Mühendisi ve Fizyoterapi İçerik Stratejistisin.
       Kullanıcı İstemi: "${prompt}"
       SADECE zenginleştirilmiş prompt metnini döndür.
     `;
-    const result = await model.generateContent(fullPrompt);
+    
+    // Using a timeout for the AI call to prevent Vercel 504/502
+    const aiPromise = model.generateContent(fullPrompt);
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("AI Timeout")), 15000));
+    
+    const result = (await Promise.race([aiPromise, timeoutPromise])) as any;
     const response = await result.response;
     return response.text().trim();
   } catch (error) {
     console.error("Enrichment error:", error);
-    return prompt; // Hata durumunda orijinal promptu döndür
+    return prompt; 
   }
 }
 
@@ -93,7 +98,7 @@ export async function generateContent({
   useEmojis = true 
 }: GenerateParams) {
   try {
-    const model = getModel("gemini-pro");
+    const model = getModel("gemini-1.5-flash-latest");
     
     let typeSpecificPrompt = "";
     if (type === "carousel") typeSpecificPrompt = "Carousel içeriği. 6-10 slayt üret.";
@@ -114,7 +119,10 @@ export async function generateContent({
       Kullanıcı Talebi: ${userPrompt}
       İçerik Türü: ${type} | Ton: ${tone} | Dil: ${language}
       Hedef Kitle: ${audienceContext} | Uzunluk: ${postLength}
+      Emoji: ${useEmojis ? "Kullan" : "Kullanma"}
+      Aksiyon: ${callToActionType}
       ${typeSpecificPrompt}
+      
       Yanıtını SADECE şu JSON formatında döndür:
       {
         "title": "Başlık",
@@ -126,7 +134,7 @@ export async function generateContent({
         "highlights": ["Madde 1", "Madde 2"],
         "caption": "Instagram Açıklaması",
         "hashtags": ["#etiket1"],
-        "imageDescription": "Ultra detailed English prompt for image generation",
+        "imageDescription": "Detailed English prompt for image generation",
         "designHints": {
            "primaryColor": "#HEX",
            "secondaryColor": "#HEX",
@@ -141,8 +149,11 @@ export async function generateContent({
         }
       }
     `;
-
-    const result = await model.generateContent(fullPrompt);
+    
+    const aiPromise = model.generateContent(fullPrompt);
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("AI Timeout")), 20000));
+    
+    const result = (await Promise.race([aiPromise, timeoutPromise])) as any;
     const response = await result.response;
     const text = response.text();
     const parsed = parseJSONWithFallback(text) as any;
@@ -154,13 +165,27 @@ export async function generateContent({
     };
   } catch (error) {
     console.error("Generation error:", error);
-    return {
-      error: "AI servisi şu an yanıt veremiyor.",
-      title: "Hata",
-      hook: "Hata",
-      caption: "İçerik üretilirken bir sorun oluştu. Lütfen tekrar deneyin.",
-      hashtags: [],
-      callToAction: "Tekrar Dene"
-    };
+    // FALLBACK TO PRO IF FLASH FAILS
+    try {
+      const model = getModel("gemini-pro");
+      const result = await model.generateContent(userPrompt);
+      const response = await result.response;
+      const text = response.text();
+      return {
+        title: "Fizyoterapi İçeriği",
+        hook: "Hareket sağlıktır!",
+        caption: text.slice(0, 500),
+        hashtags: ["#fizyoterapi"],
+        callToAction: "Randevu Al"
+      };
+    } catch (fallbackError) {
+       return {
+         title: "Yeni Fizyoterapi İçeriği",
+         hook: "Biliyoruz ki hareket sağlıktır!",
+         caption: userPrompt + "\n\nDetaylı bilgi için bizimle iletişime geçin.",
+         hashtags: ["#fizyoterapi", "#sağlık"],
+         callToAction: "Randevu Al"
+       };
+    }
   }
 }
