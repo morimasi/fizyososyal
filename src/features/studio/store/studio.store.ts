@@ -2,6 +2,9 @@ import { create } from "zustand";
 
 export type ContentType = "post" | "carousel" | "reels" | "ad";
 export type ContentTone = "professional" | "friendly" | "scientific" | "motivational";
+export type TargetAudience = "general" | "athletes" | "elderly" | "office_workers" | "women_health";
+export type PostLength = "short" | "medium" | "long";
+export type CallToActionType = "appointment" | "comment" | "save" | "share" | "dm";
 
 interface AIContent {
   title: string;
@@ -23,6 +26,12 @@ interface StudioState {
   tone: ContentTone;
   language: string;
   
+  // Advanced Settings
+  targetAudience: TargetAudience;
+  postLength: PostLength;
+  callToActionType: CallToActionType;
+  useEmojis: boolean;
+  
   // App State
   isGenerating: boolean;
   aiContent: AIContent | null;
@@ -33,6 +42,12 @@ interface StudioState {
   setContentType: (type: ContentType) => void;
   setTone: (tone: ContentTone) => void;
   setLanguage: (lang: string) => void;
+  
+  setTargetAudience: (audience: TargetAudience) => void;
+  setPostLength: (length: PostLength) => void;
+  setCallToActionType: (cta: CallToActionType) => void;
+  setUseEmojis: (use: boolean) => void;
+
   setAIContent: (content: AIContent | null) => void;
   setIsGenerating: (status: boolean) => void;
   addToHistory: (content: AIContent) => void;
@@ -44,6 +59,12 @@ export const useStudioStore = create<StudioState>((set) => ({
   contentType: "post",
   tone: "professional",
   language: "tr",
+  
+  targetAudience: "general",
+  postLength: "medium",
+  callToActionType: "appointment",
+  useEmojis: true,
+  
   isGenerating: false,
   aiContent: null,
   history: [],
@@ -52,6 +73,12 @@ export const useStudioStore = create<StudioState>((set) => ({
   setContentType: (contentType) => set({ contentType }),
   setTone: (tone) => set({ tone }),
   setLanguage: (language) => set({ language }),
+  
+  setTargetAudience: (targetAudience) => set({ targetAudience }),
+  setPostLength: (postLength) => set({ postLength }),
+  setCallToActionType: (callToActionType) => set({ callToActionType }),
+  setUseEmojis: (useEmojis) => set({ useEmojis }),
+  
   setAIContent: (aiContent) => set({ aiContent }),
   setIsGenerating: (isGenerating) => set({ isGenerating }),
   addToHistory: (content) => set((state) => ({ history: [content, ...state.history].slice(0, 10) })),

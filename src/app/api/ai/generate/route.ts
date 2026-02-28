@@ -12,6 +12,10 @@ const generateSchema = z.object({
   type: z.enum(["post", "carousel", "reels", "ad"]).default("post"),
   tone: z.enum(["professional", "friendly", "scientific", "motivational"]).default("professional"),
   language: z.enum(["tr", "en", "de"]).default("tr"),
+  targetAudience: z.enum(["general", "athletes", "elderly", "office_workers", "women_health"]).default("general"),
+  postLength: z.enum(["short", "medium", "long"]).default("medium"),
+  callToActionType: z.enum(["appointment", "comment", "save", "share", "dm"]).default("appointment"),
+  useEmojis: z.boolean().default(true),
 });
 
 export async function POST(req: Request) {
@@ -34,7 +38,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Validasyon hatası", code: "VALIDATION_ERROR" }, { status: 400 });
     }
 
-    const { prompt, type, tone, language } = validation.data;
+    const { prompt, type, tone, language, targetAudience, postLength, callToActionType, useEmojis } = validation.data;
 
     if (ratelimit) {
       try {
@@ -62,7 +66,16 @@ export async function POST(req: Request) {
 
     let content;
     try {
-      content = await generateContent({ userPrompt: prompt, type, tone, language });
+      content = await generateContent({ 
+        userPrompt: prompt, 
+        type, 
+        tone, 
+        language,
+        targetAudience,
+        postLength,
+        callToActionType,
+        useEmojis
+      });
     } catch (aiError) {
       const msg = aiError instanceof Error ? aiError.message : String(aiError);
       console.error("AI Error:", msg);

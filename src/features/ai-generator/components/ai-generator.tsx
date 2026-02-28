@@ -21,9 +21,18 @@ import {
   Volume2,
   FileVideo,
   LayoutGrid,
-  MessageCircle
+  MessageCircle,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
-import { useStudioStore, ContentType, ContentTone } from "@/features/studio/store/studio.store";
+import { 
+  useStudioStore, 
+  ContentType, 
+  ContentTone,
+  TargetAudience,
+  PostLength,
+  CallToActionType 
+} from "@/features/studio/store/studio.store";
 import Link from "next/link";
 
 export function AIGenerator() {
@@ -32,11 +41,16 @@ export function AIGenerator() {
     contentType, setContentType, 
     tone, setTone, 
     language, setLanguage,
+    targetAudience, setTargetAudience,
+    postLength, setPostLength,
+    callToActionType, setCallToActionType,
+    useEmojis, setUseEmojis,
     aiContent: result, setAIContent: setResult,
     isGenerating: loading, setIsGenerating: setLoading
   } = useStudioStore();
 
   const [copied, setCopied] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleGenerate = async () => {
     if (!prompt) return;
@@ -47,7 +61,10 @@ export function AIGenerator() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt, type: contentType, tone, language }),
+        body: JSON.stringify({ 
+          prompt, type: contentType, tone, language,
+          targetAudience, postLength, callToActionType, useEmojis
+        }),
       });
       const data = await response.json();
       if (data.success) {
@@ -133,6 +150,81 @@ export function AIGenerator() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="flex flex-col gap-2">
+              <Button 
+                variant="ghost" 
+                className="flex items-center justify-between w-full rounded-xl text-slate-500 hover:text-sage-dark bg-slate-50 hover:bg-sage/10 h-10 px-4 text-xs font-bold"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+              >
+                Gelişmiş Ayarlar (Hedef Kitle, CTA...) 
+                {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </Button>
+            </div>
+
+            {showAdvanced && (
+              <div className="flex flex-col gap-4 p-4 bg-slate-50/50 rounded-xl border border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Hedef Kitle</label>
+                  <Select value={targetAudience} onValueChange={(v) => setTargetAudience(v as TargetAudience)}>
+                    <SelectTrigger className="rounded-xl h-9 text-xs bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">Genel / Herkes</SelectItem>
+                      <SelectItem value="athletes">Sporcular</SelectItem>
+                      <SelectItem value="elderly">Yaşlılar / İleri Yaş</SelectItem>
+                      <SelectItem value="office_workers">Ofis Çalışanları</SelectItem>
+                      <SelectItem value="women_health">Kadın Sağlığı</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">İçerik Uzunluğu</label>
+                    <Select value={postLength} onValueChange={(v) => setPostLength(v as PostLength)}>
+                      <SelectTrigger className="rounded-xl h-9 text-xs bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="short">Kısa ve Öz</SelectItem>
+                        <SelectItem value="medium">Orta / Standart</SelectItem>
+                        <SelectItem value="long">Uzun ve Detaylı</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Aksiyon Çağrısı (CTA)</label>
+                    <Select value={callToActionType} onValueChange={(v) => setCallToActionType(v as CallToActionType)}>
+                      <SelectTrigger className="rounded-xl h-9 text-xs bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="appointment">Randevu Al</SelectItem>
+                        <SelectItem value="comment">Yorum Yap / Soru Sor</SelectItem>
+                        <SelectItem value="save">Kaydet</SelectItem>
+                        <SelectItem value="share">Arkadaşınla Paylaş</SelectItem>
+                        <SelectItem value="dm">DM Gönder</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-100">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Emoji Kullanımı</span>
+                  <Button 
+                    variant={useEmojis ? "default" : "outline"}
+                    size="sm" 
+                    className={`h-7 px-3 text-[10px] rounded-lg ${useEmojis ? "bg-sage hover:bg-sage-dark" : ""}`}
+                    onClick={() => setUseEmojis(!useEmojis)}
+                  >
+                    {useEmojis ? "Açık 🤩" : "Kapalı"}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <Button 
               onClick={handleGenerate} 

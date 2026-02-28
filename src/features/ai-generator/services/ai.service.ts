@@ -8,6 +8,10 @@ interface GenerateParams {
   type: ContentType;
   tone: ContentTone;
   language: string;
+  targetAudience?: string;
+  postLength?: string;
+  callToActionType?: string;
+  useEmojis?: boolean;
 }
 
 const SYSTEM_INSTRUCTION = `
@@ -86,7 +90,13 @@ function parseJSONWithFallback(text: string): object {
   }
 }
 
-export async function generateContent({ userPrompt, type, tone, language }: GenerateParams) {
+export async function generateContent({ 
+  userPrompt, type, tone, language, 
+  targetAudience = "general", 
+  postLength = "medium", 
+  callToActionType = "appointment", 
+  useEmojis = true 
+}: GenerateParams) {
   const model = getModel("gemini-2.5-flash");
   
   let typeSpecificPrompt = "";
@@ -96,6 +106,25 @@ export async function generateContent({ userPrompt, type, tone, language }: Gene
     typeSpecificPrompt = "Bu bir Reels videosu senaryosudur. Saniye saniye çekim planı ve seslendirme (voiceover) metni üret.";
   }
 
+  // Audience context
+  let audienceContext = "Genel kitle";
+  if (targetAudience === "athletes") audienceContext = "Sporcular ve aktif bireyler (spor yaralanmaları, performans, rehabilitasyon odaklı)";
+  else if (targetAudience === "elderly") audienceContext = "İleri yaş grubu (düşme önleme, osteoartrit, hareketliliği koruma, hafif ve güvenli egzersizler)";
+  else if (targetAudience === "office_workers") audienceContext = "Masa başı / ofis çalışanları (boyun-sırt ağrısı, ergonomi, duruş bozuklukları odaklı)";
+  else if (targetAudience === "women_health") audienceContext = "Kadın sağlığı (pelvik taban, hamilelik ve doğum sonrası rehabilitasyon)";
+
+  // Length context
+  let lengthContext = "Standart orta uzunlukta (Instagram algoritmasına uygun 3-4 paragraf)";
+  if (postLength === "short") lengthContext = "Kısa ve çok net (Hap bilgi, 1-2 paragraf, hızlı okunan)";
+  else if (postLength === "long") lengthContext = "Uzun ve çok detaylı (Kapsamlı eğitim, derinlemesine klinik bilgi, blog yazısı gibi detaylı)";
+
+  // CTA context
+  let ctaContext = "Kliniğe / fizyoterapiste randevu almaya teşvik et.";
+  if (callToActionType === "comment") ctaContext = "Kullanıcıları yorumlarda soru sormaya veya deneyimlerini paylaşmaya teşvik et.";
+  else if (callToActionType === "save") ctaContext = "Bu değerli bilgiyi sonradan kullanmak üzere kaydetmelerini iste.";
+  else if (callToActionType === "share") ctaContext = "Bu sorunu yaşayan bir tanıdığına/arkadaşına göndermesi için teşvik et.";
+  else if (callToActionType === "dm") ctaContext = "Detaylı bilgi veya ücretsiz danışmanlık için DM atmalarını iste.";
+
   const fullPrompt = `
     ${SYSTEM_INSTRUCTION}
     
@@ -103,6 +132,10 @@ export async function generateContent({ userPrompt, type, tone, language }: Gene
     İçerik Türü: ${type}
     Tonlama: ${tone}
     Dil: ${language}
+    Hedef Kitle: ${audienceContext}
+    İçerik Uzunluğu: ${lengthContext}
+    Emoji Kullanımı: ${useEmojis ? "Bol ve stratejik emoji kullan." : "LÜTFEN HİÇ EMOJİ KULLANMA (Sıfır emoji, ciddi görünüm)."}
+    Aksiyon Çağrısı (CTA) Amacı: ${ctaContext}
     ${typeSpecificPrompt}
     
     ÖNEMLİ: Yanıtını SADECE ve SADECE geçerli JSON olarak döndür. Başka hiçbir metin yazma.
