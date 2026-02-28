@@ -91,7 +91,7 @@ function parseJSONWithFallback(text: string): object {
 }
 
 export async function enrichPrompt(prompt: string): Promise<string> {
-  const model = getModel("gemini-2.0-flash");
+  const model = getModel("gemini-1.5-flash");
   const fullPrompt = `
     Sen profesyonel bir Prompt Mühendisi ve Fizyoterapi İçerik Stratejistisin.
     Aşağıdaki basit kullanıcı istemini, bir AI görsel ve metin üreticisinden en yüksek verimi alacak şekilde ultra profesyonel, detaylı ve klinik bağlamı güçlü bir prompte dönüştür.
@@ -119,7 +119,7 @@ export async function generateContent({
   callToActionType = "appointment", 
   useEmojis = true 
 }: GenerateParams) {
-  const model = getModel("gemini-2.0-flash");
+  const model = getModel("gemini-1.5-flash");
   
   let typeSpecificPrompt = "";
   if (type === "carousel") {
@@ -217,8 +217,8 @@ export async function generateContent({
 
   try {
     if (parsed.imageDescription) {
-      console.log("Generating image with gemini-2.5-flash-image...");
-      const imageModel = getModel("gemini-2.5-flash-image");
+      console.log("Generating image with gemini-1.5-flash...");
+      const imageModel = getModel("gemini-1.5-flash");
       const imagePrompt = String(parsed.imageDescription).substring(0, 400);
       const imgResult = await imageModel.generateContent(imagePrompt);
       const imgResponse = imgResult.response;

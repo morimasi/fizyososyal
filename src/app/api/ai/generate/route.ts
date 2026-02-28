@@ -9,11 +9,11 @@ import { z } from "zod";
 import { put } from "@vercel/blob";
 
 const generateSchema = z.object({
-  prompt: z.string().min(3).max(500),
-  type: z.enum(["post", "carousel", "reels", "ad"]).default("post"),
-  tone: z.enum(["professional", "friendly", "scientific", "motivational"]).default("professional"),
+  prompt: z.string().min(3).max(2000),
+  type: z.enum(["post", "carousel", "reels", "ad", "thread", "story", "article", "newsletter"]).default("post"),
+  tone: z.enum(["professional", "friendly", "scientific", "motivational", "empathetic", "bold", "educational"]).default("professional"),
   language: z.enum(["tr", "en", "de"]).default("tr"),
-  targetAudience: z.enum(["general", "athletes", "elderly", "office_workers", "women_health"]).default("general"),
+  targetAudience: z.enum(["general", "athletes", "elderly", "office_workers", "women_health", "chronic_pain", "post_op"]).default("general"),
   postLength: z.enum(["short", "medium", "long"]).default("medium"),
   callToActionType: z.enum(["appointment", "comment", "save", "share", "dm"]).default("appointment"),
   useEmojis: z.boolean().default(true),
