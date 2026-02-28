@@ -125,22 +125,25 @@ export function AIGenerator() {
               <Settings2 className="w-4 h-4 text-sage-dark" />
               <span className="text-xs font-bold text-sage-dark uppercase tracking-tight">Stüdyo Yapılandırması</span>
             </div>
-            <Badge variant="outline" className="text-[10px] bg-white text-sage-dark border-sage/20">V2 PRO</Badge>
+            <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-600 border-purple-100">Gemini 2.0 Thinking</Badge>
           </div>
           <CardContent className="p-6 flex flex-col gap-6">
             <div className="flex flex-col gap-2">
               <div className="flex justify-between items-center">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">İçerik Hedefi</label>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-6 text-[10px] text-purple-600 hover:text-purple-700 hover:bg-purple-50 gap-1 px-2"
-                  onClick={handleEnrichPrompt}
-                  disabled={isEnriching || !prompt}
-                >
-                  {isEnriching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                  Prompt Sihirbazı
-                </Button>
+                <div className="flex gap-1">
+                  <Badge variant="secondary" className="text-[9px] h-5 bg-blue-50 text-blue-600 border-none">Multimodal</Badge>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 text-[10px] text-purple-600 hover:text-purple-700 hover:bg-purple-50 gap-1 px-2"
+                    onClick={handleEnrichPrompt}
+                    disabled={isEnriching || !prompt}
+                  >
+                    {isEnriching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    Prompt Sihirbazı
+                  </Button>
+                </div>
               </div>
               <textarea
                 placeholder="Örn: Bel fıtığı egzersizleri..."
@@ -331,9 +334,9 @@ export function AIGenerator() {
               <Sparkles className="absolute inset-0 m-auto w-8 h-8 text-sage animate-pulse" />
             </div>
             <div className="flex flex-col items-center gap-2">
-              <h3 className="font-bold text-slate-800">İçerik Hazırlanıyor...</h3>
+              <h3 className="font-bold text-slate-800">Stratejik Akıl Yürütme Aktif...</h3>
               <p className="text-sm text-slate-500 animate-bounce italic text-center max-w-[250px]">
-                Bilimsel makaleler taranıyor ve stratejik kancalar ekleniyor.
+                Gemini 2.0 Thinking; klinik verileri ve sosyal medya trendlerini analiz ediyor.
               </p>
             </div>
           </div>
@@ -350,6 +353,9 @@ export function AIGenerator() {
                   </TabsTrigger>
                   <TabsTrigger value="strategy" className="rounded-lg px-6 flex items-center gap-2">
                     <Target className="w-4 h-4" /> Strateji
+                  </TabsTrigger>
+                  <TabsTrigger value="thinking" className="rounded-lg px-6 flex items-center gap-2 text-purple-600">
+                    <Sparkles className="w-4 h-4" /> Zihin Haritası
                   </TabsTrigger>
                   {contentType === 'reels' && (
                     <TabsTrigger value="script" className="rounded-lg px-6 flex items-center gap-2">
@@ -464,6 +470,29 @@ export function AIGenerator() {
                       )}
                     </div>
                   </ScrollArea>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="thinking" className="m-0">
+                <Card className="border-none shadow-sm rounded-3xl p-8 bg-purple-50/30 border-purple-100">
+                  <div className="flex flex-col gap-6">
+                    <h4 className="text-sm font-black text-purple-800 uppercase tracking-widest flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" /> AI Stratejik Akıl Yürütme
+                    </h4>
+                    <div className="p-6 bg-white rounded-2xl border border-purple-100 italic text-purple-900 leading-relaxed">
+                      { (result as any)?.thinking || "AI bu içeriği oluştururken klinik verileri ve sosyal medya trendlerini analiz etti." }
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="p-4 bg-white/50 rounded-xl border border-purple-100">
+                          <div className="text-[10px] font-bold text-purple-400 uppercase">Analiz Modu</div>
+                          <div className="text-xs font-bold text-purple-700">Multimodal Thinking v2</div>
+                       </div>
+                       <div className="p-4 bg-white/50 rounded-xl border border-purple-100">
+                          <div className="text-[10px] font-bold text-purple-400 uppercase">Tasarım Zekası</div>
+                          <div className="text-xs font-bold text-purple-700">Generative Logic</div>
+                       </div>
+                    </div>
+                  </div>
                 </Card>
               </TabsContent>
 

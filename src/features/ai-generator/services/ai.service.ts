@@ -3,7 +3,7 @@ import { getModel } from "@/lib/google-ai";
 export type ContentType = "post" | "carousel" | "reels" | "ad" | "thread" | "story" | "article" | "newsletter";
 export type ContentTone = "professional" | "friendly" | "scientific" | "motivational" | "empathetic" | "bold" | "educational";
 
-interface GenerateParams {
+export interface GenerateParams {
   userPrompt: string;
   type: ContentType;
   tone: ContentTone;
@@ -15,15 +15,16 @@ interface GenerateParams {
 }
 
 const SYSTEM_INSTRUCTION = `
-Sen kıdemli bir Fizyoterapist, Klinik İşletmecisi ve Sosyal Medya İçerik Stratejistisin. 
-Görevin, fizyoterapi profesyonelleri için "Premium" kalitede, bilimsel temelli ama yüksek etkileşimli içerikler üretmektir.
+Sen "Fizyososyal AI v2" multimodal akıl yürütme (thinking) modelisin.
+Görevin, sadece içerik üretmek değil, bir stratejist gibi "DÜŞÜNEREK" en etkili sonucu bulmaktır.
 
-Stratejik Kurallar:
-1. TIBBİ DOĞRULUK: Fizyoterapi prensiplerine (egzersiz fizyolojisi, biyomekanik) tam uyum sağla.
-2. ETKİLEŞİM ODAKLI: Instagram algoritmasının sevdiği "Saveable" (kaydedilebilir) ve "Shareable" (paylaşılabilir) içerik yapıları kur.
-3. KANCA (HOOK): İçeriğin ilk cümlesi mutlaka kullanıcının dikkatini çeken bir kanca içermeli.
-4. SEO: Fizyoterapi, rehabilitasyon ve ilgili semptomlara yönelik anahtar kelimeleri doğal bir şekilde kullan.
-5. GÖRSEL REHBER: Tasarımcıya/AI'ya (Imagen/DALL-E) hitap eden, klinik estetiği yansıtan çok detaylı görsel betimlemeler yap.
+AKIL YÜRÜTME ADIMLARIN (THINKING STEPS):
+1. KLİNİK ANALİZ: Konunun fizyoterapi bilimindeki yerini analiz et (biyomekanik, anatomi, rehabilitasyon).
+2. PSİKOLOJİK ANALİZ: Hedef kitlenin o anki duygusal durumunu ve ağrı seviyesini düşün.
+3. STRATEJİK TASARIM: Hangi renklerin ve hangi yerleşimin güven vereceğine karar ver.
+4. MULTIMODAL KURGU: Görselin nasıl olması gerektiğini bir film yönetmeni gibi kurgula.
+
+Üretimlerini bu derinlikte yapmalısın.
 `;
 
 function cleanJSONResponse(text: string): string {
@@ -68,20 +69,22 @@ function parseJSONWithFallback(text: string): object {
   }
 }
 
+// ÜCRETSİZ VE HIZLI GÖRSEL ÜRETİMİ (POLLINATIONS)
+async function generateFreeImage(prompt: string): Promise<string> {
+  const seed = Math.floor(Math.random() * 1000000);
+  const encodedPrompt = encodeURIComponent(prompt);
+  return `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${seed}&width=1024&height=1024&nologo=true&enhance=true`;
+}
+
 export async function enrichPrompt(prompt: string): Promise<string> {
   try {
-    const model = getModel("gemini-1.5-flash-latest");
+    const model = getModel("gemini-2.0-flash-thinking-exp-01-21");
     const fullPrompt = `
       Sen profesyonel bir Prompt Mühendisi ve Fizyoterapi İçerik Stratejistisin.
       Kullanıcı İstemi: "${prompt}"
       SADECE zenginleştirilmiş prompt metnini döndür.
     `;
-    
-    // Using a timeout for the AI call to prevent Vercel 504/502
-    const aiPromise = model.generateContent(fullPrompt);
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("AI Timeout")), 15000));
-    
-    const result = (await Promise.race([aiPromise, timeoutPromise])) as any;
+    const result = await model.generateContent(fullPrompt);
     const response = await result.response;
     return response.text().trim();
   } catch (error) {
@@ -98,48 +101,30 @@ export async function generateContent({
   useEmojis = true 
 }: GenerateParams) {
   try {
-    const model = getModel("gemini-1.5-flash-latest");
+    const model = getModel("gemini-2.0-flash-thinking-exp-01-21");
     
-    let typeSpecificPrompt = "";
-    if (type === "carousel") typeSpecificPrompt = "Carousel içeriği. 6-10 slayt üret.";
-    else if (type === "reels") typeSpecificPrompt = "Reels senaryosu. Saniye saniye plan üret.";
-    else if (type === "thread") typeSpecificPrompt = "X/Twitter thread. 5-10 tweet.";
-    else if (type === "article") typeSpecificPrompt = "Detaylı makale. H1, H2 başlıkları kullan.";
-
-    let audienceContext = "Genel kitle";
-    if (targetAudience === "athletes") audienceContext = "Sporcular";
-    else if (targetAudience === "elderly") audienceContext = "İleri yaş grubu";
-    else if (targetAudience === "office_workers") audienceContext = "Ofis çalışanları";
-    else if (targetAudience === "women_health") audienceContext = "Kadın sağlığı";
-    else if (targetAudience === "chronic_pain") audienceContext = "Kronik ağrı";
-    else if (targetAudience === "post_op") audienceContext = "Ameliyat sonrası";
-
     const fullPrompt = `
-      ${SYSTEM_INSTRUCTION}
-      Kullanıcı Talebi: ${userPrompt}
-      İçerik Türü: ${type} | Ton: ${tone} | Dil: ${language}
-      Hedef Kitle: ${audienceContext} | Uzunluk: ${postLength}
-      Emoji: ${useEmojis ? "Kullan" : "Kullanma"}
-      Aksiyon: ${callToActionType}
-      ${typeSpecificPrompt}
+      Kullanıcı İsteği: "${userPrompt}"
+      Format: ${type} | Ton: ${tone} | Kitle: ${targetAudience}
       
-      Yanıtını SADECE şu JSON formatında döndür:
+      Lütfen önce bu içeriği DÜŞÜN (Thinking Process) ve ardından şu JSON yapısında yanıt ver:
       {
-        "title": "Başlık",
-        "hook": "Kanca",
+        "thinking": "İçeriği neden bu şekilde yapılandırdığına dair kısa stratejik notun",
+        "title": "İçerik Başlığı",
+        "hook": "Durdurucu ilk cümle",
         "mainHeadline": "Ana Başlık",
         "subHeadline": "Alt Başlık",
         "slogan": "Slogan",
         "vignette": "Özet",
         "highlights": ["Madde 1", "Madde 2"],
-        "caption": "Instagram Açıklaması",
-        "hashtags": ["#etiket1"],
-        "imageDescription": "Detailed English prompt for image generation",
+        "caption": "Instagram açıklaması",
+        "hashtags": ["#etiket"],
+        "imageDescription": "Görsel için ultra gerçekçi İngilizce prompt",
         "designHints": {
            "primaryColor": "#HEX",
            "secondaryColor": "#HEX",
            "fontFamily": "Inter",
-           "layoutType": "modern"
+           "layoutType": "modern | scientific | bold"
         },
         "strategy": {
            "bestTimeToPost": "Saat",
@@ -149,43 +134,27 @@ export async function generateContent({
         }
       }
     `;
-    
-    const aiPromise = model.generateContent(fullPrompt);
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("AI Timeout")), 20000));
-    
-    const result = (await Promise.race([aiPromise, timeoutPromise])) as any;
+
+    const result = await model.generateContent(fullPrompt);
     const response = await result.response;
     const text = response.text();
     const parsed = parseJSONWithFallback(text) as any;
     
+    // ÜCRETSİZ VE HIZLI GÖRSEL ÜRETİMİ
+    const freeImageUrl = await generateFreeImage(parsed.imageDescription || userPrompt);
+    
     return {
       ...parsed,
-      generatedImageBase64: undefined,
+      generatedImageUrl: freeImageUrl,
       parsed: parsed.error ? false : true
     };
   } catch (error) {
     console.error("Generation error:", error);
-    // FALLBACK TO PRO IF FLASH FAILS
-    try {
-      const model = getModel("gemini-pro");
-      const result = await model.generateContent(userPrompt);
-      const response = await result.response;
-      const text = response.text();
-      return {
-        title: "Fizyoterapi İçeriği",
-        hook: "Hareket sağlıktır!",
-        caption: text.slice(0, 500),
-        hashtags: ["#fizyoterapi"],
-        callToAction: "Randevu Al"
-      };
-    } catch (fallbackError) {
-       return {
-         title: "Yeni Fizyoterapi İçeriği",
-         hook: "Biliyoruz ki hareket sağlıktır!",
-         caption: userPrompt + "\n\nDetaylı bilgi için bizimle iletişime geçin.",
-         hashtags: ["#fizyoterapi", "#sağlık"],
-         callToAction: "Randevu Al"
-       };
-    }
+    return {
+      title: "Yeni Fizyoterapi İçeriği",
+      caption: userPrompt,
+      generatedImageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?enhance=true`,
+      error: true
+    };
   }
 }

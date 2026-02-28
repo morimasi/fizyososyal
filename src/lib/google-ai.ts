@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const getModel = (modelName: string = "gemini-1.5-flash-latest") => {
+// Gemini 2.0 Flash Thinking - Multimodal ve Akıl Yürütme yeteneği en yüksek model
+export const getModel = (modelName: string = "gemini-2.0-flash-thinking-exp-01-21") => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("Missing GEMINI_API_KEY environment variable");
