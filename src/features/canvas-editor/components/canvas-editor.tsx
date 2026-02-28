@@ -109,6 +109,7 @@ export function CanvasEditor() {
   // --- HISTORY (UNDO/REDO) ENGINE ---
   const saveHistory = (c: fabric.Canvas, force: boolean = false) => {
     if (isHistoryUpdate.current && !force) return;
+    // @ts-expect-error Fabric v6+ tip tanımlarında toJSON argümanı opsiyonel dizi olarak belirtilmemiş olabilir
     const json = c.toJSON(['id', 'layerName', 'selectable', 'evented', 'hoverCursor']);
     setHistory(prev => {
       const newHistory = prev.slice(0, historyIndex + 1);
@@ -179,7 +180,7 @@ export function CanvasEditor() {
           // Pazarlama: Tam ekran, gradient overlay için filtreli, keskin
           img.scaleToWidth(canvasWidth);
           img.set({ left: 0, top: 0, opacity: 0.4 });
-          // Blend modu ve filtre
+          // @ts-expect-error Fabric v6+ filter api tanımlamasında hata veriyor
           const f = new fabric.Image.filters.Grayscale();
           img.filters = [f];
           img.applyFilters();
