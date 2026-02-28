@@ -9,14 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Sparkles, 
-  Loader2, 
-  Instagram, 
-  Layers, 
-  Settings2, 
-  Copy, 
-  ArrowRight, 
+import {
+  Sparkles,
+  Loader2,
+  Instagram,
+  Layers,
+  Settings2,
+  Copy,
+  ArrowRight,
   CheckCircle2,
   Volume2,
   FileVideo,
@@ -30,22 +30,22 @@ import {
   BarChart3,
   Clock
 } from "lucide-react";
-import { 
-  useStudioStore, 
-  ContentType, 
+import {
+  useStudioStore,
+  ContentType,
   ContentTone,
   TargetAudience,
   PostLength,
-  CallToActionType 
+  CallToActionType
 } from "@/features/studio/store/studio.store";
 import Link from "next/link";
 
 export function AIGenerator() {
-  const { 
-    prompt, setPrompt, 
+  const {
+    prompt, setPrompt,
     enhancedPrompt, setEnhancedPrompt,
-    contentType, setContentType, 
-    tone, setTone, 
+    contentType, setContentType,
+    tone, setTone,
     language, setLanguage,
     targetAudience, setTargetAudience,
     postLength, setPostLength,
@@ -90,7 +90,7 @@ export function AIGenerator() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           prompt: finalPrompt, type: contentType, tone, language,
           targetAudience, postLength, callToActionType, useEmojis
         }),
@@ -125,7 +125,7 @@ export function AIGenerator() {
               <Settings2 className="w-4 h-4 text-sage-dark" />
               <span className="text-xs font-bold text-sage-dark uppercase tracking-tight">Stüdyo Yapılandırması</span>
             </div>
-            <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-600 border-purple-100">Gemini 2.0 Thinking</Badge>
+            <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-600 border-purple-100">Gemini 3.1 Pro</Badge>
           </div>
           <CardContent className="p-6 flex flex-col gap-6">
             <div className="flex flex-col gap-2">
@@ -133,9 +133,9 @@ export function AIGenerator() {
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">İçerik Hedefi</label>
                 <div className="flex gap-1">
                   <Badge variant="secondary" className="text-[9px] h-5 bg-blue-50 text-blue-600 border-none">Multimodal</Badge>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="h-6 text-[10px] text-purple-600 hover:text-purple-700 hover:bg-purple-50 gap-1 px-2"
                     onClick={handleEnrichPrompt}
                     disabled={isEnriching || !prompt}
@@ -206,12 +206,12 @@ export function AIGenerator() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="flex items-center justify-between w-full rounded-xl text-slate-500 hover:text-sage-dark bg-slate-50 hover:bg-sage/10 h-10 px-4 text-xs font-bold"
                 onClick={() => setShowAdvanced(!showAdvanced)}
               >
-                Gelişmiş Ayarlar (Hedef Kitle, CTA...) 
+                Gelişmiş Ayarlar (Hedef Kitle, CTA...)
                 {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </Button>
             </div>
@@ -250,7 +250,7 @@ export function AIGenerator() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Aksiyon Çağrısı (CTA)</label>
                     <Select value={callToActionType} onValueChange={(v) => setCallToActionType(v as CallToActionType)}>
@@ -270,9 +270,9 @@ export function AIGenerator() {
 
                 <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-100">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Emoji Kullanımı</span>
-                  <Button 
+                  <Button
                     variant={useEmojis ? "default" : "outline"}
-                    size="sm" 
+                    size="sm"
                     className={`h-7 px-3 text-[10px] rounded-lg ${useEmojis ? "bg-sage hover:bg-sage-dark" : ""}`}
                     onClick={() => setUseEmojis(!useEmojis)}
                   >
@@ -282,8 +282,8 @@ export function AIGenerator() {
               </div>
             )}
 
-            <Button 
-              onClick={handleGenerate} 
+            <Button
+              onClick={handleGenerate}
               disabled={loading || !prompt}
               className="w-full rounded-2xl shadow-lg shadow-sage/30 font-bold py-8 relative overflow-hidden group"
             >
@@ -336,7 +336,7 @@ export function AIGenerator() {
             <div className="flex flex-col items-center gap-2">
               <h3 className="font-bold text-slate-800">Stratejik Akıl Yürütme Aktif...</h3>
               <p className="text-sm text-slate-500 animate-bounce italic text-center max-w-[250px]">
-                Gemini 2.0 Thinking; klinik verileri ve sosyal medya trendlerini analiz ediyor.
+                Gemini 3.1 Pro; klinik verileri ve sosyal medya trendlerini analiz ediyor.
               </p>
             </div>
           </div>
@@ -362,6 +362,11 @@ export function AIGenerator() {
                       <FileVideo className="w-4 h-4" /> Senaryo
                     </TabsTrigger>
                   )}
+                  {(contentType === 'reels' || contentType === 'story') && (
+                    <TabsTrigger value="video" className="rounded-lg px-6 flex items-center gap-2 text-blue-600">
+                      <FileVideo className="w-4 h-4" /> Video AI
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 <div className="flex gap-2">
@@ -385,14 +390,20 @@ export function AIGenerator() {
                     </div>
                     {result?.generatedImageUrl ? (
                       <div className="aspect-square w-full relative bg-slate-100 overflow-hidden">
-                        <img 
-                          src={result.generatedImageUrl} 
-                          alt="AI Generated" 
-                          className="w-full h-full object-cover" 
+                        <img
+                          src={result.generatedImageUrl}
+                          alt="AI Generated"
+                          className="w-full h-full object-cover"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080"><rect width="1080" height="1080" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="32" fill="%2394a3b8">Görsel Yüklenemedi</text></svg>';
                           }}
                         />
+                        {/* Görsel kaynak badge */}
+                        <div className="absolute bottom-2 right-2">
+                          <Badge className="text-[9px] bg-black/60 text-white border-none backdrop-blur-sm">
+                            ✨ Gemini 3.1 Flash Image
+                          </Badge>
+                        </div>
                       </div>
                     ) : (
                       <div className="aspect-square bg-slate-100 flex items-center justify-center p-6 text-center">
@@ -480,17 +491,17 @@ export function AIGenerator() {
                       <Sparkles className="w-4 h-4" /> AI Stratejik Akıl Yürütme
                     </h4>
                     <div className="p-6 bg-white rounded-2xl border border-purple-100 italic text-purple-900 leading-relaxed">
-                      { (result as any)?.thinking || "AI bu içeriği oluştururken klinik verileri ve sosyal medya trendlerini analiz etti." }
+                      {(result as any)?.thinking || "AI bu içeriği oluştururken klinik verileri ve sosyal medya trendlerini analiz etti."}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                       <div className="p-4 bg-white/50 rounded-xl border border-purple-100">
-                          <div className="text-[10px] font-bold text-purple-400 uppercase">Analiz Modu</div>
-                          <div className="text-xs font-bold text-purple-700">Multimodal Thinking v2</div>
-                       </div>
-                       <div className="p-4 bg-white/50 rounded-xl border border-purple-100">
-                          <div className="text-[10px] font-bold text-purple-400 uppercase">Tasarım Zekası</div>
-                          <div className="text-xs font-bold text-purple-700">Generative Logic</div>
-                       </div>
+                      <div className="p-4 bg-white/50 rounded-xl border border-purple-100">
+                        <div className="text-[10px] font-bold text-purple-400 uppercase">Analiz Modu</div>
+                        <div className="text-xs font-bold text-purple-700">Multimodal Thinking v2</div>
+                      </div>
+                      <div className="p-4 bg-white/50 rounded-xl border border-purple-100">
+                        <div className="text-[10px] font-bold text-purple-400 uppercase">Tasarım Zekası</div>
+                        <div className="text-xs font-bold text-purple-700">Generative Logic</div>
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -512,7 +523,7 @@ export function AIGenerator() {
                       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center text-sage">
-                             <Target className="w-5 h-5" />
+                            <Target className="w-5 h-5" />
                           </div>
                           <div>
                             <div className="text-[10px] font-bold text-slate-400 uppercase">İçerik Sütunu (Pillar)</div>
@@ -521,7 +532,7 @@ export function AIGenerator() {
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
-                             <Clock className="w-5 h-5" />
+                            <Clock className="w-5 h-5" />
                           </div>
                           <div>
                             <div className="text-[10px] font-bold text-slate-400 uppercase">En İyi Paylaşım Zamanı</div>
@@ -533,7 +544,7 @@ export function AIGenerator() {
                       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500">
-                             <Zap className="w-5 h-5" />
+                            <Zap className="w-5 h-5" />
                           </div>
                           <div>
                             <div className="text-[10px] font-bold text-slate-400 uppercase">Tahmini Erişim</div>
@@ -552,17 +563,72 @@ export function AIGenerator() {
                     </div>
 
                     <div className="bg-orchid/5 p-6 rounded-2xl border border-orchid/10">
-                       <h5 className="text-xs font-bold text-orchid-dark mb-2 flex items-center gap-2">
-                         <Sparkles className="w-3 h-3" /> AI Strateji Notu
-                       </h5>
-                       <p className="text-xs text-slate-600 leading-relaxed italic">
-                         Bu içerik, seçtiğiniz hedef kitle için "Bilişsel Güven" tetikleyicilerini kullanacak şekilde yapılandırılmıştır. 
-                         Önerilen paylaşım saatinde etkileşim oranı, kitlemizin aktiflik verilerine göre %22 daha yüksektir.
-                       </p>
+                      <h5 className="text-xs font-bold text-orchid-dark mb-2 flex items-center gap-2">
+                        <Sparkles className="w-3 h-3" /> AI Strateji Notu
+                      </h5>
+                      <p className="text-xs text-slate-600 leading-relaxed italic">
+                        Bu içerik, seçtiğiniz hedef kitle için "Bilişsel Güven" tetikleyicilerini kullanacak şekilde yapılandırılmıştır.
+                        Önerilen paylaşım saatinde etkileşim oranı, kitlemizin aktiflik verilerine göre %22 daha yüksektir.
+                      </p>
                     </div>
                   </div>
                 </Card>
               </TabsContent>
+              {/* Veo 3.1 / Flow / Whisk Bilgi Kartı */}
+              {(contentType === 'reels' || contentType === 'story') && (
+                <TabsContent value="video" className="m-0">
+                  <div className="flex flex-col gap-4 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl border border-blue-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+                        <FileVideo className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-blue-900">Veo 3.1 ile Video Üretimi</h4>
+                        <p className="text-[10px] text-blue-500">Google DeepMind — En Gelişmiş Video AI Modeli</p>
+                      </div>
+                      <Badge className="ml-auto text-[9px] bg-green-100 text-green-700 border-green-200">Ücretsiz Erişim</Badge>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <a href="https://flow.google" target="_blank" rel="noreferrer"
+                        className="flex flex-col gap-2 p-4 bg-white rounded-2xl border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all group">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                          <Sparkles className="w-4 h-4 text-indigo-600" />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-700">Flow</span>
+                        <span className="text-[10px] text-slate-400 leading-tight">AI Filmmaking Suite — Metin → Video</span>
+                      </a>
+                      <a href="https://labs.google/whisk" target="_blank" rel="noreferrer"
+                        className="flex flex-col gap-2 p-4 bg-white rounded-2xl border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all group">
+                        <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                          <Zap className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-700">Whisk Animate</span>
+                        <span className="text-[10px] text-slate-400 leading-tight">Fotoğraf → Animasyon (Veo 3)</span>
+                      </a>
+                      <a href="https://deepmind.google/technologies/veo/" target="_blank" rel="noreferrer"
+                        className="flex flex-col gap-2 p-4 bg-white rounded-2xl border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all group">
+                        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                          <BarChart3 className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <span className="text-[11px] font-bold text-slate-700">Veo 3.1</span>
+                        <span className="text-[10px] text-slate-400 leading-tight">720p/1080p, native ses, 4–8 sn</span>
+                      </a>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-4 bg-white/70 rounded-2xl border border-blue-100">
+                      <Clock className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-[11px] font-bold text-blue-800">Ücretsiz Plan: Aylık 100 kredi</p>
+                        <p className="text-[10px] text-slate-500 leading-relaxed mt-0.5">
+                          Her kredi 4–8 saniyelik video üretir. Ücretsiz planda SynthID filigranı eklenir.
+                          AI&apos;nın oluşturduğu metni ve görseli Veo&apos;ya prompt olarak kopyalayabilirsiniz.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              )}
             </Tabs>
           </div>
         )}

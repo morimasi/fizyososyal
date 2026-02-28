@@ -1,4 +1,4 @@
-import { getModel } from "@/lib/google-ai";
+import { getModel, getImageModel, MODEL_TEXT, MODEL_ENRICH } from "@/lib/google-ai";
 
 export type ContentType = "post" | "carousel" | "reels" | "ad" | "thread" | "story" | "article" | "newsletter";
 export type ContentTone = "professional" | "friendly" | "scientific" | "motivational" | "empathetic" | "bold" | "educational";
@@ -14,8 +14,25 @@ export interface GenerateParams {
   useEmojis?: boolean;
 }
 
+// =====================================================
+// Video içerik türleri için Veo 3.1 yönlendirme bilgisi
+// =====================================================
+const VIDEO_TYPES: ContentType[] = ["reels", "story"];
+
+const VIDEO_INFO = {
+  engine: "Veo 3.1",
+  tools: ["Flow (AI Filmmaking Suite)", "Whisk Animate"],
+  freeCredits: "Ayda 100 kredi (4–8 sn klipler)",
+  note: "Filigran dahil. 720p/1080p çözünürlük, native ses destekli.",
+  links: {
+    flow: "https://flow.google",
+    whisk: "https://labs.google/whisk",
+    veo: "https://deepmind.google/technologies/veo/",
+  },
+};
+
 const SYSTEM_INSTRUCTION = `
-Sen "Fizyososyal AI v2" multimodal strateji modelisin.
+Sen "Fizyososyal AI" multimodal strateji modelisin (Gemini 3.1 Pro).
 Görevin, fizyoterapi profesyonelleri için en etkili, tıbbi doğrulukta ve stratejik sosyal medya içeriklerini üretmektir.
 Çok hızlı ve doğrudan sonuç odaklı çalışmalısın.
 `;
@@ -47,37 +64,66 @@ function parseJSONWithFallback(text: string): object {
   }
 }
 
-async function generateFreeImage(prompt: string): Promise<string> {
+// =====================================================
+// Görsel Üretim — Gemini 3.1 Flash Image (Nano Banana 2)
+// =====================================================
+async function generateGeminiImage(prompt: string): Promise<string | null> {
+  try {
+    const model = getImageModel();
+    const result = await model.generateContent(
+      `Generate a high-quality, clinical, professional medical photography image for physiotherapy social media. Style: ultra realistic, clean white/medical environment. Subject: ${prompt}`
+    );
+    const response = result.response;
+
+    // Önce inline data (base64) kontrol et
+    for (const candidate of response.candidates ?? []) {
+      for (const part of candidate.content?.parts ?? []) {
+        if ((part as any).inlineData?.mimeType?.startsWith("image/")) {
+          const { mimeType, data } = (part as any).inlineData;
+          return `data:${mimeType};base64,${data}`;
+        }
+      }
+    }
+    return null;
+  } catch (err) {
+    console.warn("Gemini Image API hatası, fallback devrede:", err);
+    return null;
+  }
+}
+
+// Fallback: Pollinations (API erişimi yokken)
+function fallbackImageUrl(prompt: string): string {
   const seed = Math.floor(Math.random() * 1000000);
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&width=1024&height=1024&nologo=true&enhance=true`;
 }
 
 export async function enrichPrompt(prompt: string): Promise<string> {
   try {
-    const model = getModel("gemini-2.0-flash-exp");
+    const model = getModel(MODEL_ENRICH);
     const fullPrompt = `Kullanıcı İstemi: "${prompt}". Bu istemi sosyal medya AI görsel ve metin üreticisi için ultra profesyonel bir prompte dönüştür. SADECE promptu döndür.`;
     const result = await model.generateContent(fullPrompt);
     const response = await result.response;
     return response.text().trim();
   } catch (error) {
-    return prompt; 
+    return prompt;
   }
 }
 
-export async function generateContent({ 
-  userPrompt, type, tone, language, 
-  targetAudience = "general", 
-  postLength = "medium", 
-  callToActionType = "appointment", 
-  useEmojis = true 
+export async function generateContent({
+  userPrompt, type, tone, language,
+  targetAudience = "general",
+  postLength = "medium",
+  callToActionType = "appointment",
+  useEmojis = true
 }: GenerateParams) {
   try {
-    const model = getModel("gemini-2.0-flash-exp");
-    
+    const model = getModel(MODEL_TEXT);
+
     const fullPrompt = `
       ${SYSTEM_INSTRUCTION}
       Kullanıcı İsteği: "${userPrompt}"
       Format: ${type} | Ton: ${tone} | Kitle: ${targetAudience}
+      İçerik Uzunluğu: ${postLength} | CTA: ${callToActionType} | Emoji: ${useEmojis}
       
       Lütfen şu JSON yapısında yanıt ver:
       {
@@ -87,14 +133,16 @@ export async function generateContent({
         "mainHeadline": "Ana slogan",
         "caption": "Instagram açıklaması",
         "hashtags": ["#etiket"],
-        "imageDescription": "Ultra realistic English prompt for clinical photography",
+        "imageDescription": "Ultra realistic English prompt for clinical physiotherapy photography",
         "designHints": {
            "primaryColor": "#HEX",
            "layoutType": "modern"
         },
         "strategy": {
            "bestTimeToPost": "Saat",
-           "contentPillar": "Pillar"
+           "contentPillar": "Pillar",
+           "potentialReach": "X.Xk - X.Xk",
+           "targetKeywords": ["kelime"]
         }
       }
     `;
@@ -103,12 +151,25 @@ export async function generateContent({
     const response = await result.response;
     const text = response.text();
     const parsed = parseJSONWithFallback(text) as any;
-    
-    const freeImageUrl = await generateFreeImage(parsed.imageDescription || userPrompt);
-    
+
+    // Gemini 3.1 Flash Image ile görsel üret
+    const geminiImageBase64 = await generateGeminiImage(parsed.imageDescription || userPrompt);
+
+    // Görsel base64 varsa route'taki Vercel Blob yükleyici devreye girer
+    // Yoksa fallback URL kullan
+    const imageResult = geminiImageBase64
+      ? { generatedImageBase64: geminiImageBase64 }
+      : { generatedImageUrl: fallbackImageUrl(parsed.imageDescription || userPrompt) };
+
+    // Video içerik türleri için Veo 3.1 bilgisi ekle
+    const videoExtra = VIDEO_TYPES.includes(type) ? { videoInfo: VIDEO_INFO } : {};
+
     return {
       ...parsed,
-      generatedImageUrl: freeImageUrl,
+      ...imageResult,
+      ...videoExtra,
+      imageModel: "gemini-3.1-flash-image-preview",
+      textModel: "gemini-3.1-pro-preview",
       parsed: true
     };
   } catch (error) {
@@ -116,7 +177,7 @@ export async function generateContent({
     return {
       title: "Hata",
       caption: "Sistem şu an çok yoğun. Lütfen 30 saniye sonra tekrar deneyin.",
-      generatedImageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(userPrompt)}?enhance=true`,
+      generatedImageUrl: fallbackImageUrl(userPrompt),
       error: true
     };
   }
