@@ -41,9 +41,11 @@ import {
   Redo2,
   ZoomIn,
   ZoomOut,
-  Droplet
+  Droplet,
+  Video as VideoIcon
 } from "lucide-react";
 import { useStudioStore } from "@/features/studio/store/studio.store";
+import { VideoLibrary } from "./video-library";
 
 // ==========================================
 // Intentional Minimalism & Performance Core
@@ -59,6 +61,10 @@ export function CanvasEditor() {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const isHistoryUpdate = useRef(false);
+  const videoRenderFrame = useRef<number | null>(null); // Video render loop için
+
+  // Sol panel state'i
+  const [sidebarMode, setSidebarMode] = useState<'design' | 'typography' | 'ai' | 'video'>('design');
 
   const { aiContent, contentType, setAIContent } = useStudioStore();
 
@@ -255,13 +261,68 @@ export function CanvasEditor() {
       left: canvasWidth / 2, top: 30,
       fontFamily: "Inter", fontSize: 12, fontWeight: "bold",
       fill: style === "aggressive" ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)",
-      originX: "center", charSpacing: 400
     });
     canvas.add(brand);
 
     canvas.renderAll();
     isHistoryUpdate.current = false;
     saveHistory(canvas, true);
+  };
+
+  // --- KOMPOZİT VİDEO MOTORU (Pexels -> Canvas) ---
+  const mountVideoToCanvas = (videoUrl: string) => {
+    if (!canvas) return;
+
+    // Eski render loop'u varsa temizle
+    if (videoRenderFrame.current) {
+      cancelAnimationFrame(videoRenderFrame.current);
+    }
+
+    const videoElement = document.createElement('video');
+    videoElement.crossOrigin = "anonymous";
+    videoElement.src = videoUrl;
+    videoElement.loop = true;
+    videoElement.muted = true;
+
+    videoElement.addEventListener('loadeddata', () => {
+      const videoWidth = videoElement.videoWidth;
+      const videoHeight = videoElement.videoHeight;
+
+      // Cover mantığıyla canvas'ı kaplaması için oran hesapla
+      const scaleX = canvasWidth / videoWidth;
+      const scaleY = canvasHeight / videoHeight;
+      const scale = Math.max(scaleX, scaleY);
+
+      const fabricVideo = new fabric.Image(videoElement, {
+        left: canvasWidth / 2,
+        top: canvasHeight / 2,
+        originX: 'center',
+        originY: 'center',
+        scaleX: scale,
+        scaleY: scale,
+        objectCaching: false, // Videolar cache edilemez, her frame çizilir
+        selectable: false, // Arka plan olarak kilitle
+        evented: false,
+        layerName: 'Stok Video (Arka Plan)'
+      });
+
+      canvas.add(fabricVideo);
+      canvas.sendObjectToBack(fabricVideo);
+      videoElement.play();
+
+      // Render Animasyon Döngüsü
+      const renderLoop = () => {
+        if (fabricVideo && canvas) {
+          canvas.requestRenderAll();
+        }
+        videoRenderFrame.current = fabric.util.requestAnimFrame(renderLoop);
+      };
+      renderLoop();
+
+      // History kaydetme (video dom objesi serialize olmasa da placeholder olarak)
+      isHistoryUpdate.current = false;
+      saveHistory(canvas);
+    });
   };
 
   // Otomatik Kurulum (Modelden Veri Geldiğinde)
@@ -276,6 +337,10 @@ export function CanvasEditor() {
   const updateProp = (key: string, value: any) => {
     if (activeObject && canvas) {
       activeObject.set(key, value);
+      // Object Caching kontrolü
+      if (key === 'shadow' || key === 'stroke' || key === 'blur') {
+        activeObject.set({ objectCaching: false } as any);
+      }
       canvas.renderAll();
       // React state bridge
       setActiveObject(null);
@@ -285,13 +350,46 @@ export function CanvasEditor() {
 
 
   // --- İHRACAT (EXPORT) ---
-  const handleDownload = () => {
+  // Kompozit İndirme Motoru
+  const downloadArtwork = async () => {
     if (!canvas) return;
-    const dataURL = canvas.toDataURL({ format: "png", quality: 1, multiplier: 2 }); // 1600x1600 Yüksek Kalite İhracat
-    const a = document.createElement("a");
-    a.href = dataURL;
-    a.download = `fizyososyal-design-${Date.now()}.png`;
-    a.click();
+
+    // Canvas içinde video var mı kontrol et
+    const hasVideo = canvas.getObjects().some(obj => (obj as any)._element?.tagName === 'VIDEO');
+
+    if (hasVideo) {
+      // Video Render: MediaRecorder API (Chrome/Firefox destekli lokal render)
+      try {
+        /* Ekranı 5 saniye kaydedip video dosyası olarak sunacağız. */
+        const stream = (canvasRef.current as any).captureStream(30); // 30 FPS
+        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+        const chunks: BlobPart[] = [];
+
+        recorder.ondataavailable = e => chunks.push(e.data);
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `fizyososyal-video-${Date.now()}.webm`;
+          link.click();
+        };
+
+        recorder.start();
+        // 5 saniye render simülasyonu
+        setTimeout(() => recorder.stop(), 5000);
+        alert("Video derleniyor... Lütfen 5 saniye sayfada kalın.");
+      } catch (err) {
+        console.error("Video export hatası:", err);
+        alert("Tarayıcınız video dökümünü (WebM MediaRecorder) desteklemiyor olabilir.");
+      }
+    } else {
+      // Standart Fotoğraf İndirme (Avant-Garde Retina PNG)
+      const dataUrl = canvas.toDataURL({ format: 'png', multiplier: 2 });
+      const link = document.createElement('a');
+      link.download = `fizyososyal-studio-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+    }
   };
 
   return (
@@ -354,7 +452,7 @@ export function CanvasEditor() {
           <Button variant="secondary" size="icon" className="rounded-xl shadow-sm bg-white/90 backdrop-blur-md" onClick={redo} disabled={historyIndex >= history.length - 1}>
             <Redo2 className="w-4 h-4 text-slate-700" />
           </Button>
-          <Button variant="default" className="rounded-xl shadow-lg bg-slate-900 hover:bg-slate-800 text-white ml-2" onClick={handleDownload}>
+          <Button variant="default" className="rounded-xl shadow-lg bg-slate-900 hover:bg-slate-800 text-white ml-2" onClick={downloadArtwork}>
             <Download className="w-4 h-4 mr-2" /> 4K İndir
           </Button>
         </div>
@@ -433,26 +531,29 @@ export function CanvasEditor() {
           <TabsContent value="design" className="flex-1 overflow-hidden m-0 mt-2">
             <ScrollArea className="h-full px-4 pb-4">
               {!activeObject ? (
-                <div className="flex flex-col gap-6 p-4">
-                  <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-                    <Palette className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-xs text-slate-500 font-medium">Düzenlemek için kanvastan bir element seçin.</p>
+                <div className="w-16 md:w-20 bg-black text-white shrink-0 flex flex-col items-center py-6 gap-6 relative z-10 border-r border-[#1a1a1a]">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-800 to-black shadow-inner flex items-center justify-center border border-white/10">
+                    <Layers className="w-6 h-6 text-slate-300" />
                   </div>
-                  {/* Arkaplan Rengi (Genel) */}
-                  <div className="space-y-3 p-5 rounded-2xl border border-slate-100 bg-white shadow-sm">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Dış Arkaplan</label>
-                    <div className="flex items-center gap-3">
-                      <input type="color" className="w-12 h-12 rounded-xl cursor-pointer border-0 p-0"
-                        value={canvas?.backgroundColor as string || "#ffffff"}
-                        onChange={(e) => {
-                          if (canvas) { canvas.backgroundColor = e.target.value; canvas.renderAll(); }
-                        }} />
-                      <Input className="font-mono text-xs uppercase" value={canvas?.backgroundColor as string || "#ffffff"} readOnly />
-                    </div>
+
+                  <div className="flex flex-col gap-3 w-full px-2">
+                    {['design', 'typography', 'ai', 'video'].map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setSidebarMode(t as any)}
+                        className={`w-full aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transition-all ${sidebarMode === t ? 'bg-white/10 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
+                      >
+                        {t === 'design' && <Square className="w-5 h-5" />}
+                        {t === 'typography' && <Type className="w-5 h-5" />}
+                        {t === 'ai' && <Sparkles className="w-5 h-5" />}
+                        {t === 'video' && <VideoIcon className="w-5 h-5" />}
+                        <span className="text-[9px] font-bold uppercase tracking-wider">{t}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-6">
+              ) : activeObject ? (
+                <div className="flex flex-col gap-6 w-full">
                   {/* Temel Renk ve Opasite */}
                   <div className="space-y-4 p-5 rounded-2xl border border-slate-100 bg-white shadow-sm">
                     <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
@@ -461,13 +562,13 @@ export function CanvasEditor() {
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center gap-3">
                         <input type="color" className="w-10 h-10 rounded-lg cursor-pointer border-0 p-0"
-                          value={(activeObject.get('fill') as string) || "#000000"}
+                          value={(activeObject.get?.('fill') as string) || "#000000"}
                           onChange={(e) => updateProp("fill", e.target.value)} />
-                        <Input className="font-mono text-xs uppercase h-10" value={(activeObject.get('fill') as string) || "Görsel or Gradient"} readOnly />
+                        <Input className="font-mono text-xs uppercase h-10" value={(activeObject.get?.('fill') as string) || "Görsel or Gradient"} readOnly />
                       </div>
                       <div className="space-y-2">
-                        <div className="flex justify-between text-[10px] font-bold text-slate-500"><span>Opaklık</span><span>{Math.round((activeObject.get('opacity') || 1) * 100)}%</span></div>
-                        <Slider max={100} value={[(activeObject.get('opacity') || 1) * 100]} onValueChange={(v) => updateProp("opacity", v[0] / 100)} />
+                        <div className="flex justify-between text-[10px] font-bold text-slate-500"><span>Opaklık</span><span>{Math.round(((activeObject.get?.('opacity') as number) || 1) * 100)}%</span></div>
+                        <Slider max={100} value={[((activeObject.get?.('opacity') as number) || 1) * 100]} onValueChange={(v) => updateProp("opacity", v[0] / 100)} />
                       </div>
                     </div>
                   </div>
@@ -503,7 +604,7 @@ export function CanvasEditor() {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <span className="text-[9px] font-bold text-slate-500 uppercase">Yazı Tipi</span>
-                          <Select value={activeObject.get('fontFamily') as string} onValueChange={(v) => updateProp('fontFamily', v)}>
+                          <Select value={activeObject.get?.('fontFamily') as string} onValueChange={(v) => updateProp('fontFamily', v)}>
                             <SelectTrigger className="h-9 text-xs bg-white"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               {["Inter", "Outfit", "Playfair Display", "Montserrat"].map(f => (<SelectItem key={f} value={f}>{f}</SelectItem>))}
@@ -518,17 +619,17 @@ export function CanvasEditor() {
 
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                          <span className="text-[9px] font-bold text-slate-500 uppercase">Satır Arası (LineHeight)</span>
+                          <span className="text-[9px] font-bold text-slate-500 uppercase">Satır Arası</span>
                           <Slider min={0.5} max={3} step={0.1} value={[(activeObject as fabric.IText).lineHeight || 1.16]} onValueChange={(v) => updateProp('lineHeight', v[0])} />
                         </div>
                         <div className="space-y-2">
-                          <span className="text-[9px] font-bold text-slate-500 uppercase">Harf Arası (Tracking)</span>
+                          <span className="text-[9px] font-bold text-slate-500 uppercase">Harf Arası</span>
                           <Slider min={-200} max={800} step={10} value={[(activeObject as fabric.IText).charSpacing || 0]} onValueChange={(v) => updateProp('charSpacing', v[0])} />
                         </div>
                       </div>
 
                       <div className="flex gap-2 bg-white rounded-xl p-1 border shadow-xs">
-                        <Button variant={(activeObject as fabric.IText).fontWeight === 'bold' ? 'secondary' : 'ghost'} size="sm" className="flex-1 h-8" onClick={() => updateProp('fontWeight', (activeObject as fabric.IText).fontWeight === 'bold' ? 'normal' : 'bold')}><Bold className="w-3.5 h-3.5" /></Button>
+                        <Button variant={(activeObject as fabric.IText).fontWeight === 'bold' || (activeObject as fabric.IText).fontWeight === '900' ? 'secondary' : 'ghost'} size="sm" className="flex-1 h-8" onClick={() => updateProp('fontWeight', (activeObject as fabric.IText).fontWeight === '900' || (activeObject as fabric.IText).fontWeight === 'bold' ? 'normal' : '900')}><Bold className="w-3.5 h-3.5" /></Button>
                         <Button variant={(activeObject as fabric.IText).fontStyle === 'italic' ? 'secondary' : 'ghost'} size="sm" className="flex-1 h-8" onClick={() => updateProp('fontStyle', (activeObject as fabric.IText).fontStyle === 'italic' ? 'normal' : 'italic')}><Italic className="w-3.5 h-3.5" /></Button>
                         <div className="w-[1px] bg-slate-200 mx-1" />
                         {[{ v: 'left', i: AlignLeft }, { v: 'center', i: AlignCenter }, { v: 'right', i: AlignRight }].map(a => (
@@ -537,10 +638,9 @@ export function CanvasEditor() {
                       </div>
                     </div>
                   )}
-
-                  <div className="h-10" /> {/* Scroll Margin */}
+                  <div className="h-10" />
                 </div>
-              )}
+              ) : null}
             </ScrollArea>
           </TabsContent>
 
