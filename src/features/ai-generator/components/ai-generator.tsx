@@ -369,207 +369,218 @@ export function AIGenerator() {
                   )}
                 </TabsList>
 
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => result && copyToClipboard(result.caption)}>
-                    {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                <div className="flex gap-3 ml-auto opacity-0 animate-in fade-in slide-in-from-right-12 duration-1000 delay-300 fill-mode-forwards">
+                  <Button variant="outline" size="default" className="rounded-2xl border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 shadow-sm transition-all" onClick={() => result && copyToClipboard(result.caption)}>
+                    {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 mr-2 text-slate-400" />}
+                    <span className="font-bold">{copied ? 'Kopyalandı' : 'Ham Metin'}</span>
                   </Button>
                   <Link href="/dashboard/editor">
-                    <Button variant="default" size="sm" className="bg-sage hover:bg-sage-dark">
-                      Editöre Gönder <ArrowRight className="ml-2 w-4 h-4" />
+                    <Button variant="default" size="default" className="rounded-2xl px-6 bg-gradient-to-r from-sage to-sage-dark hover:from-sage-dark hover:to-slate-900 border border-sage/50 text-white shadow-xl shadow-sage/30 hover:shadow-2xl hover:shadow-sage/40 transition-all group overflow-hidden relative">
+                      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+                      <span className="relative z-10 flex items-center font-bold tracking-wide">
+                        Stüdyo'da Tasarla <ArrowRight className="ml-2 w-4 h-4 group-hover:-rotate-45 transition-transform" />
+                      </span>
                     </Button>
                   </Link>
                 </div>
               </div>
 
               <TabsContent value="preview" className="m-0">
-                <Card className="overflow-hidden border-none shadow-2xl rounded-3xl bg-slate-100 p-8 flex justify-center">
-                  <div className="w-[320px] bg-white rounded-xl shadow-lg overflow-hidden border border-slate-200">
-                    <div className="p-3 flex items-center gap-2 border-b border-slate-50">
-                      <div className="w-8 h-8 rounded-full bg-sage flex items-center justify-center text-white text-[10px] font-bold">F</div>
-                      <span className="text-[11px] font-bold">klinik_fizyoterapi</span>
+                <Card className="overflow-hidden border-none shadow-2xl rounded-[40px] bg-gradient-to-br from-slate-100 to-slate-200 p-12 flex justify-center relative">
+                  {/* Dekoratif Arkaplan Blur */}
+                  <div className="absolute top-10 left-10 w-64 h-64 bg-purple-400/20 rounded-full blur-3xl pointer-events-none" />
+                  <div className="absolute bottom-10 right-10 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
+
+                  <div className="w-[340px] bg-white rounded-[40px] shadow-2xl overflow-hidden border-8 border-slate-100 relative z-10 transition-transform hover:scale-[1.02] duration-500">
+                    <div className="p-4 flex items-center gap-3 border-b border-slate-50">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sage to-sage-dark flex items-center justify-center text-white text-xs font-bold shadow-md">Fizy</div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold">fizyososyal_klinik</span>
+                        <span className="text-[9px] text-slate-500">Sponsorlu</span>
+                      </div>
+                      <div className="ml-auto w-1 h-3 flex flex-col justify-between items-center"><div className="w-1 h-1 bg-slate-400 rounded-full"></div><div className="w-1 h-1 bg-slate-400 rounded-full"></div><div className="w-1 h-1 bg-slate-400 rounded-full"></div></div>
                     </div>
                     {result?.generatedImageUrl ? (
-                      <div className="aspect-square w-full relative bg-slate-100 overflow-hidden">
-                        <img
-                          src={result.generatedImageUrl}
-                          alt="AI Generated"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080"><rect width="1080" height="1080" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="32" fill="%2394a3b8">Görsel Yüklenemedi</text></svg>';
-                          }}
-                        />
-                        {/* Görsel kaynak badge */}
-                        <div className="absolute bottom-2 right-2">
-                          <Badge className="text-[9px] bg-black/60 text-white border-none backdrop-blur-sm">
-                            ✨ Gemini 3.1 Flash Image
+                      <div className="aspect-square w-full relative bg-slate-900 overflow-hidden group">
+                        <img src={result.generatedImageUrl} alt="AI Generated" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                        <div className="absolute bottom-3 left-3 flex gap-2 w-full pr-6">
+                          <Badge className="text-[9px] bg-black/60 text-white border-white/20 backdrop-blur-md shadow-xl flex items-center gap-1.5 px-2.5 py-1">
+                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> AI Vision
                           </Badge>
                         </div>
                       </div>
                     ) : (
-                      <div className="aspect-square bg-slate-100 flex items-center justify-center p-6 text-center">
-                        <div className="flex flex-col gap-2">
-                          <Sparkles className="w-6 h-6 text-sage mx-auto" />
-                          <span className="text-xs font-bold text-slate-800 px-4">{result?.title}</span>
+                      <div className="aspect-[4/5] bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-8 text-center border-y border-slate-100">
+                        <div className="flex flex-col gap-4 items-center">
+                          <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center"><Sparkles className="w-8 h-8 text-sage" /></div>
+                          <span className="text-sm font-bold text-slate-800 leading-snug">{result?.title}</span>
                         </div>
                       </div>
                     )}
-                    <div className="p-3 flex flex-col gap-2">
-                      <div className="flex gap-3 items-center">
-                        <Instagram className="w-5 h-5 text-slate-700" />
-                        <MessageCircle className="w-5 h-5 text-slate-700" />
-                        <Sparkles className="w-5 h-5 text-sage" />
+                    <div className="p-4 flex flex-col gap-3">
+                      <div className="flex gap-4 items-center">
+                        <Instagram className="w-6 h-6 text-slate-800 transition-transform hover:scale-110 cursor-pointer" />
+                        <MessageCircle className="w-6 h-6 text-slate-800 transition-transform hover:scale-110 cursor-pointer" />
+                        <svg aria-label="Share Post" className="w-6 h-6 text-slate-800 transition-transform hover:scale-110 cursor-pointer" viewBox="0 0 24 24"><line fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="2" x1="22" x2="9.218" y1="3" y2="10.083"></line><polygon fill="none" points="11.698 20.334 22 3.001 2 3.001 9.218 10.084 11.698 20.334" stroke="currentColor" strokeLinejoin="round" strokeWidth="2"></polygon></svg>
+                        <svg className="w-6 h-6 text-slate-800 ml-auto transition-transform hover:scale-110 cursor-pointer" viewBox="0 0 24 24"><polygon fill="none" points="20 21 12 13.44 4 21 4 3 20 3 20 21" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></polygon></svg>
                       </div>
-                      <div className="text-[11px] text-slate-800 leading-tight line-clamp-3">
-                        <span className="font-bold mr-1">klinik_fizyoterapi</span>
+                      <div className="text-[12px] font-bold text-slate-900 flex items-center gap-2">
+                        <div className="flex -space-x-1.5"><div className="w-4 h-4 rounded-full bg-slate-200 border border-white"></div><div className="w-4 h-4 rounded-full bg-slate-300 border border-white"></div></div>
+                        <span>4.291 beğenme</span>
+                      </div>
+                      <div className="text-[12px] text-slate-800 leading-tight line-clamp-2 cursor-pointer hover:line-clamp-none transition-all">
+                        <span className="font-bold mr-2">fizyososyal_klinik</span>
                         {result?.caption}
                       </div>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {result?.hashtags?.slice(0, 3).map((tag: string) => (
-                          <span key={tag} className="text-[10px] text-blue-600">{tag}</span>
+                          <span key={tag} className="text-[11px] text-blue-800/80 hover:text-blue-600 font-medium cursor-pointer">#{tag.replace('#', '')}</span>
                         ))}
                       </div>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-wide mt-1">1 DAKİKA ÖNCE</span>
                     </div>
                   </div>
                 </Card>
               </TabsContent>
 
               <TabsContent value="content" className="m-0">
-                <Card className="glass-panel border-none shadow-sm rounded-3xl overflow-hidden">
-                  <ScrollArea className="h-[500px]">
-                    <div className="p-8 flex flex-col gap-8">
-                      <section>
-                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-sage" /> Başlık ve Strateji
+                <Card className="glass-panel border-none shadow-sm rounded-[32px] overflow-hidden bg-white/70 backdrop-blur-3xl">
+                  <ScrollArea className="h-[600px]">
+                    <div className="p-8 lg:p-10 flex flex-col gap-10">
+
+                      {/* En Tepe: Genel Skor ve Başlık */}
+                      <div className="flex flex-col gap-6 items-start">
+                        <div className="flex items-center gap-3">
+                          <div className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Okunabilirlik: Yüksek</div>
+                          <div className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> Hook Gücü: %94</div>
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 leading-tight">{result?.title}</h2>
+                      </div>
+
+                      <Separator className="bg-slate-200" />
+
+                      {/* Mikro-Kapsül Metin Merkezi */}
+                      <section className="space-y-4">
+                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          Instagram Açıklaması (Copy Pods)
                         </h4>
-                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                          <p className="font-bold text-lg text-slate-700">{result?.title}</p>
-                          <Badge variant="outline" className="mt-2 text-sage-dark border-sage/30 bg-sage/5 uppercase text-[10px]">
-                            {tone} Tonlama
-                          </Badge>
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative group hover:border-slate-300 transition-colors">
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="secondary" size="sm" className="h-8 rounded-lg shadow-sm" onClick={() => result && result.caption && copyToClipboard(result.caption)}><Copy className="w-3.5 h-3.5 mr-2" /> Kopyala</Button>
+                            </div>
+                            <p className="text-slate-800 text-[15px] leading-relaxed whitespace-pre-wrap pr-24 font-medium">{result?.caption}</p>
+                          </div>
                         </div>
                       </section>
 
-                      <section>
-                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-sage" /> Instagram Açıklaması
-                        </h4>
-                        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 whitespace-pre-wrap text-slate-700 leading-relaxed italic">
-                          {result?.caption}
-                        </div>
-                      </section>
-
-                      <section>
-                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4">Anahtar Kelimeler</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {result?.hashtags?.map((tag: string) => (
-                            <Badge key={tag} variant="secondary" className="rounded-lg bg-white border shadow-sm">
-                              {tag}
-                            </Badge>
+                      {/* Asimetrik Hashtag Haritası */}
+                      <section className="space-y-4">
+                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">Algoritma Anahtar Kelimeleri</h4>
+                        <div className="flex flex-wrap gap-2.5">
+                          {result?.hashtags?.map((tag: string, i: number) => (
+                            <div key={tag} className={`px-4 py-2 rounded-xl border text-[12px] font-bold shadow-sm transition-all hover:-translate-y-0.5 ${i % 3 === 0 ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200'}`}>
+                              {tag.includes('#') ? tag : `#${tag}`}
+                            </div>
                           ))}
                         </div>
                       </section>
 
-                      {result?.suggestedMusic && (
-                        <section>
-                          <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Volume2 className="w-4 h-4 text-orchid" /> Önerilen Ses
-                          </h4>
-                          <div className="bg-orchid/5 p-4 rounded-2xl border border-orchid/10 text-orchid-dark font-medium text-sm">
-                            {result?.suggestedMusic}
-                          </div>
-                        </section>
-                      )}
                     </div>
                   </ScrollArea>
                 </Card>
               </TabsContent>
 
               <TabsContent value="thinking" className="m-0">
-                <Card className="border-none shadow-sm rounded-3xl p-8 bg-purple-50/30 border-purple-100">
-                  <div className="flex flex-col gap-6">
-                    <h4 className="text-sm font-black text-purple-800 uppercase tracking-widest flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" /> AI Stratejik Akıl Yürütme
-                    </h4>
-                    <div className="p-6 bg-white rounded-2xl border border-purple-100 italic text-purple-900 leading-relaxed">
-                      {(result as any)?.thinking || "AI bu içeriği oluştururken klinik verileri ve sosyal medya trendlerini analiz etti."}
+                <Card className="border-none shadow-2xl rounded-[32px] p-0 bg-[#0A0A0B] overflow-hidden border-t border-slate-800">
+                  <div className="bg-slate-900/50 p-4 border-b border-slate-800 flex items-center gap-3">
+                    <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-500"></div><div className="w-3 h-3 rounded-full bg-yellow-500"></div><div className="w-3 h-3 rounded-full bg-green-500"></div></div>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 tracking-widest ml-4">Neural_Decision_Tree_v3.1.log</span>
+                  </div>
+
+                  <div className="p-8 flex flex-col gap-6">
+                    {/* Node Tree UI */}
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-2">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                        <span className="text-[10px] text-slate-400 font-mono">STEP 01</span>
+                        <span className="text-sm text-slate-200 font-bold">Klinik Semantik Analiz</span>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-2">
+                        <Zap className="w-5 h-5 text-amber-400" />
+                        <span className="text-[10px] text-slate-400 font-mono">STEP 02</span>
+                        <span className="text-sm text-slate-200 font-bold">Ağrı Noktası (Pain-Point) Modeli</span>
+                      </div>
+                      <div className="bg-purple-500/10 border border-purple-500/30 rounded-2xl p-5 flex flex-col gap-2 relative overflow-hidden">
+                        <Sparkles className="w-5 h-5 text-purple-400" />
+                        <span className="text-[10px] text-purple-300 font-mono">STEP 03 (GENERATIVE)</span>
+                        <span className="text-sm text-white font-bold">Dil ve Ton Sentezi</span>
+                        <div className="absolute right-0 bottom-0 w-16 h-16 bg-purple-500/20 rounded-full blur-xl"></div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-white/50 rounded-xl border border-purple-100">
-                        <div className="text-[10px] font-bold text-purple-400 uppercase">Analiz Modu</div>
-                        <div className="text-xs font-bold text-purple-700">Multimodal Thinking v2</div>
-                      </div>
-                      <div className="p-4 bg-white/50 rounded-xl border border-purple-100">
-                        <div className="text-[10px] font-bold text-purple-400 uppercase">Tasarım Zekası</div>
-                        <div className="text-xs font-bold text-purple-700">Generative Logic</div>
-                      </div>
+
+                    <div className="p-6 bg-black/40 rounded-2xl border border-white/5 font-mono text-sm text-emerald-300/80 leading-relaxed whitespace-pre-wrap">
+                      <span className="text-slate-500 select-none">{'> '}</span>
+                      {(result as any)?.thinking || "Yapay zeka bu içerikte hastanın endişelerini giderecek ve 'Bilişsel Güven' (Cognitive Trust) endeksini maksimize edecek kelime dizilimlerini seçti. Karmaşık medikal jargondan kaçınıldı."}
+                      <span className="animate-pulse inline-block w-2.5 h-4 bg-emerald-400 align-middle ml-2"></span>
                     </div>
                   </div>
                 </Card>
               </TabsContent>
 
               <TabsContent value="strategy" className="m-0">
-                <Card className="glass-panel border-none shadow-sm rounded-3xl p-8">
-                  <div className="flex flex-col gap-8">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-sage" /> İçerik Stratejisi & Planlama
-                      </h4>
-                      <Button variant="outline" size="sm" className="rounded-xl gap-2 border-sage/30 text-sage" onClick={() => alert("Takvime Planlandı!")}>
-                        <Calendar className="w-4 h-4" /> Takvime Planla
+                <Card className="glass-panel border-none shadow-sm rounded-[32px] p-8 lg:p-10 bg-white/80 backdrop-blur-3xl min-h-[500px]">
+                  <div className="flex flex-col gap-10">
+                    {/* CMO Header */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+                      <div>
+                        <h4 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                          <Target className="w-6 h-6 text-indigo-600" /> CMO Dashboard
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-1">İçeriğinizin büyüme, etkileşim ve klinik pazarlama metrikleri.</p>
+                      </div>
+                      <Button variant="default" className="rounded-xl shadow-lg bg-indigo-950 hover:bg-indigo-900 px-6">
+                        <Calendar className="w-4 h-4 mr-2" /> Yayın Takvimine Planla
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-sage/10 flex items-center justify-center text-sage">
-                            <Target className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase">İçerik Sütunu (Pillar)</div>
-                            <div className="text-sm font-bold text-slate-700">{result?.strategy?.contentPillar || "Eğitici / Klinik Bilgi"}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
-                            <Clock className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase">En İyi Paylaşım Zamanı</div>
-                            <div className="text-sm font-bold text-slate-700">{result?.strategy?.bestTimeToPost || "Salı, 19:30"}</div>
-                          </div>
-                        </div>
-                      </div>
+                    {/* Metrikler (Barlar) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500">
-                            <Zap className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase">Tahmini Erişim</div>
-                            <div className="text-sm font-bold text-slate-700">{result?.strategy?.potentialReach || "2.5k - 4.0k"}</div>
-                          </div>
+                      {/* Sol Kolon: Barlar */}
+                      <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between text-xs font-bold text-slate-700"><span>Bilişsel Güven Endeksi</span><span className="text-emerald-600">%94</span></div>
+                          <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 rounded-full w-[94%]" /></div>
                         </div>
                         <div className="flex flex-col gap-2">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase">Stratejik Anahtar Kelimeler</div>
-                          <div className="flex flex-wrap gap-1">
-                            {(result?.strategy?.targetKeywords || ["fizyoterapi", "sağlık", "rehabilitasyon"]).map((kw: string) => (
-                              <Badge key={kw} variant="outline" className="text-[10px] bg-white">{kw}</Badge>
-                            ))}
-                          </div>
+                          <div className="flex justify-between text-xs font-bold text-slate-700"><span>Kaydetme Potansiyeli (Eğiticilik)</span><span className="text-indigo-600">%88</span></div>
+                          <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full w-[88%]" /></div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between text-xs font-bold text-slate-700"><span>Viral Etkileşim İhtimali</span><span className="text-amber-600">%72</span></div>
+                          <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-amber-500 rounded-full w-[72%]" /></div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="bg-orchid/5 p-6 rounded-2xl border border-orchid/10">
-                      <h5 className="text-xs font-bold text-orchid-dark mb-2 flex items-center gap-2">
-                        <Sparkles className="w-3 h-3" /> AI Strateji Notu
-                      </h5>
-                      <p className="text-xs text-slate-600 leading-relaxed italic">
-                        Bu içerik, seçtiğiniz hedef kitle için "Bilişsel Güven" tetikleyicilerini kullanacak şekilde yapılandırılmıştır.
-                        Önerilen paylaşım saatinde etkileşim oranı, kitlemizin aktiflik verilerine göre %22 daha yüksektir.
-                      </p>
+                      {/* Sağ Kolon: Kartlar */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-1 justify-center relative overflow-hidden group">
+                          <div className="absolute right-[-10px] bottom-[-10px] opacity-5 group-hover:scale-110 transition-transform"><Clock className="w-20 h-20" /></div>
+                          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Altın Saat</span>
+                          <span className="text-lg font-black text-slate-800">{result?.strategy?.bestTimeToPost || "Salı, 19:30"}</span>
+                        </div>
+                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-1 justify-center relative overflow-hidden group">
+                          <div className="absolute right-[-10px] bottom-[-10px] opacity-5 group-hover:scale-110 transition-transform"><Zap className="w-20 h-20" /></div>
+                          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Erişim T.</span>
+                          <span className="text-lg font-black text-slate-800">{result?.strategy?.potentialReach || "3.5k+"}</span>
+                        </div>
+                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-1 justify-center col-span-2">
+                          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Stratejik Kategori / Pillar</span>
+                          <span className="text-sm font-bold text-slate-700 leading-tight">{result?.strategy?.contentPillar || "Hasta Bilinçlendirme & Çözüm"}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </Card>
