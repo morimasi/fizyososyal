@@ -28,63 +28,41 @@ Stratejik Kurallar:
 
 function cleanJSONResponse(text: string): string {
   let cleaned = text;
-  
   cleaned = cleaned.replace(/```json\n?/g, "");
   cleaned = cleaned.replace(/```\n?/g, "");
   cleaned = cleaned.replace(/^```\w*\n?/g, "");
   cleaned = cleaned.replace(/\n```$/g, "");
-  
   cleaned = cleaned.trim();
-  
   const jsonStart = cleaned.indexOf("{");
   const jsonEnd = cleaned.lastIndexOf("}");
-  
   if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
     cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
   }
-  
   cleaned = cleaned.replace(/,\s*}/g, "}");
   cleaned = cleaned.replace(/,\s*\]/g, "]");
-  
   return cleaned;
 }
 
 function parseJSONWithFallback(text: string): object {
   const cleaned = cleanJSONResponse(text);
-  
   try {
     return JSON.parse(cleaned);
   } catch (firstError) {
-    console.log("First JSON parse failed, trying regex extraction");
-    
     const jsonMatches = text.match(/\{[\s\S]*\}/g);
-    
     if (jsonMatches) {
       for (const match of jsonMatches) {
         try {
-          const cleanedMatch = cleanJSONResponse(match);
-          const parsed = JSON.parse(cleanedMatch);
-          
-          if (parsed.title || parsed.caption || parsed.hook) {
-            return parsed;
-          }
-        } catch {
-          continue;
-        }
+          const parsed = JSON.parse(cleanJSONResponse(match));
+          if (parsed.title || parsed.caption || parsed.hook) return parsed;
+        } catch { continue; }
       }
     }
-    
-    console.error("All JSON parsing attempts failed");
-    
     return {
       error: "İçerik yapılandırılırken bir hata oluştu",
-      raw: text.slice(0, 500),
-      parsed: false,
       title: "İçerik Başlığı",
-      hook: "Bu içerik için fizyoterapi uzmanınızdan randevu alın!",
+      hook: "Fizyoterapi uzmanınızdan randevu alın!",
       caption: text.slice(0, 500),
-      hashtags: ["#fizyoterapi", "#rehabilitasyon", "#fizik tedavi", "#sağlık"],
-      imageDescription: "Modern bir fizyoterapi kliniği iç mekanı",
+      hashtags: ["#fizyoterapi", "#sağlık"],
       callToAction: "Detaylı bilgi için DM!"
     };
   }
@@ -95,18 +73,9 @@ export async function enrichPrompt(prompt: string): Promise<string> {
   const fullPrompt = `
     Sen profesyonel bir Prompt Mühendisi ve Fizyoterapi İçerik Stratejistisin.
     Aşağıdaki basit kullanıcı istemini, bir AI görsel ve metin üreticisinden en yüksek verimi alacak şekilde ultra profesyonel, detaylı ve klinik bağlamı güçlü bir prompte dönüştür.
-    
     Kullanıcı İstemi: "${prompt}"
-    
-    Yeni prompt şunları içermeli:
-    - Klinik doğruluk ve tıbbi terminoloji (uygun yerlerde)
-    - Hedef kitlenin psikolojik tetikleyicileri
-    - Görsel kompozisyon detayları
-    - İçeriğin stratejik amacı (eğitici, güven verici, satış odaklı vb.)
-    
     SADECE zenginleştirilmiş prompt metnini döndür.
   `;
-
   const result = await model.generateContent(fullPrompt);
   const response = await result.response;
   return response.text().trim();
@@ -121,22 +90,61 @@ export async function generateContent({
 }: GenerateParams) {
   const model = getModel("gemini-1.5-flash");
   
-  // ... (Existing prompt logic)
-  
+  let typeSpecificPrompt = "";
+  if (type === "carousel") typeSpecificPrompt = "Carousel içeriği. 6-10 slayt üret.";
+  else if (type === "reels") typeSpecificPrompt = "Reels senaryosu. Saniye saniye plan üret.";
+  else if (type === "thread") typeSpecificPrompt = "X/Twitter thread. 5-10 tweet.";
+  else if (type === "article") typeSpecificPrompt = "Detaylı makale. H1, H2 başlıkları kullan.";
+
+  let audienceContext = "Genel kitle";
+  if (targetAudience === "athletes") audienceContext = "Sporcular";
+  else if (targetAudience === "elderly") audienceContext = "İleri yaş grubu";
+  else if (targetAudience === "office_workers") audienceContext = "Ofis çalışanları";
+  else if (targetAudience === "women_health") audienceContext = "Kadın sağlığı";
+  else if (targetAudience === "chronic_pain") audienceContext = "Kronik ağrı";
+  else if (targetAudience === "post_op") audienceContext = "Ameliyat sonrası";
+
+  const fullPrompt = `
+    ${SYSTEM_INSTRUCTION}
+    Kullanıcı Talebi: ${userPrompt}
+    İçerik Türü: ${type} | Ton: ${tone} | Dil: ${language}
+    Hedef Kitle: ${audienceContext} | Uzunluk: ${postLength}
+    ${typeSpecificPrompt}
+    Yanıtını SADECE şu JSON formatında döndür:
+    {
+      "title": "Başlık",
+      "hook": "Kanca",
+      "mainHeadline": "Ana Başlık",
+      "subHeadline": "Alt Başlık",
+      "slogan": "Slogan",
+      "vignette": "Özet",
+      "highlights": ["Madde 1", "Madde 2"],
+      "caption": "Instagram Açıklaması",
+      "hashtags": ["#etiket1"],
+      "imageDescription": "Ultra detailed English prompt for image generation",
+      "designHints": {
+         "primaryColor": "#HEX",
+         "secondaryColor": "#HEX",
+         "fontFamily": "Inter",
+         "layoutType": "modern"
+      },
+      "strategy": {
+         "bestTimeToPost": "Saat",
+         "targetKeywords": ["kelime"],
+         "potentialReach": "Erişim",
+         "contentPillar": "Pillar"
+      }
+    }
+  `;
+
   const result = await model.generateContent(fullPrompt);
   const response = await result.response;
   const text = response.text();
-  
-  console.log("AI Raw Response length:", text.length);
-
-  const parsed = parseJSONWithFallback(text) as Record<string, unknown>;
-  
-  // Disabled Image generation to prevent 502 Bad Gateway (timeouts)
-  // Let the client or a separate background job handle this if needed
+  const parsed = parseJSONWithFallback(text) as any;
   
   return {
     ...parsed,
     generatedImageBase64: undefined,
-    parsed: (parsed as any).parsed !== false,
+    parsed: parsed.error ? false : true
   };
 }
