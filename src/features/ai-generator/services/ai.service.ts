@@ -167,9 +167,12 @@ export async function generateContent({
 
   const parsed = parseJSONWithFallback(text) as Record<string, unknown>;
   
-  let safePrompt = parsed.imageDescription ? String(parsed.imageDescription).substring(0, 400) : "";
+  let safePrompt = parsed.imageDescription ? String(parsed.imageDescription).substring(0, 200) : "";
+  // Ensure we don't end with a broken word or punctuation
+  safePrompt = safePrompt.replace(/%20/g, ' ').replace(/[^a-zA-Z0-9\s,.-]/g, '').trim();
+  
   const imageUrl = safePrompt 
-    ? "https://image.pollinations.ai/prompt/" + encodeURIComponent(safePrompt + ", highly detailed, professional photography, clinical") + "?width=1080&height=1080&nologo=true"
+    ? `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=1080&height=1080&nologo=true`
     : undefined;
   
   return {
