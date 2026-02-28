@@ -6,6 +6,7 @@ import { users } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { ratelimit } from "@/lib/upstash";
 import { z } from "zod";
+import { put } from "@vercel/blob";
 
 const generateSchema = z.object({
   prompt: z.string().min(3).max(500),
@@ -75,15 +76,36 @@ export async function POST(req: Request) {
         postLength,
         callToActionType,
         useEmojis
-      });
+      }) as any;
     } catch (aiError) {
       const msg = aiError instanceof Error ? aiError.message : String(aiError);
       console.error("AI Error:", msg);
       return NextResponse.json({ error: "AI hatası: " + msg, code: "AI_ERROR" }, { status: 502 });
     }
 
-    if (!content || (content as Record<string, unknown>).error) {
+    if (!content || content.error) {
       return NextResponse.json({ error: "AI boş yanıt", code: "AI_RESPONSE_ERROR" }, { status: 502 });
+    }
+
+    // Handle Image Upload if generatedImageBase64 exists
+    if (content.generatedImageBase64) {
+      try {
+        const base64Data = content.generatedImageBase64.split(",")[1];
+        const mimeType = content.generatedImageBase64.split(";")[0].split(":")[1];
+        const buffer = Buffer.from(base64Data, "base64");
+        
+        const blob = await put(`ai-generated/${session.user.id}/${Date.now()}.png`, buffer, {
+          access: "public",
+          contentType: mimeType,
+        });
+
+        content.generatedImageUrl = blob.url;
+        // Optionally delete base64 to keep response small
+        delete content.generatedImageBase64;
+        console.log("AI Image uploaded to Blob:", blob.url);
+      } catch (uploadError) {
+        console.error("Failed to upload AI generated image to Blob:", uploadError);
+      }
     }
 
     await db.update(users)
