@@ -167,17 +167,29 @@ export async function generateContent({
 
   const parsed = parseJSONWithFallback(text) as Record<string, unknown>;
   
-  let safePrompt = parsed.imageDescription ? String(parsed.imageDescription).substring(0, 200) : "";
-  // Ensure we don't end with a broken word or punctuation
-  safePrompt = safePrompt.replace(/%20/g, ' ').replace(/[^a-zA-Z0-9\s,.-]/g, '').trim();
-  
-  const imageUrl = safePrompt 
-    ? `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=1080&height=1080&nologo=true`
-    : undefined;
+  let base64Image: string | undefined = undefined;
+
+  try {
+    if (parsed.imageDescription) {
+      console.log("Generating image with gemini-2.5-flash-image...");
+      const imageModel = getModel("gemini-2.5-flash-image");
+      const imagePrompt = String(parsed.imageDescription).substring(0, 400);
+      const imgResult = await imageModel.generateContent(imagePrompt);
+      const imgResponse = imgResult.response;
+      
+      const inlineData = imgResponse.candidates?.[0]?.content?.parts?.[1]?.inlineData;
+      if (inlineData?.data) {
+        base64Image = `data:${inlineData.mimeType};base64,${inlineData.data}`;
+        console.log("Image successfully generated!");
+      }
+    }
+  } catch (imgError) {
+    console.error("Gemini image generation failed:", imgError);
+  }
   
   return {
     ...parsed,
-    generatedImageUrl: imageUrl,
+    generatedImageBase64: base64Image,
     parsed: parsed.parsed !== false,
   };
 }
