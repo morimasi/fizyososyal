@@ -17,6 +17,18 @@ interface AIContent {
   suggestedMusic?: string;
   callToAction: string;
   generatedImageUrl?: string;
+  // New Enhanced Fields
+  mainHeadline?: string;
+  subHeadline?: string;
+  slogan?: string;
+  vignette?: string;
+  highlights?: string[];
+  designHints?: {
+    primaryColor: string;
+    secondaryColor: string;
+    fontFamily: string;
+    layoutType: "minimal" | "bold" | "scientific" | "modern";
+  };
 }
 
 interface StudioState {

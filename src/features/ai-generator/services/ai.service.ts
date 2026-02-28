@@ -143,9 +143,20 @@ export async function generateContent({
     {
       "title": "İçerik Başlığı (Stratejik)",
       "hook": "Dikkat çekici kanca cümlesi",
+      "mainHeadline": "Görsel üzerinde yer alacak ana başlık (Vurgulu ve profesyonel)",
+      "subHeadline": "Görsel üzerinde yer alacak alt başlık veya slogan",
+      "slogan": "Akılda kalıcı kısa bir slogan",
+      "vignette": "İçeriği özetleyen kısa bir bilgi kutucuğu metni",
+      "highlights": ["Madde 1", "Madde 2", "Madde 3"],
       "caption": "Instagram Açıklaması (Emoji zengini, paragraflara bölünmüş)",
       "hashtags": ["#fizyoterapi", "#rehabilitasyon", ...],
       "imageDescription": "Görsel üretim modeli (Stable Diffusion) için ultra detaylı İNGİLİZCE prompt",
+      "designHints": {
+         "primaryColor": "Marka/içerik için uygun bir ana renk HEX kodu",
+         "secondaryColor": "Vurgu rengi HEX kodu",
+         "fontFamily": "Inter | Poppins | Montserrat | Playfair Display",
+         "layoutType": "minimal | bold | scientific | modern"
+      },
       "carouselSlides": [
          {"slide": 1, "text": "Slayt metni", "visual": "Görsel betimleme"},
          {"slide": 2, "text": "...", "visual": "..."}
