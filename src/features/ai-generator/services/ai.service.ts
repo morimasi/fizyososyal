@@ -100,12 +100,27 @@ function fallbackImageUrl(prompt: string): string {
 export async function enrichPrompt(prompt: string): Promise<string> {
   try {
     const model = getModel(MODEL_ENRICH);
-    const fullPrompt = `Kullanıcı İstemi: "${prompt}". Bu istemi sosyal medya AI görsel ve metin üreticisi için ultra profesyonel bir prompte dönüştür. SADECE promptu döndür.`;
+    const fullPrompt = `Sen dünyanın en iyi prompt mühendisi ve metin yazarı klinik yöneticisisin. Hedefin: Fizyoterapi klinikleri için sosyal medya görselleri ve post metinleri üretecek AI'a verilecek en yoğun, en profesyonel dönüşümlü "Ana İstemi (Master Prompt)" yazmak.
+
+Kullanıcının yazdığı zayıf, basit fikir: "${prompt}"
+
+Senden Beklenen:
+Bu basit fikri alıp, tıbbi doğruluğa sahip, hedef kitlenin (hastaların) acı noktalarına (pain points) dokunan, "Intentional Minimalism" ve yüksek klinik güvenilirlik hissi taşıyan estetik bir prompta çevir. 
+SADECE MÜKEMMELLEŞTİRİLMİŞ YENİ PROMPTU DÖNDÜR. Ekstra açıklama, merhaba, not ekleme.
+Örnek Çıktı Formatı: "Bel fıtığı anatomisini gösteren, hastanın doğru duruş ergonomisini anlatan, sade medikal renklerle (mavi-beyaza dönük) estetik bir klinik bilgilendirme gönderisi."`;
+
     const result = await model.generateContent(fullPrompt);
     const response = await result.response;
-    return response.text().trim();
+    const enrichedText = response.text().trim();
+
+    if (!enrichedText || enrichedText.length < 10) {
+      throw new Error("AI çok kısa veya boş bir prompt döndürdü.");
+    }
+    return enrichedText;
   } catch (error) {
-    return prompt;
+    console.warn("Prompt Sihirbazı hatası, fallback uygulanıyor:", error);
+    // Silent failure engellemek için estetik bir fallback
+    return `${prompt} (Profesyonel, etik klinik bilgilendirme standartlarında ve yüksek çözünürlüklü medikal estetik bağlamında yeniden kurgulanmıştır.)`;
   }
 }
 

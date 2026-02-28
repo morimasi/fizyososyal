@@ -10,8 +10,8 @@ export const MODEL_TEXT = "gemini-3.1-pro-preview";
 /** Görsel Üretim: Gemini 3.1 Flash Image (Nano Banana 2) */
 export const MODEL_IMAGE = "gemini-3.1-flash-image-preview";
 
-/** Prompt Zenginleştirme: Hız için Gemini 3 Flash */
-export const MODEL_ENRICH = "gemini-3-flash";
+/** Prompt Zenginleştirme: Geriye dönük uyumlu ve en stabil model (v0.24 sdk fix) */
+export const MODEL_ENRICH = "gemini-2.0-flash-exp";
 
 function getGenAI(): GoogleGenerativeAI {
   const apiKey = process.env.GEMINI_API_KEY;
