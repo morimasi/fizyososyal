@@ -4,14 +4,14 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Fizyososyal — Güncel AI Model Sabitleri (Şubat 2026)
 // =====================================================
 
-/** Metin + Strateji: Gemini 2.0 Flash (Hızlı ve Güçlü) */
-export const MODEL_TEXT = "gemini-2.0-flash";
+/** Metin + Strateji: Gemini 1.5 Flash (Üretim için en stabil) */
+export const MODEL_TEXT = "gemini-1.5-flash";
 
-/** Görsel Üretim: Imagen 3 (Gemini 2.0 Flash üzerinden multimodal kullanım) */
-export const MODEL_IMAGE = "gemini-2.0-flash";
+/** Görsel Üretim: Fallback üzerinden Imagen kullanımı planlanıyor */
+export const MODEL_IMAGE = "gemini-1.5-flash";
 
-/** Prompt Zenginleştirme: En stabil flash modeli */
-export const MODEL_ENRICH = "gemini-2.0-flash";
+/** Prompt Zenginleştirme */
+export const MODEL_ENRICH = "gemini-1.5-flash";
 
 function getGenAI(): GoogleGenerativeAI {
   const apiKey = process.env.GEMINI_API_KEY;

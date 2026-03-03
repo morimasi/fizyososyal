@@ -22,7 +22,7 @@ const generateSchema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Yetkisiz erişim", code: "UNAUTHORIZED" }, { status: 401 });
     }
@@ -67,10 +67,10 @@ export async function POST(req: Request) {
 
     let content;
     try {
-      content = await generateContent({ 
-        userPrompt: prompt, 
-        type, 
-        tone, 
+      content = await generateContent({
+        userPrompt: prompt,
+        type,
+        tone,
         language,
         targetAudience,
         postLength,
@@ -80,11 +80,11 @@ export async function POST(req: Request) {
     } catch (aiError) {
       const msg = aiError instanceof Error ? aiError.message : String(aiError);
       console.error("AI Error:", msg);
-      return NextResponse.json({ error: "AI hatası: " + msg, code: "AI_ERROR" }, { status: 502 });
+      return NextResponse.json({ error: "AI Servis Hatası", details: msg, code: "AI_ERROR" }, { status: 500 });
     }
 
     if (!content || content.error) {
-      return NextResponse.json({ error: "AI boş yanıt", code: "AI_RESPONSE_ERROR" }, { status: 502 });
+      return NextResponse.json({ error: "AI şu an yanıt veremiyor", code: "AI_EMPTY_RESPONSE" }, { status: 503 });
     }
 
     // Handle Image Upload if generatedImageBase64 exists
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
         const base64Data = content.generatedImageBase64.split(",")[1];
         const mimeType = content.generatedImageBase64.split(";")[0].split(":")[1];
         const buffer = Buffer.from(base64Data, "base64");
-        
+
         const blob = await put(`ai-generated/${session.user.id}/${Date.now()}.png`, buffer, {
           access: "public",
           contentType: mimeType,
