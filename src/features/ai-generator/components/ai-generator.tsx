@@ -125,7 +125,7 @@ export function AIGenerator() {
               <Settings2 className="w-4 h-4 text-sage-dark" />
               <span className="text-xs font-bold text-sage-dark uppercase tracking-tight">Stüdyo Yapılandırması</span>
             </div>
-            <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-600 border-purple-100">Gemini 3.1 Pro</Badge>
+            <Badge variant="outline" className="text-[10px] bg-indigo-50 text-indigo-600 border-indigo-100">Gemini 2.0 Flash</Badge>
           </div>
           <CardContent className="p-6 flex flex-col gap-6">
             <div className="flex flex-col gap-2">

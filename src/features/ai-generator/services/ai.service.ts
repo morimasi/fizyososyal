@@ -176,17 +176,21 @@ export async function generateContent({
       ...parsed,
       ...imageResult,
       ...videoExtra,
-      imageModel: "gemini-3.1-flash-image-preview",
-      textModel: "gemini-3.1-pro-preview",
-      parsed: true
-    };
-  } catch (error) {
-    console.error("Generation error:", error);
-    return {
-      title: "Hata",
-      caption: "Sistem şu an çok yoğun. Lütfen 30 saniye sonra tekrar deneyin.",
-      generatedImageUrl: fallbackImageUrl(userPrompt),
-      error: true
-    };
+      return {
+        ...parsed,
+        ...imageResult,
+        ...videoExtra,
+        imageModel: "gemini-2.0-flash-image",
+        textModel: "gemini-2.0-flash-text",
+        parsed: true
+      };
+    } catch (error) {
+      console.error("Generation error:", error);
+      return {
+        title: "Hata",
+        caption: "Sistem şu an çok yoğun. Lütfen 30 saniye sonra tekrar deneyin.",
+        generatedImageUrl: fallbackImageUrl(userPrompt),
+        error: true
+      };
+    }
   }
-}
