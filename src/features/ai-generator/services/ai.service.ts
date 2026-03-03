@@ -155,42 +155,38 @@ export async function generateContent({
       }
     `;
 
-    const result = await model.generateContent(fullPrompt);
-    const response = await result.response;
+    // 1. Metin ve Görsel Üretimini Paralel Başlat
+    const textPromise = model.generateContent(fullPrompt);
+    const imagePromise = generateGeminiImage(userPrompt);
+
+    const [textResult, geminiImageBase64] = await Promise.all([textPromise, imagePromise]);
+
+    const response = await textResult.response;
     const text = response.text();
     const parsed = parseJSONWithFallback(text) as any;
 
-    // Gemini 3.1 Flash Image ile görsel üret
-    const geminiImageBase64 = await generateGeminiImage(parsed.imageDescription || userPrompt);
-
     // Görsel base64 varsa route'taki Vercel Blob yükleyici devreye girer
-    // Yoksa fallback URL kullan
     const imageResult = geminiImageBase64
       ? { generatedImageBase64: geminiImageBase64 }
       : { generatedImageUrl: fallbackImageUrl(parsed.imageDescription || userPrompt) };
 
-    // Video içerik türleri için Veo 3.1 bilgisi ekle
     const videoExtra = VIDEO_TYPES.includes(type) ? { videoInfo: VIDEO_INFO } : {};
 
     return {
       ...parsed,
       ...imageResult,
       ...videoExtra,
-      return {
-        ...parsed,
-        ...imageResult,
-        ...videoExtra,
-        imageModel: "gemini-1.5-flash-image",
-        textModel: "gemini-1.5-flash-text",
-        parsed: true
-      };
-    } catch (error) {
-      console.error("Generation error:", error);
-      return {
-        title: "Hata",
-        caption: "Sistem şu an çok yoğun. Lütfen 30 saniye sonra tekrar deneyin.",
-        generatedImageUrl: fallbackImageUrl(userPrompt),
-        error: true
-      };
-    }
+      imageModel: "gemini-1.5-flash-image",
+      textModel: "gemini-1.5-flash-text",
+      parsed: true
+    };
+  } catch (error) {
+    console.error("Generation error:", error);
+    return {
+      title: "Hata",
+      caption: "Sistem şu an çok yoğun. Lütfen 30 saniye sonra tekrar deneyin.",
+      generatedImageUrl: fallbackImageUrl(userPrompt),
+      error: true
+    };
   }
+}

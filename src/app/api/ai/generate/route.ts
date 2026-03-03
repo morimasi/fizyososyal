@@ -18,6 +18,8 @@ const generateSchema = z.object({
   callToActionType: z.enum(["appointment", "comment", "save", "share", "dm"]).default("appointment"),
   useEmojis: z.boolean().default(true),
 });
+export const maxDuration = 60; // Vercel için timeout süresini 60 saniyeye çıkarıyoruz
+
 
 export async function POST(req: Request) {
   try {
