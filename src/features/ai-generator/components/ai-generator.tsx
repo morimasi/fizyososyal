@@ -99,7 +99,9 @@ export function AIGenerator() {
       if (data.success) {
         setResult(data.data);
       } else {
-        alert(data.error || "Bir hata oluştu");
+        const errorMsg = data.error || "Bir hata oluştu";
+        const errorDetails = data.details ? `\n\nDetay: ${data.details}` : "";
+        alert(`${errorMsg}${errorDetails}`);
       }
     } catch (error) {
       alert("Bağlantı hatası");

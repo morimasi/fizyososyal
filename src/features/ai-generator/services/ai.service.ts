@@ -189,11 +189,17 @@ export async function generateContent({
       parsed: true
     };
   } catch (error: any) {
-    console.error("Generation error:", error);
+    console.error("Generation error details:", error);
+
+    let detailMessage = error?.message || String(error);
+    if (detailMessage.includes("SAFETY")) {
+      detailMessage = "İçerik Gemini güvenlik filtrelerine takıldı. Lütfen tıbbi tavsiye içermeyen, daha genel bir dil kullanmayı deneyin.";
+    }
+
     return {
       title: "Hata",
-      caption: "Sistem şu an bu içeriği oluştururken bir kısıtlamaya takıldı veya yoğunluk yaşıyor.",
-      details: error?.message || String(error),
+      caption: "Sistem şu an bu içeriği oluştururken bir kısıtlamaya takıldı.",
+      details: detailMessage,
       error: true
     };
   }
