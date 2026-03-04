@@ -22,8 +22,11 @@ function getGenAI(): GoogleGenerativeAI {
 }
 
 /** Metin modeli döndürür (varsayılan: MODEL_TEXT) */
-export const getModel = (modelName: string = MODEL_TEXT) => {
-  return getGenAI().getGenerativeModel({ model: modelName });
+export const getModel = (modelName: string = MODEL_TEXT, safetySettings?: any) => {
+  return getGenAI().getGenerativeModel({
+    model: modelName,
+    safetySettings
+  });
 };
 
 /** Görsel üretimi için — responseModalities: IMAGE destekli */

@@ -86,7 +86,11 @@ export async function POST(req: Request) {
     }
 
     if (!content || content.error) {
-      return NextResponse.json({ error: "AI şu an yanıt veremiyor", code: "AI_EMPTY_RESPONSE" }, { status: 503 });
+      return NextResponse.json({
+        error: content?.caption || "AI şu an yanıt veremiyor",
+        details: content?.details || "Bilinmeyen AI hatası",
+        code: "AI_EMPTY_RESPONSE"
+      }, { status: 503 });
     }
 
     // Handle Image Upload if generatedImageBase64 exists

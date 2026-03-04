@@ -1,4 +1,12 @@
 import { getModel, getImageModel, MODEL_TEXT, MODEL_ENRICH } from "@/lib/google-ai";
+import { HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+
+const SAFETY_SETTINGS = [
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+];
 
 export type ContentType = "post" | "carousel" | "reels" | "ad" | "thread" | "story" | "article" | "newsletter";
 export type ContentTone = "professional" | "friendly" | "scientific" | "motivational" | "empathetic" | "bold" | "educational";
@@ -125,7 +133,7 @@ export async function generateContent({
   useEmojis = true
 }: GenerateParams) {
   try {
-    const model = getModel(MODEL_TEXT);
+    const model = getModel(MODEL_TEXT, SAFETY_SETTINGS);
 
     const fullPrompt = `
       ${SYSTEM_INSTRUCTION}
@@ -180,12 +188,12 @@ export async function generateContent({
       textModel: "gemini-1.5-flash-text",
       parsed: true
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Generation error:", error);
     return {
       title: "Hata",
-      caption: "Sistem şu an çok yoğun. Lütfen 30 saniye sonra tekrar deneyin.",
-      generatedImageUrl: fallbackImageUrl(userPrompt),
+      caption: "Sistem şu an bu içeriği oluştururken bir kısıtlamaya takıldı veya yoğunluk yaşıyor.",
+      details: error?.message || String(error),
       error: true
     };
   }
